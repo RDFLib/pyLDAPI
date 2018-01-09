@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Sites API</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/ga_theme.css')}}" />
+</head>
+<body>
+    {% include 'ga_header.html' %}
+    <div id="container-content">
+        {% block content %}{% endblock %}
+    </div>
+    {% include 'ga_footer.html' %}
+</body>
+</html>
