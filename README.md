@@ -65,6 +65,9 @@ To run this app using Apache2 web server on Debina/Ubuntu Linux:
     * export FLASK_APP=app.py
     * python3 -m flask run
 
+
+
+
 ## License
 This repository is licensed under Creative Commons 4.0 International. See the [LICENSE deed](LICENSE) in this repository for details.
 

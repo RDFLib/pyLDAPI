@@ -4,6 +4,7 @@ from rdflib import Graph, URIRef, RDF, RDFS, XSD, Namespace, Literal
 from _ldapi.__init__ import LDAPI
 from lxml import etree
 import requests
+import json
 from io import StringIO, BytesIO
 import _config as conf
 
@@ -12,23 +13,116 @@ class RegisterRenderer(Renderer):
     """
     Version 1.0
     """
-    def __init__(self, request, base_uri, uri, endpoints, page, per_page, prev_page, next_page, last_page):
-        Renderer.__init__(self, uri, endpoints)
+    def __init__(self, request):
+        Renderer.__init__(self, conf.URI_SITE_CLASS, None)
 
         self.request = request
-        self.base_uri = base_uri
-        self.uri = uri
+        self.base_uri = conf.URI_SITE_INSTANCE_BASE
+        self.uri = conf.URI_SITE_CLASS
         self.register = []
         self.g = None
-        self.per_page = per_page
-        self.page = page
-        self.prev_page = prev_page
-        self.next_page = next_page
-        self.last_page = last_page
+        self.paging_params(self.request)
+        self.load_data(self.page, self.per_page)
 
+    def paging_params(self, request):
+        # pagination
+        self.page = int(request.args.get('page')) if request.args.get('page') is not None else 1
+        self.per_page = int(request.args.get('per_page')) if request.args.get('per_page') is not None else 100
+
+        if self.per_page > conf.PAGE_SIZE_DEFAULT:
+            return Response(
+                'You must enter either no value for per_page or an integer <= {}.'.format(conf.PAGE_SIZE_DEFAULT),
+                status=400,
+                mimetype='text/plain'
+            )
+
+        links = list()
+        links.append('<http://www.w3.org/ns/ldp#Resource>; rel="type"')
+        # signalling that this is, in fact, a resource described in pages
+        links.append('<http://www.w3.org/ns/ldp#Page>; rel="type"')
+        links.append('<{}?per_page={}>; rel="first"'.format(conf.URI_SITE_INSTANCE_BASE, self.per_page))
+
+        # if this isn't the first page, add a link to "prev"
+        if self.page != 1:
+            links.append('<{}?per_page={}&page={}>; rel="prev"'.format(
+                conf.URI_SITE_INSTANCE_BASE,
+                self.per_page,
+                (self.page - 1)
+            ))
+
+        # if this isn't the first page, add a link to "prev"
+        if self.page != 1:
+            self.prev_page = self.page - 1
+            links.append('<{}?per_page={}&page={}>; rel="prev"'.format(
+                conf.URI_SITE_INSTANCE_BASE,
+                per_page,
+                prev_page
+            ))
+        else:
+            self.prev_page = None
+
+        # add a link to "next" and "last"
+        try:
+            r = requests.get(conf.XML_API_URL_SITES_TOTAL_COUNT)
+            no_of_samples = int(r.content.decode('utf-8').split('<RECORD_COUNT>')[1].split('</RECORD_COUNT>')[0])
+            self.last_page = int(round(no_of_samples / self.per_page, 0)) + 1  # same as math.ceil()
+
+            # if we've gotten the last page value successfully, we can choke if someone enters a larger value
+            if self.page > self.last_page:
+                return Response(
+                    'You must enter either no value for page or an integer <= {} which is the last page number.'
+                    .format(self.last_page),
+                    status=400,
+                    mimetype='text/plain'
+                )
+
+            # add a link to "next"
+            if self.page != self.last_page:
+                self.next_page = self.page + 1
+                links.append('<{}?per_page={}&page={}>; rel="next"'
+                                .format(conf.URI_SITE_INSTANCE_BASE, self.per_page, (self.page + 1)))
+            else:
+                self.next_page = None
+
+            # add a link to "last"
+            links.append('<{}?per_page={}&page={}>; rel="last"'
+                            .format(conf.URI_SITE_INSTANCE_BASE, self.per_page, self.last_page))
+        except:
+            # if there's some error in getting the no of samples, add the "next" link but not the "last" link
+            self.next_page = self.page + 1
+            links.append('<{}?per_page={}&page={}>; rel="next"'
+                            .format(conf.URI_SITE_INSTANCE_BASE, self.per_page, (self.page + 1)))
+            self.last_page = None
+
+        self.headers = {
+            'Link': ', '.join(links)
+        }
+        
+
+    def load_data(self, page, per_page):
         self._get_details_from_oracle_api(page, per_page)
 
-    def render(self, view, mimetype, extra_headers=None):
+    @staticmethod
+    def view():
+        return json.dumps({
+            "renderer": "RegisterRenderer",
+            "default": "reg",
+            "alternates": {
+                "mimetypes": ["text/html", "text/turtle", "application/rdf+xml", "application/rdf+json", "application/json"],
+                "default_mimetype": "text/html",
+                "namespace": "http://www.w3.org/ns/ldp#Alternates",
+                "description": "The view listing all other views of this class of object"
+            },
+            "reg": {
+                "mimetypes": ["text/html", "text/turtle", "application/rdf+xml", "application/rdf+json"],
+                "default_mimetype": "text/html",
+                "namespace": "http://purl.org/linked-data/registry#",
+                "description": "The Registry Ontology. Core ontology for linked data registry services. Based on ISO19135 but heavily modified to suit Linked Data representations and applications",
+                "containedItemClass": ["http://pid.geoscience.gov.au/def/ont/ga/pdm#Site"]
+            }
+        })
+
+    def render(self, view, mimetype):
         if view == 'reg':
             # is an RDF format requested?
             if mimetype in LDAPI.get_rdf_mimetypes_list():
@@ -39,7 +133,7 @@ class RegisterRenderer(Renderer):
                     self.g.serialize(format=rdflib_format),
                     status=200,
                     mimetype=mimetype,
-                    headers=extra_headers
+                    headers=self.headers
                 )
             elif mimetype == 'text/html':
                 return Response(
@@ -55,7 +149,7 @@ class RegisterRenderer(Renderer):
                         last_page=self.last_page
                     ),
                     mimetype='text/html',
-                    headers=extra_headers
+                    headers=self.headers
                 )
         else:
             return Response('The requested model model is not valid for this class', status=400, mimetype='text/plain')

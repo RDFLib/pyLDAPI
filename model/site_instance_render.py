@@ -7,10 +7,11 @@ import _config as conf
 from _ldapi.__init__ import LDAPI
 from datetime import datetime
 import json
+from .renderer import Renderer
 json.encoder.FLOAT_REPR = lambda f: ("%.2f" % f)
 
 
-class Site:
+class Site(Renderer):
 
     URI_GA = 'http://pid.geoscience.gov.au/org/ga/geoscienceausralia'
 
@@ -29,7 +30,36 @@ class Site:
             self._populate_from_xml_file(xml)
         else:
             self._populate_from_oracle_api()
-
+    @staticmethod
+    def view():
+        return json.dumps({
+		"renderer": "SiteRenderer",
+		"default": "pdm",
+		"alternates": {
+			"mimetypes": [
+				"text/html",
+				"text/turtle",
+				"application/rdf+xml",
+				"application/rdf+json",
+				"application/json"
+			],
+			"default_mimetype": "text/html",
+			"namespace": "http://www.w3.org/ns/ldp#Alternates",
+			"description": "The view listing all other views of this class of object"
+		},
+        "pdm": {
+			"mimetypes": ["text/html", "text/turtle", "application/rdf+xml", "application/rdf+json"],
+			"default_mimetype": "text/html",
+			"namespace": "http://pid.geoscience.gov.au/def/ont/ga/pdm",
+			"description": "Geoscience Australia's Public Data Model ontology"
+		},
+		 "nemsr": {
+			"mimetypes": ["application/vnd.geo+json"],
+			"default_mimetype": "application/vnd.geo+json",
+			"namespace": "http://www.neii.gov.au/nemsr",
+			"description": "The National Environmental Monitoring Sites Register"
+		}
+	})
     def validate_xml(self, xml):
         parser = etree.XMLParser(dtd_validation=False)
 
