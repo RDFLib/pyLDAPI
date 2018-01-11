@@ -1,5 +1,4 @@
-
-from flask import Blueprint, render_template, request, Response
+from flask import Blueprint, render_template, request, Response, Flask
 from functools import wraps
 import urllib.parse as uriparse
 import requests
@@ -9,6 +8,10 @@ import json
 from _ldapi.__init__ import LDAPI, LdapiParameterError
 from .functions import render_alternates_view, client_error_Response
 import _config as conf
+from model.default_register import RegisterRenderer
+from model.index_register import IndexRegister
+# from controller import routes
+
 
 __global_view_format__ = {"/": json.dumps({
 		"renderer": "RegisterRenderer",
@@ -27,17 +30,30 @@ __global_view_format__ = {"/": json.dumps({
 			"containedItemClass": ["http://pid.geoscience.gov.au/def/ont/ga/pdm#Site"]
 		}
 	})}
+# ldapi.route
+# path_routes = routes.routes
+# path_routes = Blueprint('pyldp', __name__)
 
-
-def register(render='root'):
+def register(rule, render=None):
     print('#register decorator')
+    print(rule)
    
+    # @path_routes.route(rule)
     def decorator(func):
         @wraps(func)
-        def decorated_function( **param):
-            if render != 'root':
-                __global_view_format__[request.path] = render.view()
-            views_formats = json.loads(__global_view_format__.get(request.path))
+        def decorated_function(**param):
+            if rule == '/' and render == None:
+                # Home path with default home render
+                render = IndexRegister
+            if rule != '/' and render == None:
+                if bool(param):
+                    # Instance view, render class must be supported
+                    return Response('Instance render class should be provided', status=404, mimetype='text/plain')
+                else:
+                    # None home path with default register render
+                    render = RegisterRenderer
+            
+            views_formats = json.loads(render.view())
             try:
                 view, mime_format = LDAPI.get_valid_view_and_format(
                     request.args.get('_view'),
@@ -50,7 +66,6 @@ def register(render='root'):
 
                 if view == 'alternates':
                     # print('alternates view')
-                    del views_formats['renderer']
                     return render_alternates_view(
                         class_uri,
                         uriparse.quote_plus(class_uri),
@@ -61,18 +76,19 @@ def register(render='root'):
                     )
                 else:
                     print('return default customer function')
-                    
-                    if render != 'root':
-                        print(len(param))
-                        if bool(param) :
-                            return render(param.get('site_no')).render(view, mime_format)
-                        return render(request).render(view, mime_format)
-                    return func()
+                    args = {}
+                    if bool(param):
+                        for p in param.keys():
+                            print(p)
+                            args[p] = param[p]
+                    args['view'] = view
+                    args['format'] = mime_format
+
+                    return func(**args)
             except LdapiParameterError as e:
                 return client_error_Response(e)
+        
         return decorated_function
+    # path_routes.add_url_rule(rule,view_func=decorator)
     return decorator
 
-def instance(func):
-    def decorator():
-        pass

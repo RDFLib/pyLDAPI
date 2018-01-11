@@ -32,8 +32,7 @@ class Site(Renderer):
             self._populate_from_oracle_api()
     @staticmethod
     def view():
-        return json.dumps({
-		"renderer": "SiteRenderer",
+        return json.dumps({   
 		"default": "pdm",
 		"alternates": {
 			"mimetypes": [
