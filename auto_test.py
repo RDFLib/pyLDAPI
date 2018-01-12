@@ -2,8 +2,6 @@
 import os
 import unittest
 import json
-# import rdflib
-from os.path import join, dirname
 from rdflib.graph import Graph
 from app import app
 
@@ -11,7 +9,7 @@ class SingleSiteViewTest(unittest.TestCase):
     def setUp(self):
         app.testing = True
         self.client = app.test_client() 
-        # collect all categories 
+        # collect all registers 
         response = self.client.get('/?_view=reg&_format=application/json')
         json_data = json.loads(response.data)
 
@@ -42,7 +40,6 @@ class SingleSiteViewTest(unittest.TestCase):
                             } limit 1 
                     """)
             js_format = json.loads(qres.serialize(format="json").decode('utf-8'))
-            # print(js_format)
             print ('#pickup_instance() get an instance: '+js_format.get('results').get('bindings')[0].get('instance').get('value'))
         else:
             raise Exception("call view=reg&_format=text/turtle error for register: " + register)
@@ -50,6 +47,10 @@ class SingleSiteViewTest(unittest.TestCase):
 
 
     def test_instance(self):
+        '''
+            Test views and formats for instances
+            view default, description, alternates will not be included
+        '''
         for register in self.registers:
             if register != '/':
                 raw_instance = self.pickup_instance(register)
@@ -81,6 +82,10 @@ class SingleSiteViewTest(unittest.TestCase):
                                         self.assertIn(format, response.headers.get('Content-Type'))
 
     def test_register(self):
+        '''
+        Test register's views and formats
+        Just registers will be tested, no instance pick and test
+        '''
         for ca in self.registers:
             print('#test_register() test register : '+ ca)
             with self.subTest(ca):

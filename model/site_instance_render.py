@@ -7,7 +7,7 @@ import _config as conf
 from _ldapi.__init__ import LDAPI
 from datetime import datetime
 import json
-from .renderer import Renderer
+from pyldp.renderer import Renderer
 json.encoder.FLOAT_REPR = lambda f: ("%.2f" % f)
 
 

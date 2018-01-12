@@ -9,7 +9,7 @@ from io import StringIO, BytesIO
 import _config as conf
 
 
-class RegisterRenderer(Renderer):
+class DefaultRegisterRenderer(Renderer):
     """
     Version 1.0
     """

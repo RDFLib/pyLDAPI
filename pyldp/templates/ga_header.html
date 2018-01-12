@@ -1,0 +1,26 @@
+<div id="header">
+  <table>
+    <tr>
+      <td>
+        <img id="ga-logo" src="{{ url_for('static', filename = 'img/ga-logo.jpg') }}" />
+      </td>
+      <td>
+        <table>
+          <tr>
+            <td id="quote">
+              <span id="quote">Applying geoscience to Australia's most important challenges</span>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              {% include 'ga_nav.html' %}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+  <div id="ga-colour-strip-container">
+    <img id="ga-colour-strip" src="{{ url_for('static', filename = 'img/lo.jpg') }}" />
+  </div>
+</div>

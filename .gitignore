@@ -1,3 +1,4 @@
 model/__pycache__
 *.pyc
 */*.pyc
+controller/__pycache__
