@@ -10,6 +10,19 @@
     <ul>
         <li><a href="{{ url_for('controller.index') }}?_view=getcapabilities&_format=text/xml">{{ url_for('controller.index') }}?_view=getcapabilities&_format=text/xml</a></li>
     </ul>
+    <h3>Registers</h3>
+    <table class="pretty">
+        <tr>
+            <td>Register URI</td>
+            <td>Introduction</td>
+        </tr>
+    {% for register in register_tree %}
+        <tr>
+            <td style="width: 20%"> <h3><a href={{register.get('uri')}}> {{register.get('uri')}}</a></h3> </td>
+            <td>{{register.get('description')}}</td>
+        </tr>
+    {% endfor %}
+    </table>
     <h3>Contact</h3>
     <p>This API is maintained by GA's Scientific Data section. Contact then on <a href="mailto:dataman@ga.gov.au">dataman@ga.gov.au</a>.</p>
 {% endblock %}

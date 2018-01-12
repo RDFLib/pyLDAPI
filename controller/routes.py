@@ -3,6 +3,7 @@ import urllib.parse as uriparse
 import requests
 import json
 from _ldapi.__init__ import LDAPI, LdapiParameterError
+from model.index_register import IndexRegister
 from model.default_register import RegisterRenderer
 from model.site_instance_render import Site
 import _config as conf
@@ -16,7 +17,9 @@ routes = Blueprint('controller', __name__)
 @routes.route('/')
 @decorator.register('/')
 def index(**args):
-    return render_template('page_index.html')
+    view = args.get('view')
+    format = args.get('format')
+    return IndexRegister('page_index.html', decorator.register_tree).render(view, format)
 
 @routes.route('/register')
 def register():
@@ -35,7 +38,7 @@ def sites(**args):
     return RegisterRenderer(request).render(view, format)
 
 @routes.route('/site/<string:site_no>')
-@decorator.register('/site/<string:site_no>', render=Site)
+@decorator.instance('/site/<string:site_no>', render=Site)
 def site(**args):
     """
     A single Site

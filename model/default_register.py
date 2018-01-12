@@ -105,7 +105,6 @@ class RegisterRenderer(Renderer):
     @staticmethod
     def view():
         return json.dumps({
-            "renderer": "RegisterRenderer",
             "default": "reg",
             "alternates": {
                 "mimetypes": ["text/html", "text/turtle", "application/rdf+xml", "application/rdf+json", "application/json"],
@@ -118,8 +117,8 @@ class RegisterRenderer(Renderer):
                 "default_mimetype": "text/html",
                 "namespace": "http://purl.org/linked-data/registry#",
                 "description": "The Registry Ontology. Core ontology for linked data registry services. Based on ISO19135 but heavily modified to suit Linked Data representations and applications",
-                "containedItemClass": ["http://pid.geoscience.gov.au/def/ont/ga/pdm#Site"]
-            }
+            },
+            "description": "Default register, return all instances with links in one page.   When register class doesnot specified in @decorator.register() in router.py, this default register will be applied."
         })
 
     def render(self, view, mimetype):

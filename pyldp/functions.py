@@ -8,6 +8,7 @@ import json
 import urllib.parse as uparse
 
 
+
 def client_error_Response(error_message):
     return Response(
         str(error_message),
@@ -49,7 +50,8 @@ def render_alternates_view(class_uri, class_uri_encoded, instance_uri, instance_
         default_title = views_formats['default']
 
         # the ApiResource is incorrectly assigned to the class URI
-        for view_name, formats in views_formats.iteritems():
+        for view_name in views_formats.keys():
+            formats = views_formats.get(view_name)
             if view_name == 'alternates':
                 for f in formats:
                     g.add((alternates_view, URIRef('http://purl.org/dc/terms/format'), Literal(f, datatype=XSD.string)))

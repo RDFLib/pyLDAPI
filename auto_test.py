@@ -12,11 +12,10 @@ class SingleSiteViewTest(unittest.TestCase):
         app.testing = True
         self.client = app.test_client() 
         # collect all categories 
-        response = self.client.get('/register')
+        response = self.client.get('/?_view=reg&_format=application/json')
         json_data = json.loads(response.data)
-        self.registers = set(json_data)
-        # add root register
-        self.registers.add('#')
+
+        self.registers = set(ele.get('uri') for ele in json_data)
 
         self.formats = set(['text/html', 
                             'text/turtle', 
@@ -31,61 +30,62 @@ class SingleSiteViewTest(unittest.TestCase):
 
 
     def pickup_instance(self, register):
-        ca = register.split('#')[1].lower()
-
-        response = self.client.get('/'+ca+'/?_view=reg&_format=text/turtle')
+        response = self.client.get(register+'?_view=reg&_format=text/turtle')
         if response.status_code == 200:
             g = Graph()
             g.parse(data=response.data.decode('utf-8'), format='turtle')
+            # This query shoud be changed later to allow it query instances for different site
             qres = g.query(
                     """ SELECT ?instance
                         WHERE {
-                            ?instance  a <"""+register+""">
+                            ?instance  a <http://pid.geoscience.gov.au/def/ont/ga/pdm#Site>
                             } limit 1 
                     """)
             js_format = json.loads(qres.serialize(format="json").decode('utf-8'))
-            print ('#pick_instance() get an instance: '+js_format.get('results').get('bindings')[0].get('instance').get('value'))
+            # print(js_format)
+            print ('#pickup_instance() get an instance: '+js_format.get('results').get('bindings')[0].get('instance').get('value'))
+        else:
+            raise Exception("call view=reg&_format=text/turtle error for register: " + register)
         return js_format.get('results').get('bindings')[0].get('instance').get('value')
 
 
-    def test_instances(self):
+    def test_instance(self):
         for register in self.registers:
-            if register == '#':
-                return None
-            long_instance = self.pickup_instance(register)
-            instance = '/'+'/'.join(long_instance.split("/")[3:])
-            print('#test_instance() test instance: '+instance)
-            with self.subTest(instance):
-                # from alternates application/json view get JSON style register views and formats info.
-                response = self.client.get(instance+'?_view=alternates&_format=application/json')
+            if register != '/':
+                raw_instance = self.pickup_instance(register)
 
-                self.assertEqual(200, response.status_code)
-                self.assertIn('application/json', response.headers.get('Content-Type'))
+                instance = register+raw_instance.split('/')[-1]
+                print('#test_instance() test instance: '+instance)
 
-                # From response json data, get this register supported views and formats, and start test
-                if response.status_code == 200:
-                    data = json.loads(response.data)
-                    views = data.keys()
-                    for view in views:
-                        if view != 'default' != 'subreg' != 'renderer':
-                            formats = data[view]['mimetypes']
-                            for format in formats:
-                                with self.subTest(format):
-                                    print('----#test_instance() Testing instance '+ instance +': view ' + view + ' with format ' + format)
-                                    response = self.client.get(instance+'?_view='+view+'&_format='+format)
-                                    self.assertEqual(200, response.status_code)
-                                    self.assertIn(format, response.headers.get('Content-Type'))
+                with self.subTest(instance):
+                    # from alternates application/json view get JSON style register views and formats info.
+                    response = self.client.get(instance+'?_view=alternates&_format=application/json')
+
+                    self.assertEqual(200, response.status_code)
+                    self.assertIn('application/json', response.headers.get('Content-Type'))
+
+                    # From response json data, get this register supported views and formats, and start test
+                    if response.status_code == 200:
+                        data = json.loads(response.data)
+                        views = data.keys()
+                        for view in views:
+                            if view != 'default' and view != 'description' and view != 'alternates':
+                                # print(view)
+                                formats = data[view].get('mimetypes')
+                                for format in formats:
+                                    with self.subTest(format):
+                                        # view [non-alternaties and default ] and mimetypes test for instance
+                                        print('----#test_instance() Testing instance '+ instance +': view ' + view + ' with format ' + format)
+                                        response = self.client.get(instance+'?_view='+view+'&_format='+format)
+                                        self.assertEqual(200, response.status_code)
+                                        self.assertIn(format, response.headers.get('Content-Type'))
 
     def test_register(self):
-        for register in self.registers:
-            ca = register.split('#')[1].lower()
+        for ca in self.registers:
             print('#test_register() test register : '+ ca)
             with self.subTest(ca):
                 # from alternates application/json view get JSON style register views and formats info.
-                if ca == '':
-                    response = self.client.get('/?_view=alternates&_format=application/json')
-                else:
-                    response = self.client.get('/'+ca+'/?_view=alternates&_format=application/json')
+                response = self.client.get(ca+'?_view=alternates&_format=application/json')
                 
                 self.assertEqual(200, response.status_code)
                 self.assertIn('application/json', response.headers.get('Content-Type'))
@@ -95,14 +95,12 @@ class SingleSiteViewTest(unittest.TestCase):
                     data = json.loads(response.data)
                     views = data.keys()
                     for view in views:
-                        if view != 'default' != 'subreg' != 'renderer':
-                            formats = data[view]['mimetypes']
+                        if view != 'default' and view != 'description':
+                            formats = data[view].get('mimetypes')
                             for format in formats:
                                 with self.subTest(format):
-                                    if ca == '':
-                                        response = self.client.get('/?_view='+view+'&_format='+format)
-                                    else:
-                                        response = self.client.get('/'+ca+'/?_view='+view+'&_format='+format)
+                                    # View [alternates, and reg] and mimetypes test
+                                    response = self.client.get(ca+'?_view='+view+'&_format='+format)
                                     print('----#test_register() Testing register '+ ca +': view ' + view + ' with format ' + format)
                                     self.assertEqual(200, response.status_code)
                                     self.assertIn(format, response.headers.get('Content-Type'))

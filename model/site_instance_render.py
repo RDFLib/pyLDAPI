@@ -57,7 +57,8 @@ class Site(Renderer):
 			"default_mimetype": "application/vnd.geo+json",
 			"namespace": "http://www.neii.gov.au/nemsr",
 			"description": "The National Environmental Monitoring Sites Register"
-		}
+		}, 
+        "description": "instance render class for register Site"
 	})
     def validate_xml(self, xml):
         parser = etree.XMLParser(dtd_validation=False)
