@@ -25,7 +25,7 @@ class Renderer:
     @abstractmethod
     def view():
         """
-        return supported views, default views, description, and mimetypes for 
+        return supported views, default views, description, and mimetypes for supported views.
         Example:
         '
         {
