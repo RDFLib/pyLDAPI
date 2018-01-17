@@ -65,7 +65,7 @@ http://127.0.0.1:5000/?_view=reg&_format=application/json
 	},
 	{
 		"uri": "/site/",
-		"description": "Default register, return all instances with links in one page.   When register class doesnot specified\ 
+		"description": "Default register, return all instances with links in one page.   When register class doesnot specified \ 
 		in @decorator.register() in router.py, this default register will be applied."
 	}
 ]
@@ -99,7 +99,7 @@ http://127.0.0.1:5000/site/?_view=alternates&_format=application/json
 		],
 		"default_mimetype": "text/html",
 		"namespace": "http://purl.org/linked-data/registry#",
-		"description": "The Registry Ontology. Core ontology for linked data registry services. Based on ISO19135 but 
+		"description": "The Registry Ontology. Core ontology for linked data registry services. Based on ISO19135 but \
 		heavily modified to suit Linked Data representations and applications"
 	},
 	"description": "Default register, return all instances with links in one page.   \
