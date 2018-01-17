@@ -1,10 +1,18 @@
 
 ## decoration ##
-* @register -- provide alternates view and register view, because these two views are required by any category and instances, even root path, it should be extended by all of them.
-* @instance (extends @register, belongs @category(site) or @sub-category(sub-site))
+* @decorator.register provides a decoration based alternates views and register views decorator by providing customed render class, such as  @decorator.register('/', render = DefaultIndexRegister), or @decorator.register('/') when DefaultIndexRegister will be used by default.
+* @deciratir.instance extends @register, besides provides alternates views and register views of an instance, it also renders the instance display views. The render class must be provided. Such as @deciratir.instance('/site/10', render=Site)
 
+## Render class ##
+* the render classes used in the register decorator and instance decorator must extends the renderer.py class, which asks sub-class must implementing the static view() method and render() method.
+* the static view() method tells decorator what views and formats does it support, default view, and the instance description which will be displayed on home page as registers navigation introduction.
+* the render() method accepts view and mimetype parameters to render views as specified by view and mimetype.
 
 ## Usage ##
+* The usge of the pyldp register model is as simple as adding a @decorator.register decorator between @routes.route and the method.  In future, we are going to combine route decorator with the register decorator, when just one @decorator.register decorator could process both route and render class register operation. 
+
+* Here is an example of usage:
+``` python
 from pyldp.index_register import DefaultIndexRegister
 from pyldp.default_register import DefaultRegisterRenderer
 from pyldp import decorator
@@ -39,53 +47,13 @@ def site(**args):
     view = args.get('view')
     format = args.get('format')
     return Site(site_no).render(view, format)
+```
 
-
-## How to go crossing the website? ##
-1. @register decoration adds alternates and regester views to all routes, 
-2. @category, @sub-categories extends @register
-3. using URL/_view=alternates&_format=application/json can acquire current register views and alternates view, 
-4. at the same time, using register.__subclasses__() to get all categories as a tree and return them as the categories the system support. 
-5. In the testing, I can access these categories using alternates view in application/json format, and go cross categories and pick up an instance each of them.
-5. since at any category, sub-category and instance, I could easily access any information or data as I wish.
- 
-
+## How to walk through the website? ##
+* the entry of website if the home page where an site map was provided in defualt text/html view. 
+* specifying ```?_view=alternates&_format=application/json``` when call the root URI, a json format data will be responsed, which tells terminal users what registers are supported.
+* specifying ```?_view=alternates&_format=application/json``` to a specific register, a jons format data will be responsed, which tells views and formats the register supported.
+* specifying ```?_view=alternates&_format=application/json``` to a specific instance, a jons format data will be responsed, which tells views and formats the instance supported.
 	
-
-## What each url returned ##
-URL/
-	| return categories of this system, such as category1, category2, and category/sub-category etc.
-	| site introduction, register view and alternates view info can also been put here
-	| by default text/html returned -> display available categories of the system
-	| Using _view=alternates to display alternative views and formats  of this URL
-	| Using URL/_view=alternates&_format=application/json can read current register information -- Testing can follow this clue to go crossing the website
-
-
-URL/category1/
-		| return all available instances of this category
-		| category1 introduction, register view and alternates view info can also been put here
-		| by default text/html returned -> display available instances of the category
-		| Using _view=alternates to display alternative views and formats  of this category
-		| Using URL/category1/_view=alternates&_format=application/json can read current category register information
-
-
-URL/category1/id/
-		| return an instance quired by id
-		| by default text/html returned -> display the instance information and alternates view info link
-		| Using _view=alternates to display alternative views and formats  of this category
-		| Using URL/category1/_view=alternates&_format=application/json can read current instance register information
-
-URL/category/
-		| return sub-category belonging to this category, such as sub-category1, sub-category2, ...
-		| category category introduction and alternates view info can been put here
-		| by default text/html returned 
-		| Using _view=alternates to display alternative views and formats  of this URL
-		| Using URL/_view=alternates&_format=application/json can read current category register information
-
-ULR/category/sub-category1
-		| similar to ULR/category1
-
-ULR/category/sub-category/id
-		| similar to ULR/category1/id
 		
 		

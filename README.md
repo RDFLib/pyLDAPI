@@ -6,14 +6,16 @@ Here is where you should add a longer description about the repository. You coul
 ## Structure
 Folders:  
 * **model**
-    * contains files to interface with data structures (databases/files etc.)
-    * the files here are likely class files that get called by functions in controller
+    * contains files to custom interface with data structures (databases/files etc.)
+    * the files here are likely class files that get called by @register in route.py
 * **view**
     * contains template files, static files like CSS and other content used to formulate ouput formats
 * **controller**
     * contains the declarations of Flask API endpoints - routes
     * these are the HTTP endpoints that, when accessed via a browser or some external agent trigger handling by this application
     * in this MVC formulation, the routes file(s) should be minimal and just respond to HTTP requests and hand off data access to model and use resources via views for responses
+* **pyldp**
+    * contains the model of register decorator, which will be released as a python package later.
 * **_config**
     * a basic config file to store things like pointers to static folders
 
@@ -52,7 +54,8 @@ To run this app using Apache2 web server on Debina/Ubuntu Linux:
 	* note: the user and group of WSGIDaemonProcess configuration specified in apache.conf should be an Unix/Linux user, who should have execute privileges on the WSGIscript.
 * access service
     * navigate http://localhost/minimal to access services
-## Installation on develop machine
+
+## Installation and running on develop machine
 * installation on windows
     * install python3
     * install pip using python3
@@ -64,8 +67,6 @@ To run this app using Apache2 web server on Debina/Ubuntu Linux:
 * start on Linux
     * export FLASK_APP=app.py
     * python3 -m flask run
-
-
 
 
 ## License
