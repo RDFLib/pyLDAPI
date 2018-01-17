@@ -51,9 +51,98 @@ def site(**args):
 
 ## How to walk through the website? ##
 * the entry of website if the home page where an site map was provided in defualt text/html view. 
-* specifying ```?_view=alternates&_format=application/json``` when call the root URI, a json format data will be responsed, which tells terminal users what registers are supported.
+* specifying ```?_view=reg&_format=application/json``` when call the root URI, a json format data will be responsed, which tells terminal users what registers are supported.
+```
+http://127.0.0.1:5000/?_view=reg&_format=application/json
+```
+```json
+[
+{
+"uri": "/",
+"description": "Index register, return all registers with links navigating to them. This index register will be used when there is not register specified in @decorator.register() in routes.py.  People can replace this default register by simply adding customized index register in @decorator.register() decorator."
+},
+{
+"uri": "/site/",
+"description": "Default register, return all instances with links in one page.   When register class doesnot specified in @decorator.register() in router.py, this default register will be applied."
+}
+]
+
+```
 * specifying ```?_view=alternates&_format=application/json``` to a specific register, a jons format data will be responsed, which tells views and formats the register supported.
+```
+http://127.0.0.1:5000/site/?_view=alternates&_format=application/json
+```
+```json
+{
+"default": "reg",
+"alternates": {
+"mimetypes": [
+"text/html",
+"text/turtle",
+"application/rdf+xml",
+"application/rdf+json",
+"application/json"
+],
+"default_mimetype": "text/html",
+"namespace": "http://www.w3.org/ns/ldp#Alternates",
+"description": "The view listing all other views of this class of object"
+},
+"reg": {
+"mimetypes": [
+"text/html",
+"text/turtle",
+"application/rdf+xml",
+"application/rdf+json"
+],
+"default_mimetype": "text/html",
+"namespace": "http://purl.org/linked-data/registry#",
+"description": "The Registry Ontology. Core ontology for linked data registry services. Based on ISO19135 but heavily modified to suit Linked Data representations and applications"
+},
+"description": "Default register, return all instances with links in one page.   When register class doesnot specified in @decorator.register() in router.py, this default register will be applied."
+}
+```
 * specifying ```?_view=alternates&_format=application/json``` to a specific instance, a jons format data will be responsed, which tells views and formats the instance supported.
+```
+http://127.0.0.1:5000/site/10?_view=alternates&_format=application/json
+```
+
+```json
+{
+"default": "pdm",
+"alternates": {
+"mimetypes": [
+"text/html",
+"text/turtle",
+"application/rdf+xml",
+"application/rdf+json",
+"application/json"
+],
+"default_mimetype": "text/html",
+"namespace": "http://www.w3.org/ns/ldp#Alternates",
+"description": "The view listing all other views of this class of object"
+},
+"pdm": {
+"mimetypes": [
+"text/html",
+"text/turtle",
+"application/rdf+xml",
+"application/rdf+json"
+],
+"default_mimetype": "text/html",
+"namespace": "http://pid.geoscience.gov.au/def/ont/ga/pdm",
+"description": "Geoscience Australia's Public Data Model ontology"
+},
+"nemsr": {
+"mimetypes": [
+"application/vnd.geo+json"
+],
+"default_mimetype": "application/vnd.geo+json",
+"namespace": "http://www.neii.gov.au/nemsr",
+"description": "The National Environmental Monitoring Sites Register"
+},
+"description": "instance render class for register Site"
+}
+```
 	
 		
 		
