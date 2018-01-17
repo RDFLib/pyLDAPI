@@ -4,8 +4,16 @@
 * ```@deciratir.instance extends @register```, besides provides alternates views and register views of an instance, it also renders the instance display views. The render class must be provided. Such as ```@deciratir.instance('/site/10', render=Site)```
 
 ## Render class ##
-* the render classes used in the register decorator and instance decorator must extends the renderer.py class, which asks sub-class must implementing the static view() method and render() method.
-* the static view() method tells decorator what views and formats does it support, default view, and the instance description which will be displayed on home page as registers navigation introduction.
+* the render classes used in the register decorator and instance decorator must extends the renderer.py class, which asks sub-class must implementing the static view() method and render() method. 
+```python
+class DefaultRegisterRenderer(Renderer):
+	@staticmethod
+    	def view():
+        	return json.dumps({ ... })
+	def render(self, view, mimetype):
+		return Response data as specified by view and mimetype.
+```
+* the static view() method tells decorator what kinds of views, formats, and default view it supports, and the instance description which will be displayed on home page as registers navigation introduction. The view method also provides data for alternates views.
 * the render() method accepts view and mimetype parameters to render views as specified by view and mimetype.
 
 ## Usage ##
