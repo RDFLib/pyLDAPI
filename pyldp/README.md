@@ -1,7 +1,7 @@
 
-## decoration ##
-* @decorator.register provides a decoration based alternates views and register views decorator by providing customed render class, such as  @decorator.register('/', render = DefaultIndexRegister), or @decorator.register('/') when DefaultIndexRegister will be used by default.
-* @deciratir.instance extends @register, besides provides alternates views and register views of an instance, it also renders the instance display views. The render class must be provided. Such as @deciratir.instance('/site/10', render=Site)
+## Decoration define ##
+* ```@decorator.register``` provides a decoration based alternates views and register views decorator by providing customed render class, such as  ```@decorator.register('/', render = DefaultIndexRegister)```, or ```@decorator.register('/')``` when ```DefaultIndexRegister``` will be used by default.
+* ```@deciratir.instance extends @register```, besides provides alternates views and register views of an instance, it also renders the instance display views. The render class must be provided. Such as ```@deciratir.instance('/site/10', render=Site)```
 
 ## Render class ##
 * the render classes used in the register decorator and instance decorator must extends the renderer.py class, which asks sub-class must implementing the static view() method and render() method.
@@ -9,7 +9,7 @@
 * the render() method accepts view and mimetype parameters to render views as specified by view and mimetype.
 
 ## Usage ##
-* The usge of the pyldp register model is as simple as adding a @decorator.register decorator between @routes.route and the method.  In future, we are going to combine route decorator with the register decorator, when just one @decorator.register decorator could process both route and render class register operation. 
+* The usge of the pyldp register model is as simple as adding a @decorator.register decorator between @routes.route and the method.  In future, we are going to combine route decorator with the register decorator, when just one ```@decorator.register``` decorator could process both route and render class register operation. 
 
 * Here is an example of usage:
 ``` python
