@@ -59,15 +59,15 @@ http://127.0.0.1:5000/?_view=reg&_format=application/json
 [
 	{
 		"uri": "/",
-		"description": "Index register, return all registers with links navigating to them. \ 
-		This index register will be used when there is not register specified in \ 
+		"description": "Index register, return all registers with links navigating to them. \
+		This index register will be used when there is not register specified in \
 		@decorator.register() in routes.py.  People can replace this default 	\
 		register by simply adding customized index register in @decorator.register() decorator."
 	},
 	{
 		"uri": "/site/",
-		"description": "Default register, return all instances with links in one page.  \ 
-		When register class doesnot specified  in @decorator.register() in router.py, \ 
+		"description": "Default register, return all instances with links in one page.  \
+		When register class doesnot specified  in @decorator.register() in router.py, \
 		this default register will be applied."
 	}
 ]
@@ -101,8 +101,8 @@ http://127.0.0.1:5000/site/?_view=alternates&_format=application/json
 		],
 		"default_mimetype": "text/html",
 		"namespace": "http://purl.org/linked-data/registry#",
-		"description": "The Registry Ontology. Core ontology for linked data registry services. \ 
-		Based on ISO19135 but heavily modified to suit  \ 
+		"description": "The Registry Ontology. Core ontology for linked data registry services. \
+		Based on ISO19135 but heavily modified to suit  \
 		Linked Data representations and applications"
 	},
 	"description": "Default register, return all instances with links in one page.   \
