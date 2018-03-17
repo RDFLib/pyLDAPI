@@ -1,9 +1,9 @@
-# Sites Register
-A Linked Data Register of all of Geoscience Australia's sites.
+# Python Linked Data API
+A Linked Data API too to be used to present non-Linked Data in HTML and RDF.
 
-Here is where you should add a longer description about the repository. You could have a single paragraph of text, rather like and abstract, or you could have a very long description containing any amount of sections, subsections, subheadings etc.
+NOTE: this repo currently contains an implementation of the generic *pyldapi* tool. Shortly this repo will be reconfigured so that the tool is a stand-alone [Python Flask](http://flask.pocoo.org/) plugin.
 
-## Structure
+## Code Structure
 Folders:  
 * **model**
     * contains files to custom interface with data structures (databases/files etc.)
@@ -77,8 +77,8 @@ This repository is licensed under Creative Commons 4.0 International. See the [L
 You can write anything you like in the Contacts section, as long as you also include one or more GA contact people using the layout below as a guide. You do not need to include more than a name and email address: the title, ORCID etc. are all optional.
 
 Point of Contact:
-**Nicholas Car**
-*Data Architect*
-Geoscience Australia
-<nicholas.car@ga.gov.au>
+**Nicholas Car**  
+*Senior Experimental Scientist*  
+CSIRO Land & Water  
+<nicholas.car@csiro.au>  
 <http://orcid.org/0000-0002-8742-7730>
