@@ -17,8 +17,7 @@ def client_error_response(error_message):
 
 
 def render_alternates_view(class_uri, class_uri_encoded, instance_uri, instance_uri_encoded, views_formats, mimetype):
-    """Renders an HTML table, a JSON object string or a serialised RDF representation of the alternate views of an
-    object"""
+    """Renders an HTML table, a JSON object or a serialised RDF representation of the alternates views of an object"""
     if mimetype == 'application/json':
         return Response(json.dumps(views_formats), status=200, mimetype='application/json')
     elif mimetype in LDAPI.get_rdf_mimetypes_list():

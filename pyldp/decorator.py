@@ -1,50 +1,49 @@
-from flask import  render_template, request
+from flask import request
 from functools import wraps
 import urllib.parse as uriparse
-import json
 
 from _ldapi.__init__ import LDAPI, LdapiParameterError
 from .functions import render_alternates_view, client_error_response
-import _config as conf
-from .default_register import DefaultRegisterRenderer
-from .index_register import DefaultIndexRegister
+from .register_master import RegisterMasterRenderer
+from .register import RegisterRenderer
 
 
 register_tree = []
 
 
-def _regist_(rule, descriptions, options):
+def _regist_(rule, description, options):
     """
-        store decorated rule and render class information to home page naviation
+        store decorated rule and render class information to home page navigation
     """
-    is_instance = options.get('is_instance')
-    if not is_instance:
+    # add all registers to register_tree
+    if not options.get('is_instance'):
         site = {
             'uri': rule,
-            'description': descriptions
+            'description': description
         }
         register_tree.append(site)
 
 
-def register(rule, render=None, **options):
+def register(rule, render=None, contained_item_class='http://purl.org/linked-data/registry#Register', **options):
     """
         decorator for registers
-        param rule is the route path, param render is a class implemented rederer.py's render() method.
-        When render not provided, default DefaultIndexRegister will be used  if rule == /,  
-        and DefaultRegisterRenderer will be used if rule != /
+        param rule is the route path, param render is a class implemented renderer.py's render() method.
+        When render not provided, default RegisterMasterRenderer will be used  if rule == /,
+        and RegisterRenderer will be used if rule != /
         If an instance used this decorator, the instance render class must provided, or else, an error will be raised. 
     """
-    if rule == '/' and render is None:
-        # default render will be allocated if render is not provided and rule is / 
-        render = DefaultIndexRegister
-    if rule != '/' and render is None:
-        if bool(param) and param.get('is_instance'):
-            # Instance view, render class must be supported
-            raise Exception('Instance render class should be provided')
-        else:
-            # None home path with default register render
-            render = DeafultRegisterRenderer
-    views_formats = json.loads(render.view())
+    if render is None:
+        if rule == '/':
+            render = RegisterMasterRenderer
+        if rule != '/':
+            if bool(options) and options.get('is_instance'):
+                # Instance view, render class must be supported
+                raise Exception('Instance render class should be provided')
+            else:
+                # None home path with default register render
+                render = RegisterRenderer
+
+    views_formats = render.views_formats()
     _regist_(rule, views_formats.get('description'), options)
 
     def decorator(func):
@@ -57,27 +56,22 @@ def register(rule, render=None, **options):
                 ** param will absorb any parameters given to the decoracted func
             """
             try:
-                view, mime_format = LDAPI.get_valid_view_and_format(
-                    request.args.get('_view'),
-                    request.args.get('_format'),
-                    views_formats
-                )
+                view, mime_format = LDAPI.get_valid_view_and_format(request, views_formats)
                
                 # if alternates model, return this info from file
-                class_uri = conf.URI_SITE_CLASS
                 # render alternates view 
                 if view == 'alternates':
                     return render_alternates_view(
-                        class_uri,
-                        uriparse.quote_plus(class_uri),
+                        contained_item_class,
+                        uriparse.quote_plus(contained_item_class),
                         None,
                         None,
                         views_formats,
                         mime_format
                     )
                 else:
-                    # Since all render class extends from renderer.py, it requires two param to render views: view and
-                    # format register decorator pass these two parameters and  parameters came from decoracted func back
+                    # Since all render class instances extend renderer.py, they requires two param to render views:
+                    # view and format. The register decorator passes these two parameters from decoracted func back
                     args = {}
                     if bool(param):
                         for p in param.keys():
@@ -97,6 +91,6 @@ instance = register
 
 def instance(rule, render=None, is_instance=True, **options):
     """
-        instance decoractor wraps register, and provides it with a new param: is_instance with default value True
+        instance decorator wraps register, and provides it with a new param: is_instance with default value True
     """
-    return register(rule, render, is_instance=True) 
+    return register(rule, render, is_instance=is_instance)

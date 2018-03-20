@@ -9,7 +9,7 @@ from io import StringIO, BytesIO
 import _config as conf
 
 
-class DefaultRegisterRenderer(Renderer):
+class RegisterRenderer(Renderer):
     """
     Version 1.0
     """
@@ -27,11 +27,12 @@ class DefaultRegisterRenderer(Renderer):
     def paging_params(self, request):
         # pagination
         self.page = int(request.args.get('page')) if request.args.get('page') is not None else 1
-        self.per_page = int(request.args.get('per_page')) if request.args.get('per_page') is not None else 100
+        self.per_page = int(request.args.get('per_page')) if request.args.get('per_page') is not None \
+            else conf.PAGE_SIZE_DEFAULT
 
-        if self.per_page > conf.PAGE_SIZE_DEFAULT:
+        if self.per_page > conf.PAGE_SIZE_MAX:
             return Response(
-                'You must enter either no value for per_page or an integer <= {}.'.format(conf.PAGE_SIZE_DEFAULT),
+                'You must enter either no value for per_page or an integer <= {}.'.format(conf.PAGE_SIZE_MAX),
                 status=400,
                 mimetype='text/plain'
             )
@@ -55,8 +56,8 @@ class DefaultRegisterRenderer(Renderer):
             self.prev_page = self.page - 1
             links.append('<{}?per_page={}&page={}>; rel="prev"'.format(
                 conf.URI_SITE_INSTANCE_BASE,
-                per_page,
-                prev_page
+                self.per_page,
+                self.prev_page
             ))
         else:
             self.prev_page = None
@@ -102,28 +103,28 @@ class DefaultRegisterRenderer(Renderer):
         self._get_details_from_oracle_api(page, per_page)
 
     @staticmethod
-    def view():
-        return json.dumps({
-            "default": "reg",
-            "alternates": {
-                "mimetypes":
-                    ["text/html", "text/turtle", "application/rdf+xml", "application/rdf+json", "application/json"],
-                "default_mimetype": "text/html",
-                "namespace": "http://www.w3.org/ns/ldp#Alternates",
-                "description": "The view listing all other views of this class of object"
+    def views_formats():
+        return {
+            'default': 'reg',
+            'alternates': {
+                'mimetypes':
+                    ['text/html', 'text/turtle', 'application/rdf+xml', 'application/rdf+json', 'application/json'],
+                'default_mimetype': 'text/html',
+                'namespace': 'http://www.w3.org/ns/ldp#Alternates',
+                'description': 'The view listing all other views of this class of object'
             },
-            "reg": {
-                "mimetypes": ["text/html", "text/turtle", "application/rdf+xml", "application/rdf+json"],
-                "default_mimetype": "text/html",
-                "namespace": "http://purl.org/linked-data/registry#",
-                "description":
-                    "The Registry Ontology. Core ontology for linked data registry services. Based on ISO19135 but "
-                    "heavily modified to suit Linked Data representations and applications",
+            'reg': {
+                'mimetypes': ['text/html', 'text/turtle', 'application/rdf+xml', 'application/rdf+json'],
+                'default_mimetype': 'text/html',
+                'namespace': 'http://purl.org/linked-data/registry#',
+                'description':
+                    'The Registry Ontology. Core ontology for linked data registry services. Based on ISO19135 but '
+                    'heavily modified to suit Linked Data representations and applications',
             },
-            "description":
-                "Default register, return all instances with links in one page.   When register class doesnot "
-                "specified in @decorator.register() in router.py, this default register will be applied."
-        })
+            'description':
+                'This Register contains all instances of a class type (the containedItemClass). When a specialised '
+                'Register class is not specified in @decorator.register() in router.py, this default will be applied.'
+        }
 
     def render(self, view, mimetype):
         if view == 'reg':

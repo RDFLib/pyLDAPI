@@ -11,7 +11,7 @@ from pyldp.renderer import Renderer
 json.encoder.FLOAT_REPR = lambda f: ("%.2f" % f)
 
 
-class Site(Renderer):
+class SiteRenderer(Renderer):
 
     URI_GA = 'http://pid.geoscience.gov.au/org/ga/geoscienceausralia'
 
@@ -32,35 +32,35 @@ class Site(Renderer):
             self._populate_from_oracle_api()
 
     @staticmethod
-    def view():
-        return json.dumps({   
-            "default": "pdm",
-            "alternates": {
-                "mimetypes": [
-                    "text/html",
-                    "text/turtle",
-                    "application/rdf+xml",
-                    "application/rdf+json",
-                    "application/json"
+    def views_formats():
+        return {
+            'default': 'pdm',
+            'alternates': {
+                'mimetypes': [
+                    'text/html',
+                    'text/turtle',
+                    'application/rdf+xml',
+                    'application/rdf+json',
+                    'application/json'
                 ],
-                "default_mimetype": "text/html",
-                "namespace": "http://www.w3.org/ns/ldp#Alternates",
-                "description": "The view listing all other views of this class of object"
+                'default_mimetype': 'text/html',
+                'namespace': 'http://www.w3.org/ns/ldp#Alternates',
+                'description': 'The view listing all other views of this class of object'
             },
-            "pdm": {
-                "mimetypes": ["text/html", "text/turtle", "application/rdf+xml", "application/rdf+json"],
-                "default_mimetype": "text/html",
-                "namespace": "http://pid.geoscience.gov.au/def/ont/ga/pdm",
-                "description": "Geoscience Australia's Public Data Model ontology"
+            'pdm': {
+                'mimetypes': ['text/html', 'text/turtle', 'application/rdf+xml', 'application/rdf+json'],
+                'default_mimetype': 'text/html',
+                'namespace': 'http://pid.geoscience.gov.au/def/ont/ga/pdm#',
+                'description': 'Geoscience Australia\'s Public Data Model ontology'
             },
-            "nemsr": {
-                "mimetypes": ["application/vnd.geo+json"],
-                "default_mimetype": "application/vnd.geo+json",
-                "namespace": "http://www.neii.gov.au/nemsr",
-                "description": "The National Environmental Monitoring Sites Register"
+            'nemsr': {
+                'mimetypes': ['application/vnd.geo+json'],
+                'default_mimetype': 'application/vnd.geo+json',
+                'namespace': 'http://www.neii.gov.au/nemsr',
+                'description': 'The National Environmental Monitoring Sites Register'
             },
-            "description": "instance render class for register Site"
-        })
+            'description': 'instance render for class Site'
+        }
 
     def validate_xml(self, xml):
         parser = etree.XMLParser(dtd_validation=False)
@@ -300,7 +300,7 @@ class Site(Renderer):
                     'siteURL': '{}{}'.format(conf.URI_SITE_INSTANCE_BASE, self.site_no),
                     'operatingAuthority': {
                         'name': 'Geoscience Australia',
-                        'id': Site.URI_GA
+                        'id': SiteRenderer.URI_GA
                     }
                 },
                 'siteStatus': self.status,
@@ -403,8 +403,8 @@ class Site(Renderer):
                 date=self.entry_date,
                 type=self.site_type,
                 wkt=self._generate_wkt(),
-                creator='<a href="{}">Geoscience Australia</a>'.format(Site.URI_GA),
-                publisher='<a href="{}">Geoscience Australia</a>'.format(Site.URI_GA),
+                creator='<a href="{}">Geoscience Australia</a>'.format(SiteRenderer.URI_GA),
+                publisher='<a href="{}">Geoscience Australia</a>'.format(SiteRenderer.URI_GA),
             )
 
         # add in the Pingback header links as they are valid for all HTML views
@@ -438,6 +438,6 @@ class ParameterError(ValueError):
 
 
 if __name__ == '__main__':
-    s = Site(17943)
+    s = SiteRenderer(17943)
     s._populate_from_oracle_api()
     print(s.export_nemsr_geojson())

@@ -15,7 +15,7 @@
             <th>Description</th>
         </tr>
     {% for v, vals in views_formats.items() %}
-        {% if v != 'default' %}
+        {% if v != 'default' and v != 'description' %}
             <tr>
                 <td><a href="{{ request.base_url }}?_view={{ v }}">{{ v }}</a></td>
                 <td>

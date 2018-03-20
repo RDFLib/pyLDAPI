@@ -155,7 +155,7 @@ class LDAPI:
             return v, f
 
     @staticmethod
-    def client_error_Response(error_message):
+    def client_error_response(error_message):
         return Response(
             error_message,
             status=400,

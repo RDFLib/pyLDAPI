@@ -21,6 +21,7 @@ XML_API_URL_SITES_TOTAL_COUNT = 'http://dbforms.ga.gov.au/www/a.entities_api.get
 XML_API_URL_SITES_TOTAL_COUNT_DATE_RANGE = 'http://dbforms.ga.gov.au/www/a.entities_api.get_Number_Modified?' \
                                            'pModifiedFromDate={0}&pModifiedToDate={1}'
 PAGE_SIZE_DEFAULT = 100
+PAGE_SIZE_MAX = 10000
 
 ADMIN_EMAIL = 'dataman@ga.gov.au'
 
