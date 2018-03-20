@@ -1,7 +1,7 @@
 from flask import Blueprint, request
-from pyldp.renderer_register_master import RegisterMasterRenderer
-from pyldp.renderer_register import RegisterRenderer
-from pyldp import decorator
+from pyldapi.renderer_register_master import RegisterMasterRenderer
+from pyldapi.renderer_register import RegisterRenderer
+from pyldapi import decorator
 from model.renderer_site import SiteRenderer
 
 routes = Blueprint('controller', __name__)

@@ -1,7 +1,7 @@
 from .renderer import Renderer
 from flask import Response, render_template
 from rdflib import Graph, URIRef, RDF, RDFS, XSD, Namespace, Literal
-from _ldapi.__init__ import LDAPI
+from pyldapi import PYLDAPI
 from lxml import etree
 import requests
 from io import BytesIO
@@ -128,10 +128,10 @@ class RegisterRenderer(Renderer):
     def render(self, view, mimetype):
         if view == 'reg':
             # is an RDF format requested?
-            if mimetype in LDAPI.get_rdf_mimetypes_list():
+            if mimetype in PYLDAPI.get_rdf_mimetypes_list():
                 # it is an RDF format so make the graph for serialization
                 self._make_reg_graph(view)
-                rdflib_format = LDAPI.get_rdf_parser_for_mimetype(mimetype)
+                rdflib_format = PYLDAPI.get_rdf_parser_for_mimetype(mimetype)
                 return Response(
                     self.g.serialize(format=rdflib_format),
                     status=200,

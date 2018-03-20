@@ -2,7 +2,7 @@ import logging
 import _config as conf
 from flask import Flask
 from controller import routes
-# from pyldp import pyldp_routes
+# from pyldapi import pyldp_routes
 
 app = Flask(__name__, template_folder=conf.TEMPLATES_DIR, static_folder=conf.STATIC_DIR)
 

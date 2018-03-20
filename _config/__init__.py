@@ -9,8 +9,6 @@ DEBUG = True
 XML_API_URL_SITESET = 'http://dbforms.ga.gov.au/www/a.entities_api.SearchEntities' \
                         '?pOrder=ENO&pPageNo={0}&pNoOfRecordsPerPage={1}'
 XML_API_URL_SITE = 'http://dbforms.ga.gov.au/www/a.entities_api.entities?pEno={0}'
-# XML_API_URL_NETWORKSET = ''
-# XML_API_URL_NETWORK = ''
 
 XML_API_URL_SITESET_DATE_RANGE = \
     'http://dbforms.ga.gov.au/www/a.entities_api.SearchEntities' \

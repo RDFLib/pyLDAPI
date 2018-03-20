@@ -4,10 +4,10 @@ from lxml import etree
 from lxml import objectify
 from rdflib import Graph, URIRef, RDF, RDFS, XSD, OWL, Namespace, Literal, BNode
 import _config as conf
-from _ldapi.__init__ import LDAPI
+from pyldapi import PYLDAPI
 from datetime import datetime
 import json
-from pyldp.renderer import Renderer
+from pyldapi.renderer import Renderer
 json.encoder.FLOAT_REPR = lambda f: ("%.2f" % f)
 
 
@@ -364,7 +364,7 @@ class SiteRenderer(Renderer):
         g.add((site_geometry, RDF.type, GEO.Geometry))
         g.add((site_geometry, GEO.asWKT, Literal(self._generate_wkt(), datatype=GEO.wktLiteral)))
 
-        return g.serialize(format=LDAPI.get_rdf_parser_for_mimetype(rdf_mime))
+        return g.serialize(format=PYLDAPI.get_rdf_parser_for_mimetype(rdf_mime))
 
     def export_html(self, model_view='pdm'):
         """

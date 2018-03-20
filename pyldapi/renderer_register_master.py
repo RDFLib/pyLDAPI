@@ -2,7 +2,7 @@ from abc import ABCMeta
 from flask import render_template, Response
 from .renderer import Renderer
 from rdflib import Graph, URIRef, RDF, RDFS, XSD, Namespace, Literal
-from _ldapi.__init__ import LDAPI
+from pyldapi import PYLDAPI
 import _config as conf
 
 
@@ -28,7 +28,7 @@ class RegisterMasterRenderer(Renderer):
             return render_template(self.template, register_tree=self.register_tree)
         else:
             self._make_reg_graph(view)
-            rdflib_format = LDAPI.get_rdf_parser_for_mimetype(mimetype)
+            rdflib_format = PYLDAPI.get_rdf_parser_for_mimetype(mimetype)
             return Response(
                 self.g.serialize(format=rdflib_format),
                 status=200,
@@ -104,7 +104,6 @@ class RegisterMasterRenderer(Renderer):
         # add a link to "next" and "last"
         try:
             no_of_items = len(self.register_tree)
-            print(no_of_items)
             self.last_page = int(round(no_of_items / self.per_page, 0)) + 1  # same as math.ceil()
 
             # if we've gotten the last page value successfully, we can choke if someone enters a larger value

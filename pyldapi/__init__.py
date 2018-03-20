@@ -1,19 +1,19 @@
-from flask import Response, render_template
 import json
-from os.path import join, dirname
-from rdflib import Graph, Namespace, URIRef, Literal, BNode
-from rdflib.namespace import RDF, XSD
-from werkzeug.contrib.cache import SimpleCache
 import urllib
+from os.path import join, dirname
+
+from flask import Response, render_template
+from rdflib import Graph, Namespace, URIRef, RDF, BNode, Literal, XSD
+from werkzeug.contrib.cache import SimpleCache
 
 
-class LDAPI:
+class PYLDAPI:
     """
     A class containing static functions to assist with building a Linked Data API
 
     This class is issued as a Python file, rather than a Git submodule so check the version number before use!
 
-    Version 2.4
+    Version 2.5
     """
 
     # maps HTTP MIMETYPES to rdflib's RDF parsing formats
@@ -34,15 +34,15 @@ class LDAPI:
 
     @staticmethod
     def get_rdf_mimetypes_list():
-        return [item[0] for item in LDAPI.MIMETYPES_PARSERS]
+        return [item[0] for item in PYLDAPI.MIMETYPES_PARSERS]
 
     @staticmethod
     def get_rdf_parser_for_mimetype(mimetype):
-        return [item[1] for item in LDAPI.MIMETYPES_PARSERS if item[0] == mimetype][0]
+        return [item[1] for item in PYLDAPI.MIMETYPES_PARSERS if item[0] == mimetype][0]
 
     @staticmethod
     def get_mimetype_for_rdf_parser(rdf_parser):
-        return [item[0] for item in LDAPI.MIMETYPES_PARSERS if item[1] == rdf_parser][0]
+        return [item[0] for item in PYLDAPI.MIMETYPES_PARSERS if item[1] == rdf_parser][0]
 
     @staticmethod
     def get_file_extension(mimetype):
@@ -137,7 +137,7 @@ class LDAPI:
         f = request.values.get('_format')
 
         # validate view
-        v = LDAPI.valid_view(v, views_formats)
+        v = PYLDAPI.valid_view(v, views_formats)
 
         # if no given _format, check for MIME types
         if f is None:
@@ -148,7 +148,7 @@ class LDAPI:
             if f.replace(' ', '+') not in views_formats.get(v)['mimetypes']:
                 f = views_formats[v]['default_mimetype']
         # validate format
-        f = LDAPI.valid_format(f, v, views_formats)
+        f = PYLDAPI.valid_format(f, v, views_formats)
 
         if v and f:
             # return valid model and format
@@ -224,13 +224,12 @@ class LDAPI:
         return cvf
 
     @staticmethod
-    def render_alternates_view(class_uri, class_uri_encoded, instance_uri, instance_uri_encoded, views_formats,
-                               mimetype):
+    def render_alternates_view(views_formats, mimetype, class_uri, instance_uri):
         """Renders an HTML table, a JSON object string or a serialised RDF representation of the alternate views of an
         object"""
         if mimetype == 'application/json':
             return Response(json.dumps(views_formats), status=200, mimetype='application/json')
-        elif mimetype in LDAPI.get_rdf_mimetypes_list():
+        elif mimetype in PYLDAPI.get_rdf_mimetypes_list():
             g = Graph()
             LDAPI_O = Namespace('http://promsns.org/def/_ldapi#')
             g.bind('_ldapi', LDAPI_O)
@@ -287,7 +286,7 @@ class LDAPI:
             #     self.g.add((URIRef(item['uri']), RDF.type, URIRef(self.uri)))
             #     self.g.add((URIRef(item['uri']), RDFS.label, Literal(item['label'], datatype=XSD.string)))
             #     self.g.add((URIRef(item['uri']), REG.register, URIRef(self.request.url)))
-            rdflib_format = [item[1] for item in LDAPI.MIMETYPES_PARSERS if item[0] == mimetype][0]
+            rdflib_format = [item[1] for item in PYLDAPI.MIMETYPES_PARSERS if item[0] == mimetype][0]
             return Response(g.serialize(format=rdflib_format), status=200, mimetype=mimetype)
         else:  # HTML
             return render_template(
@@ -299,14 +298,15 @@ class LDAPI:
                 views_formats=views_formats
             )
 
+    @staticmethod
+    def client_error_response(error_message):
+        return Response(
+            str(error_message),
+            status=400,
+            mimetype='text/plain'
+        )
+
 
 class LdapiParameterError(ValueError):
     pass
 
-
-def client_error_Response(error_message):
-    return Response(
-        str(error_message),
-        status=400,
-        mimetype='text/plain'
-    )
