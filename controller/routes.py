@@ -28,7 +28,8 @@ def sites(**args):
     """
     view = args.get('view')
     format = args.get('format')
-    return RegisterRenderer(request).render(view, format)
+    description = args.get('description')
+    return RegisterRenderer(request, description=description).render(view, format)
 
 
 @routes.route('/site/<string:instance_id>')

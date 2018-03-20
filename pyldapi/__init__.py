@@ -3,7 +3,7 @@ import urllib
 from os.path import join, dirname
 
 from flask import Response, render_template
-from rdflib import Graph, Namespace, URIRef, RDF, BNode, Literal, XSD
+from rdflib import Graph, Namespace, URIRef, RDF, BNode, Literal, XSD, RDFS
 from werkzeug.contrib.cache import SimpleCache
 
 
@@ -224,7 +224,7 @@ class PYLDAPI:
         return cvf
 
     @staticmethod
-    def render_alternates_view(views_formats, mimetype, class_uri, instance_uri):
+    def render_alternates_view(views_formats, mimetype, instance_uri, class_uri):
         """Renders an HTML table, a JSON object string or a serialised RDF representation of the alternate views of an
         object"""
         if mimetype == 'application/json':
@@ -235,45 +235,28 @@ class PYLDAPI:
             g.bind('_ldapi', LDAPI_O)
             DCT = Namespace('http://purl.org/dc/terms/')
             g.bind('dct', DCT)
+            DCAT = Namespace('http://www.w3.org/ns/dcat#')
+            g.bind('dcat', DCAT)
 
-            class_uri_ref = URIRef(urllib.parse.unquote_plus(class_uri))
+            class_uri_ref = URIRef(class_uri)
+            instance_uri_ref = URIRef(instance_uri)
+            g.add((instance_uri_ref, RDF.type, class_uri_ref))
 
-            if instance_uri:
-                instance_uri_ref = URIRef(instance_uri)
-                g.add((instance_uri_ref, RDF.type, class_uri_ref))
-            else:
-                g.add((class_uri_ref, RDF.type, LDAPI_O.ApiResource))
-
-            # alternates model
-            alternates_view = BNode()
-            g.add((alternates_view, RDF.type, LDAPI_O.View))
-            g.add((alternates_view, DCT.title, Literal('alternates', datatype=XSD.string)))
-            g.add((class_uri_ref, LDAPI_O.view, alternates_view))
-
-            # default model
-            default_view = BNode()
-            g.add((default_view, DCT.title, Literal('default', datatype=XSD.string)))
-            g.add((class_uri_ref, LDAPI_O.defaultView, default_view))
-            default_title = views_formats['default']
-
-            # the ApiResource is incorrectly assigned to the class URI
-            for view_name, formats in views_formats.iteritems():
-                if view_name == 'alternates':
-                    for f in formats:
-                        g.add((alternates_view, URIRef('http://purl.org/dc/terms/format'),
-                               Literal(f, datatype=XSD.string)))
-                elif view_name == 'default':
-                    pass
-                elif view_name == 'renderer':
+            for view_name, view_data in views_formats.items():
+                if view_name == 'default' or view_name == 'description':
                     pass
                 else:
-                    x = BNode()
-                    if view_name == default_title:
-                        g.add((default_view, RDF.type, x))
-                    g.add((class_uri_ref, LDAPI_O.view, x))
-                    g.add((x, DCT.title, Literal(view_name, datatype=XSD.string)))
-                    for f in formats:
-                        g.add((x, URIRef('http://purl.org/dc/terms/format'), Literal(f, datatype=XSD.string)))
+                    v = BNode()
+                    if view_name == views_formats['default']:
+                        g.add((instance_uri_ref, LDAPI_O.defaultView, v))
+                    else:
+                        g.add((instance_uri_ref, LDAPI_O.view, v))
+                    g.add((v, RDF.type, LDAPI_O.View))
+                    g.add((v, RDFS.label, Literal(view_name + ' View', datatype=XSD.string)))
+                    g.add((v, LDAPI_O.key, Literal(view_name)))
+                    g.add((v, RDFS.comment, Literal(view_data['description'], datatype=XSD.string)))
+                    for f in view_data['mimetypes']:
+                        g.add((v, DCAT.mediaType, Literal(f)))
 
             # make the static part of the graph
             # REG = Namespace('http://purl.org/linked-data/registry#')
@@ -290,11 +273,9 @@ class PYLDAPI:
             return Response(g.serialize(format=rdflib_format), status=200, mimetype=mimetype)
         else:  # HTML
             return render_template(
-                'alternates_view.html',
+                'alternates.html',
                 class_uri=class_uri,
-                class_uri_encoded=class_uri_encoded,
                 instance_uri=instance_uri,
-                instance_uri_encoded=instance_uri_encoded,
                 views_formats=views_formats
             )
 

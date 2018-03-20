@@ -14,6 +14,7 @@ json.encoder.FLOAT_REPR = lambda f: ("%.2f" % f)
 class SiteRenderer(Renderer):
 
     INSTANCE_CLASS = 'http://pid.geoscience.gov.au/def/ont/pdm#Site'
+    INSTANCE_URI_BASE = 'http://pid.geoscience.gov.au/site/'
     URI_GA = 'http://pid.geoscience.gov.au/org/ga/geoscienceaustralia'
 
     def __init__(self, site_no, xml=None):

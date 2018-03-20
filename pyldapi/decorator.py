@@ -43,7 +43,7 @@ def register(rule, renderer=RegisterRenderer, contained_item_class='http://purl.
                 # if alternates model, return this info from file
                 # render alternates view 
                 if view == 'alternates':
-                    return PYLDAPI.render_alternates_view(views_formats, mime_format, contained_item_class, None)
+                    return PYLDAPI.render_alternates_view(views_formats, mime_format, request.base_url, 'http://purl.org/linked-data/registry#Register')
                 else:
                     # Since all render class instances extend renderer.py, they requires two param to render views:
                     # view and format. The register decorator passes these two parameters from decorated func back
@@ -53,6 +53,7 @@ def register(rule, renderer=RegisterRenderer, contained_item_class='http://purl.
                             args[p] = param[p]
                     args['view'] = view
                     args['format'] = mime_format
+                    args['description'] = description
                     return func(**args)
             except LdapiParameterError as e:
                 return PYLDAPI.client_error_response(e)
@@ -71,6 +72,7 @@ def instance(rule, renderer, **options):
     """
     views_formats = renderer.views_formats()
     instance_class = renderer.INSTANCE_CLASS
+    instance_uri_base = renderer.INSTANCE_URI_BASE
 
     def decorator(func):
         """
@@ -88,10 +90,10 @@ def instance(rule, renderer, **options):
                 # if alternates model, return this info from file
                 # render alternates view
                 if view == 'alternates':
-                    return PYLDAPI.render_alternates_view(views_formats, mime_format, instance_class, param['instance_id'])
+                    return PYLDAPI.render_alternates_view(views_formats, mime_format, request.base_url, instance_class)
                 else:
                     # Since all render class instances extend renderer.py, they requires two param to render views:
-                    # view and format. The register decorator passes these two parameters from decoracted func back
+                    # view and format. The register decorator passes these two parameters from decorated func back
                     args = {}
                     if bool(param):
                         for p in param.keys():
