@@ -8,8 +8,7 @@ import json
 import urllib.parse as uparse
 
 
-
-def client_error_Response(error_message):
+def client_error_response(error_message):
     return Response(
         str(error_message),
         status=400,

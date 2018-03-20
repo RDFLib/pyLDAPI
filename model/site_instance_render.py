@@ -30,36 +30,38 @@ class Site(Renderer):
             self._populate_from_xml_file(xml)
         else:
             self._populate_from_oracle_api()
+
     @staticmethod
     def view():
         return json.dumps({   
-		"default": "pdm",
-		"alternates": {
-			"mimetypes": [
-				"text/html",
-				"text/turtle",
-				"application/rdf+xml",
-				"application/rdf+json",
-				"application/json"
-			],
-			"default_mimetype": "text/html",
-			"namespace": "http://www.w3.org/ns/ldp#Alternates",
-			"description": "The view listing all other views of this class of object"
-		},
-        "pdm": {
-			"mimetypes": ["text/html", "text/turtle", "application/rdf+xml", "application/rdf+json"],
-			"default_mimetype": "text/html",
-			"namespace": "http://pid.geoscience.gov.au/def/ont/ga/pdm",
-			"description": "Geoscience Australia's Public Data Model ontology"
-		},
-		 "nemsr": {
-			"mimetypes": ["application/vnd.geo+json"],
-			"default_mimetype": "application/vnd.geo+json",
-			"namespace": "http://www.neii.gov.au/nemsr",
-			"description": "The National Environmental Monitoring Sites Register"
-		}, 
-        "description": "instance render class for register Site"
-	})
+            "default": "pdm",
+            "alternates": {
+                "mimetypes": [
+                    "text/html",
+                    "text/turtle",
+                    "application/rdf+xml",
+                    "application/rdf+json",
+                    "application/json"
+                ],
+                "default_mimetype": "text/html",
+                "namespace": "http://www.w3.org/ns/ldp#Alternates",
+                "description": "The view listing all other views of this class of object"
+            },
+            "pdm": {
+                "mimetypes": ["text/html", "text/turtle", "application/rdf+xml", "application/rdf+json"],
+                "default_mimetype": "text/html",
+                "namespace": "http://pid.geoscience.gov.au/def/ont/ga/pdm",
+                "description": "Geoscience Australia's Public Data Model ontology"
+            },
+            "nemsr": {
+                "mimetypes": ["application/vnd.geo+json"],
+                "default_mimetype": "application/vnd.geo+json",
+                "namespace": "http://www.neii.gov.au/nemsr",
+                "description": "The National Environmental Monitoring Sites Register"
+            },
+            "description": "instance render class for register Site"
+        })
+
     def validate_xml(self, xml):
         parser = etree.XMLParser(dtd_validation=False)
 
@@ -328,7 +330,9 @@ class Site(Renderer):
         """
 
         '''
-        <http://pid.geoscience.gov.au/site/9810> a <http://vocabulary.odm2.org/samplingfeaturetype/borehole>, <http://www.w3.org/2002/07/owl#NamedIndividual> ;
+        <http://pid.geoscience.gov.au/site/9810> 
+            a <http://vocabulary.odm2.org/samplingfeaturetype/borehole>, 
+                <http://www.w3.org/2002/07/owl#NamedIndividual> ;
             samfl:samplingElevation [ a samfl:Elevation ;
             samfl:elevation "231.69716"^^xsd:float ;
             samfl:verticalDatum "http://spatialreference.org/ref/epsg/4283/"^^xsd:anyUri ] ;

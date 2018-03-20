@@ -80,7 +80,7 @@ class DefaultRegisterRenderer(Renderer):
             if self.page != self.last_page:
                 self.next_page = self.page + 1
                 links.append('<{}?per_page={}&page={}>; rel="next"'
-                                .format(conf.URI_SITE_INSTANCE_BASE, self.per_page, (self.page + 1)))
+                             .format(conf.URI_SITE_INSTANCE_BASE, self.per_page, (self.page + 1)))
             else:
                 self.next_page = None
 
@@ -91,13 +91,12 @@ class DefaultRegisterRenderer(Renderer):
             # if there's some error in getting the no of samples, add the "next" link but not the "last" link
             self.next_page = self.page + 1
             links.append('<{}?per_page={}&page={}>; rel="next"'
-                            .format(conf.URI_SITE_INSTANCE_BASE, self.per_page, (self.page + 1)))
+                         .format(conf.URI_SITE_INSTANCE_BASE, self.per_page, (self.page + 1)))
             self.last_page = None
 
         self.headers = {
             'Link': ', '.join(links)
         }
-        
 
     def load_data(self, page, per_page):
         self._get_details_from_oracle_api(page, per_page)
@@ -107,7 +106,8 @@ class DefaultRegisterRenderer(Renderer):
         return json.dumps({
             "default": "reg",
             "alternates": {
-                "mimetypes": ["text/html", "text/turtle", "application/rdf+xml", "application/rdf+json", "application/json"],
+                "mimetypes":
+                    ["text/html", "text/turtle", "application/rdf+xml", "application/rdf+json", "application/json"],
                 "default_mimetype": "text/html",
                 "namespace": "http://www.w3.org/ns/ldp#Alternates",
                 "description": "The view listing all other views of this class of object"
@@ -116,9 +116,13 @@ class DefaultRegisterRenderer(Renderer):
                 "mimetypes": ["text/html", "text/turtle", "application/rdf+xml", "application/rdf+json"],
                 "default_mimetype": "text/html",
                 "namespace": "http://purl.org/linked-data/registry#",
-                "description": "The Registry Ontology. Core ontology for linked data registry services. Based on ISO19135 but heavily modified to suit Linked Data representations and applications",
+                "description":
+                    "The Registry Ontology. Core ontology for linked data registry services. Based on ISO19135 but "
+                    "heavily modified to suit Linked Data representations and applications",
             },
-            "description": "Default register, return all instances with links in one page.   When register class doesnot specified in @decorator.register() in router.py, this default register will be applied."
+            "description":
+                "Default register, return all instances with links in one page.   When register class doesnot "
+                "specified in @decorator.register() in router.py, this default register will be applied."
         })
 
     def render(self, view, mimetype):
@@ -188,7 +192,7 @@ class DefaultRegisterRenderer(Renderer):
         :param page: the page number of the total resultset from the Sites Set API
         :return: None
         """
-        #os.environ['NO_PROXY'] = 'ga.gov.au'
+        # os.environ['NO_PROXY'] = 'ga.gov.au'
         r = requests.get(conf.XML_API_URL_SITESET.format(page, per_page), timeout=3)
         xml = r.content
 

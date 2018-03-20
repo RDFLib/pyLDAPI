@@ -2,3 +2,4 @@ model/__pycache__
 *.pyc
 */*.pyc
 controller/__pycache__
+.idea/

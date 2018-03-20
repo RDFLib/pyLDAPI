@@ -4,7 +4,7 @@ import urllib.parse as uriparse
 import json
 
 from _ldapi.__init__ import LDAPI, LdapiParameterError
-from .functions import render_alternates_view, client_error_Response
+from .functions import render_alternates_view, client_error_response
 import _config as conf
 from .default_register import DefaultRegisterRenderer
 from .index_register import DefaultIndexRegister
@@ -14,29 +14,31 @@ register_tree = []
 
 
 def _regist_(rule, descriptions, options):
-    ''' 
+    """
         store decorated rule and render class information to home page naviation
-    '''
+    """
     is_instance = options.get('is_instance')
     if not is_instance:
-        site = {}
-        site['uri'] = rule
-        site['description'] = descriptions
+        site = {
+            'uri': rule,
+            'description': descriptions
+        }
         register_tree.append(site)
 
+
 def register(rule, render=None, **options):
-    '''
+    """
         decorator for registers
         param rule is the route path, param render is a class implemented rederer.py's render() method.
         When render not provided, default DefaultIndexRegister will be used  if rule == /,  
         and DefaultRegisterRenderer will be used if rule != /
         If an instance used this decorator, the instance render class must provided, or else, an error will be raised. 
-    '''
-    if rule == '/' and render == None:
+    """
+    if rule == '/' and render is None:
         # default render will be allocated if render is not provided and rule is / 
         render = DefaultIndexRegister
-    if rule != '/' and render == None:
-        if bool(param) and param.get('is_instance')==True:
+    if rule != '/' and render is None:
+        if bool(param) and param.get('is_instance'):
             # Instance view, render class must be supported
             raise Exception('Instance render class should be provided')
         else:
@@ -46,14 +48,14 @@ def register(rule, render=None, **options):
     _regist_(rule, views_formats.get('description'), options)
 
     def decorator(func):
-        '''
+        """
             wrap decorated function to make it perform like a view
-        '''
+        """
         @wraps(func)
         def decorated_function(**param):
-            '''
+            """
                 ** param will absorb any parameters given to the decoracted func
-            '''
+            """
             try:
                 view, mime_format = LDAPI.get_valid_view_and_format(
                     request.args.get('_view'),
@@ -74,8 +76,8 @@ def register(rule, render=None, **options):
                         mime_format
                     )
                 else:
-                    # Since all render class extends from renderer.py, it requires two param to render views: view and format
-                    # register decorator pass these two parameters and  parameters came from decoracted func back
+                    # Since all render class extends from renderer.py, it requires two param to render views: view and
+                    # format register decorator pass these two parameters and  parameters came from decoracted func back
                     args = {}
                     if bool(param):
                         for p in param.keys():
@@ -84,15 +86,17 @@ def register(rule, render=None, **options):
                     args['format'] = mime_format
                     return func(**args)
             except LdapiParameterError as e:
-                return client_error_Response(e)
+                return client_error_response(e)
         
         return decorated_function
     return decorator
 
+
 instance = register
 
+
 def instance(rule, render=None, is_instance=True, **options):
-    '''
+    """
         instance decoractor wraps register, and provides it with a new param: is_instance with default value True
-    '''
+    """
     return register(rule, render, is_instance=True) 

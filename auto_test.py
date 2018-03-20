@@ -5,6 +5,7 @@ import json
 from rdflib.graph import Graph
 from app import app
 
+
 class SingleSiteViewTest(unittest.TestCase):
     def setUp(self):
         app.testing = True
@@ -26,7 +27,6 @@ class SingleSiteViewTest(unittest.TestCase):
                             'application/json', 
                             'abcdef'])
 
-
     def pickup_instance(self, register):
         response = self.client.get(register+'?_view=reg&_format=text/turtle')
         if response.status_code == 200:
@@ -40,17 +40,17 @@ class SingleSiteViewTest(unittest.TestCase):
                             } limit 1 
                     """)
             js_format = json.loads(qres.serialize(format="json").decode('utf-8'))
-            print ('#pickup_instance() get an instance: '+js_format.get('results').get('bindings')[0].get('instance').get('value'))
+            print('#pickup_instance() get an instance: '+js_format.get('results')
+                  .get('bindings')[0].get('instance').get('value'))
         else:
             raise Exception("call view=reg&_format=text/turtle error for register: " + register)
         return js_format.get('results').get('bindings')[0].get('instance').get('value')
 
-
     def test_instance(self):
-        '''
+        """
             Test views and formats for instances
             view default, description, alternates will not be included
-        '''
+        """
         for register in self.registers:
             if register != '/':
                 raw_instance = self.pickup_instance(register)
@@ -73,21 +73,22 @@ class SingleSiteViewTest(unittest.TestCase):
                             if view != 'default' and view != 'description' and view != 'alternates':
                                 # print(view)
                                 formats = data[view].get('mimetypes')
-                                for format in formats:
-                                    with self.subTest(format):
+                                for f in formats:
+                                    with self.subTest(f):
                                         # view [non-alternaties and default ] and mimetypes test for instance
-                                        print('----#test_instance() Testing instance '+ instance +': view ' + view + ' with format ' + format)
-                                        response = self.client.get(instance+'?_view='+view+'&_format='+format)
+                                        print('----#test_instance() Testing instance ' +
+                                              instance + ': view ' + view + ' with format ' + f)
+                                        response = self.client.get(instance+'?_view=' + view + '&_format=' + f)
                                         self.assertEqual(200, response.status_code)
-                                        self.assertIn(format, response.headers.get('Content-Type'))
+                                        self.assertIn(f, response.headers.get('Content-Type'))
 
     def test_register(self):
-        '''
+        """
         Test register's views and formats
         Just registers will be tested, no instance pick and test
-        '''
+        """
         for ca in self.registers:
-            print('#test_register() test register : '+ ca)
+            print('#test_register() test register : ' + ca)
             with self.subTest(ca):
                 # from alternates application/json view get JSON style register views and formats info.
                 response = self.client.get(ca+'?_view=alternates&_format=application/json')
@@ -102,14 +103,13 @@ class SingleSiteViewTest(unittest.TestCase):
                     for view in views:
                         if view != 'default' and view != 'description':
                             formats = data[view].get('mimetypes')
-                            for format in formats:
-                                with self.subTest(format):
+                            for f in formats:
+                                with self.subTest(f):
                                     # View [alternates, and reg] and mimetypes test
-                                    response = self.client.get(ca+'?_view='+view+'&_format='+format)
-                                    print('----#test_register() Testing register '+ ca +': view ' + view + ' with format ' + format)
+                                    response = self.client.get(ca+'?_view='+view+'&_format='+f)
+                                    print('----#test_register() Testing register '+ ca +': view ' + view + ' with format ' + f)
                                     self.assertEqual(200, response.status_code)
-                                    self.assertIn(format, response.headers.get('Content-Type'))
-
+                                    self.assertIn(f, response.headers.get('Content-Type'))
 
     def tearDown(self):
         pass
