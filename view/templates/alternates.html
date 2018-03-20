@@ -2,7 +2,7 @@
 
 {% block content %}
     <h1>Alternates view</h1>
-    <h2>Alternates view of a <a href="{{ class_uri }}">{{ class_uri }}</a></h2>
+    <h2>Of a <a href="{{ class_uri }}">{{ class_uri }}</a></h2>
     {% if instance_id %}
         <h3>Instance <a href="{{ url_for('controller.site', instance_id=instance_id) }}">{{ instance_id }}</a></h3>
     {% endif %}

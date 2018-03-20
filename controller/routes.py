@@ -12,11 +12,16 @@ routes = Blueprint('controller', __name__)
 def index(**args):
     view = args.get('view')
     format = args.get('format')
-    return RegisterMasterRenderer('page_index.html', decorator.register_tree).render(view, format)
+    return RegisterMasterRenderer(request, 'page_index.html', decorator.register_tree).render(view, format)
 
 
 @routes.route('/site/')
-@decorator.register('/site/', RegisterRenderer, contained_item_class='http://pid.geoscience.gov.au/def/ont/pdm#Site')
+@decorator.register(
+    '/site/',
+    RegisterRenderer,
+    contained_item_class='http://pid.geoscience.gov.au/def/ont/pdm#Site',
+    description='This register contains instances of Geoscience Australia\'s monitoring sites.'
+)
 def sites(**args):
     """
     The Register of Sites

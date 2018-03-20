@@ -4,8 +4,7 @@ from rdflib import Graph, URIRef, RDF, RDFS, XSD, Namespace, Literal
 from _ldapi.__init__ import LDAPI
 from lxml import etree
 import requests
-import json
-from io import StringIO, BytesIO
+from io import BytesIO
 import _config as conf
 
 
@@ -13,7 +12,7 @@ class RegisterRenderer(Renderer):
     """
     Version 1.0
     """
-    def __init__(self, request):
+    def __init__(self, request, description):
         Renderer.__init__(self, conf.URI_SITE_CLASS, None)
 
         self.request = request
@@ -23,6 +22,7 @@ class RegisterRenderer(Renderer):
         self.g = None
         self.paging_params(self.request)
         self.load_data(self.page, self.per_page)
+        self.description = description
 
     def paging_params(self, request):
         # pagination
@@ -103,7 +103,7 @@ class RegisterRenderer(Renderer):
         self._get_details_from_oracle_api(page, per_page)
 
     @staticmethod
-    def views_formats():
+    def views_formats(description):
         return {
             'default': 'reg',
             'alternates': {
@@ -122,8 +122,7 @@ class RegisterRenderer(Renderer):
                     'heavily modified to suit Linked Data representations and applications',
             },
             'description':
-                'This Register contains all instances of a class type (the containedItemClass). When a specialised '
-                'Register class is not specified in @decorator.register() in router.py, this default will be applied.'
+                description
         }
 
     def render(self, view, mimetype):

@@ -22,7 +22,7 @@ class Renderer:
 
     @staticmethod
     @abstractmethod
-    def views_formats():
+    def views_formats(description=None):
         """
         return supported views, default views, description, and mimetypes for supported views.
         Example:
