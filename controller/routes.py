@@ -1,14 +1,14 @@
 from flask import Blueprint, request
-from pyldp.register_master import RegisterMasterRenderer
-from pyldp.register import RegisterRenderer
+from pyldp.renderer_register_master import RegisterMasterRenderer
+from pyldp.renderer_register import RegisterRenderer
 from pyldp import decorator
-from model.site_instance_renderer import SiteRenderer
+from model.renderer_site import SiteRenderer
 
 routes = Blueprint('controller', __name__)
 
 
 @routes.route('/')
-@decorator.register('/')
+@decorator.register('/', RegisterMasterRenderer)
 def index(**args):
     view = args.get('view')
     format = args.get('format')
@@ -16,7 +16,7 @@ def index(**args):
 
 
 @routes.route('/site/')
-@decorator.register('/site/', render=RegisterRenderer, contained_item_class='http://pid.geoscience.gov.au/def/ont/pdm#Site')
+@decorator.register('/site/', RegisterRenderer, contained_item_class='http://pid.geoscience.gov.au/def/ont/pdm#Site')
 def sites(**args):
     """
     The Register of Sites
@@ -26,14 +26,13 @@ def sites(**args):
     return RegisterRenderer(request).render(view, format)
 
 
-@routes.route('/site/<string:site_no>')
-@decorator.instance('/site/<string:site_no>', render=SiteRenderer)
+@routes.route('/site/<string:instance_id>')
+@decorator.instance('/site/<string:instance_id>', SiteRenderer)
 def site(**args):
     """
-    A single Site
+    A single Instance
     """
-    site_no = args.get('site_no')
+    instance_id = args.get('instance_id')
     view = args.get('view')
     format = args.get('format')
-    return SiteRenderer(site_no).render(view, format)
-
+    return SiteRenderer(instance_id).render(view, format)

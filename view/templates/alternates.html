@@ -2,9 +2,9 @@
 
 {% block content %}
     <h1>Alternates view</h1>
-    <h2>Alternates view of a <a href="{{ class_uri_encoded }}">{{ class_uri }}</a></h2>
-    {% if instance_uri %}
-        <h3>Instance <a href="{{ instance_uri_encoded }}">{{ instance_uri }}</a></h3>
+    <h2>Alternates view of a <a href="{{ class_uri }}">{{ class_uri }}</a></h2>
+    {% if instance_id %}
+        <h3>Instance <a href="{{ url_for('controller.site', instance_id=instance_id) }}">{{ instance_id }}</a></h3>
     {% endif %}
     <p>Default view: <a href="{{ request.base_url }}?_view={{ views_formats['default'] }}">{{ views_formats['default'] }}</a></p>
     <table class="pretty">

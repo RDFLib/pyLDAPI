@@ -13,9 +13,11 @@ json.encoder.FLOAT_REPR = lambda f: ("%.2f" % f)
 
 class SiteRenderer(Renderer):
 
-    URI_GA = 'http://pid.geoscience.gov.au/org/ga/geoscienceausralia'
+    INSTANCE_CLASS = 'http://pid.geoscience.gov.au/def/ont/pdm#Site'
+    URI_GA = 'http://pid.geoscience.gov.au/org/ga/geoscienceaustralia'
 
     def __init__(self, site_no, xml=None):
+
         self.site_no = site_no
         self.site_type = None
         self.description = None
@@ -59,7 +61,7 @@ class SiteRenderer(Renderer):
                 'namespace': 'http://www.neii.gov.au/nemsr',
                 'description': 'The National Environmental Monitoring Sites Register'
             },
-            'description': 'instance render for class Site'
+            'description': 'Renderer for Site (http://pid.geoscience.gov.au/def/ont/pdm#Site) class instances'
         }
 
     def validate_xml(self, xml):
