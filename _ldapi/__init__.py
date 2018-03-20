@@ -1,7 +1,10 @@
-from flask import Response
+from flask import Response, render_template
 import json
 from os.path import join, dirname
+from rdflib import Graph, Namespace, URIRef, Literal, BNode
+from rdflib.namespace import RDF, XSD
 from werkzeug.contrib.cache import SimpleCache
+import urllib
 
 
 class LDAPI:
@@ -10,7 +13,7 @@ class LDAPI:
 
     This class is issued as a Python file, rather than a Git submodule so check the version number before use!
 
-    Version 2.1
+    Version 2.4
     """
 
     # maps HTTP MIMETYPES to rdflib's RDF parsing formats
@@ -87,11 +90,13 @@ class LDAPI:
         """
         if view is not None:
             if view in views_formats.keys():
+                if view == 'default':
+                    view = views_formats['default']
                 return view
             else:
                 raise LdapiParameterError(
                     'The _view parameter is invalid. For this object, it must be one of {0}.'
-                    .format(', '.join(views_formats.keys()))
+                    .format(', '.join(views_formats.keys()).replace('renderer, ', ''))
                 )
         else:
             # views_formats will give us the default model
@@ -113,11 +118,11 @@ class LDAPI:
                         .format(', '.join(views_formats.get(view)['mimetypes']))
                 )
         else:
-            # HTML is default
-            return 'text/html'
+            # for format is None, return the default format
+            return views_formats[view]['default_mimetype']
 
     @staticmethod
-    def get_valid_view_and_format(view, format, views_formats):
+    def get_valid_view_and_format(request, views_formats):
         """
         If both the model and the format are valid, return them
 
@@ -127,15 +132,27 @@ class LDAPI:
         :param views_formats: the allowed model and their formats in this instance
         :return: valid model and format
         """
-        view = LDAPI.valid_view(view, views_formats)
-        if format is not None:
-            format = LDAPI.valid_format(format, view, views_formats)
-        else:
-            format = views_formats[view]['default_mimetype']
+        # try to use given vew & format
+        v = request.values.get('_view')
+        f = request.values.get('_format')
 
-        if view and format:
+        # validate view
+        v = LDAPI.valid_view(v, views_formats)
+
+        # if no given _format, check for MIME types
+        if f is None:
+            f = request.accept_mimetypes.best_match(
+                ['text/turtle', 'application/rdf+json', 'application/rdf+xml', 'text/html', 'text/xml', 'application/xml']
+            )
+            # handle the case where getting the format from Accept header results in an invalid format for this view
+            if f.replace(' ', '+') not in views_formats.get(v)['mimetypes']:
+                f = views_formats[v]['default_mimetype']
+        # validate format
+        f = LDAPI.valid_format(f, v, views_formats)
+
+        if v and f:
             # return valid model and format
-            return view, format
+            return v, f
 
     @staticmethod
     def client_error_Response(error_message):
@@ -199,18 +216,97 @@ class LDAPI:
         :return: a Python object parsed from the views_formats.json file
         """
         cache = SimpleCache()
-        cvf = cache.get('classes_views_formats')
+        cvf = cache.get('views_formats')
         if cvf is None:
             cvf = json.load(open(join(dirname(dirname(__file__)), 'controller', 'views_formats.json')))
             # times out never (i.e. on app startup/shutdown)
-            cache.set('classes_views_formats', cvf)
+            cache.set('views_formats', cvf)
         return cvf
+
+    @staticmethod
+    def render_alternates_view(class_uri, class_uri_encoded, instance_uri, instance_uri_encoded, views_formats,
+                               mimetype):
+        """Renders an HTML table, a JSON object string or a serialised RDF representation of the alternate views of an
+        object"""
+        if mimetype == 'application/json':
+            return Response(json.dumps(views_formats), status=200, mimetype='application/json')
+        elif mimetype in LDAPI.get_rdf_mimetypes_list():
+            g = Graph()
+            LDAPI_O = Namespace('http://promsns.org/def/_ldapi#')
+            g.bind('_ldapi', LDAPI_O)
+            DCT = Namespace('http://purl.org/dc/terms/')
+            g.bind('dct', DCT)
+
+            class_uri_ref = URIRef(urllib.parse.unquote_plus(class_uri))
+
+            if instance_uri:
+                instance_uri_ref = URIRef(instance_uri)
+                g.add((instance_uri_ref, RDF.type, class_uri_ref))
+            else:
+                g.add((class_uri_ref, RDF.type, LDAPI_O.ApiResource))
+
+            # alternates model
+            alternates_view = BNode()
+            g.add((alternates_view, RDF.type, LDAPI_O.View))
+            g.add((alternates_view, DCT.title, Literal('alternates', datatype=XSD.string)))
+            g.add((class_uri_ref, LDAPI_O.view, alternates_view))
+
+            # default model
+            default_view = BNode()
+            g.add((default_view, DCT.title, Literal('default', datatype=XSD.string)))
+            g.add((class_uri_ref, LDAPI_O.defaultView, default_view))
+            default_title = views_formats['default']
+
+            # the ApiResource is incorrectly assigned to the class URI
+            for view_name, formats in views_formats.iteritems():
+                if view_name == 'alternates':
+                    for f in formats:
+                        g.add((alternates_view, URIRef('http://purl.org/dc/terms/format'),
+                               Literal(f, datatype=XSD.string)))
+                elif view_name == 'default':
+                    pass
+                elif view_name == 'renderer':
+                    pass
+                else:
+                    x = BNode()
+                    if view_name == default_title:
+                        g.add((default_view, RDF.type, x))
+                    g.add((class_uri_ref, LDAPI_O.view, x))
+                    g.add((x, DCT.title, Literal(view_name, datatype=XSD.string)))
+                    for f in formats:
+                        g.add((x, URIRef('http://purl.org/dc/terms/format'), Literal(f, datatype=XSD.string)))
+
+            # make the static part of the graph
+            # REG = Namespace('http://purl.org/linked-data/registry#')
+            # self.g.bind('reg', REG)
+            #
+            # self.g.add((URIRef(self.request.url), RDF.type, REG.Register))
+            #
+            # # add all the items
+            # for item in self.register:
+            #     self.g.add((URIRef(item['uri']), RDF.type, URIRef(self.uri)))
+            #     self.g.add((URIRef(item['uri']), RDFS.label, Literal(item['label'], datatype=XSD.string)))
+            #     self.g.add((URIRef(item['uri']), REG.register, URIRef(self.request.url)))
+            rdflib_format = [item[1] for item in LDAPI.MIMETYPES_PARSERS if item[0] == mimetype][0]
+            return Response(g.serialize(format=rdflib_format), status=200, mimetype=mimetype)
+        else:  # HTML
+            return render_template(
+                'alternates_view.html',
+                class_uri=class_uri,
+                class_uri_encoded=class_uri_encoded,
+                instance_uri=instance_uri,
+                instance_uri_encoded=instance_uri_encoded,
+                views_formats=views_formats
+            )
 
 
 class LdapiParameterError(ValueError):
     pass
 
 
-if __name__ == '__main__':
-    vfs = LDAPI.get_classes_views_formats().get('http://reference.data.gov.au/def/dataset#Dataset')
-    print(LDAPI.get_valid_view_and_format('dataset', 'text/turtle', vfs))
+def client_error_Response(error_message):
+    return Response(
+        str(error_message),
+        status=400,
+        mimetype='text/plain'
+    )
