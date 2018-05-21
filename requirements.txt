@@ -1,5 +1,4 @@
-requests
 flask
-lxml
+requests
 rdflib
 rdflib-jsonld

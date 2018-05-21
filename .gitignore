@@ -1,13 +1,19 @@
 __pycache__/
-model/__pycache__
 *.pyc
 */*.pyc
-controller/__pycache__
+*.pyo
+
+# PyCharm
 .idea/
 
 # Mac
 .DS_Store
 
 # log files
-
 *.log
+
+# PyPI distribution
+build/
+dist/
+*.egg
+*.egg-info/
