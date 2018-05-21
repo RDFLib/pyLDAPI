@@ -1,3 +1,4 @@
+import os
 import logging
 from flask import Response, render_template
 from threading import Thread
@@ -10,14 +11,36 @@ from abc import ABCMeta, abstractmethod
 g = Graph()
 
 
-def setup(app, base):
-    t = Thread(target=make_rofr_rdf, args=(app, base))
+def setup(app, api_home_dir, api_uri):
+    """
+    Used to set up the Register of Registers for this LDAPI
+
+    Must be fun before app.run like this: thread = pyldapi.setup(app, conf.URI_BASE)
+    :param app: the Flask app containing this LDAPI
+    :type app: Flask app
+    :param api_uri: URI base of the API
+    :type api_uri: string
+    :return: the thread executing this task
+    :rtype: thread
+    """
+    t = Thread(target=_make_rofr_rdf, args=(app, api_home_dir, api_uri))
     t.start()
 
     return t
 
 
-def make_rofr_rdf(app, base):
+def _make_rofr_rdf(app, api_home_dir, api_uri):
+    """
+    The setup function that creates the Register of Registers.
+
+    Do not call from outside setup
+    :param app: the Flask app containing this LDAPI
+    :type app: Flask app
+    :param api_uri: URI base of the API
+    :type api_uri: string
+    :return: none
+    :rtype: None
+    """
     sleep(1)  # to ensure that this occurs after the Flask boot
     print('making RofR')
 
@@ -25,17 +48,26 @@ def make_rofr_rdf(app, base):
     for rule in app.url_map.iter_rules():
         if '<' not in str(rule):  # no registers can have a Flask variable in their path
             # make the register view URI for each possible register
-            candidate_register_uri = base + str(rule) + '?_view=reg&_format=text/turtle'
+            candidate_register_uri = api_uri + str(rule) + '?_view=reg&_format=text/turtle'
             get_filtered_register_graph(candidate_register_uri)
 
     # serialise g
-    with open('rofr.ttl', 'w') as f:
+    with open(os.path.join(api_home_dir, 'rofr.ttl'), 'w') as f:
         f.write(g.serialize(format='text/turtle').decode('utf-8'))
 
     print('finished making RofR')
 
 
 def get_filtered_register_graph(register_uri):
+    """
+    Gets a filtered version (label, comment, contained item classes & subregisters only) of the each register for the
+    Register of Registers
+
+    :param register_uri: the public URI of the register
+    :type register_uri: string
+    :return: True if ok, else False
+    :rtype: boolean
+    """
     logging.debug('assessing register candidate ' + register_uri.replace('?_view=reg&_format=text/turtle', ''))
     try:
         r = requests.get(register_uri)
@@ -85,6 +117,9 @@ def get_filtered_register_graph(register_uri):
 
 
 class View:
+    """
+    A class containing elements for a Linked Data 'movel view', including MIME type 'formats'
+    """
     def __init__(
             self,
             label,
@@ -105,11 +140,26 @@ class ViewsFormatsException(ValueError):
 
 
 class Renderer:
+    """
+    Abstract class as a parent for classes that validate the views & formats for an API-delivered resource (typically
+    either registers or objects) and also creates an 'alternates view' for them, based on all available views & formats.
+    """
     __metaclass__ = ABCMeta
 
     RDF_MIMETYPES = ['text/turtle', 'application/rdf+xml', 'application/rdf+json', 'text/n3', 'application/json']
 
     def __init__(self, request, uri, views, default_view_token):
+        """
+        Init function for class
+        :param request: the Flask request object that triggered this class object creation
+        :type request: Flask request object
+        :param uri: the URI called that triggered this API endpoint (can be via redirects but the main URI is needed)
+        :type uri: string
+        :param views: a list of views available for this resource
+        :type views: list (of View class objects)
+        :param default_view_token: the ID of the default view (key of a view in the list of Views)
+        :type default_view_token: string (key in views)
+        """
         self.request = request
         self.uri = uri
 
@@ -224,6 +274,9 @@ class Renderer:
 
 
 class RegisterRenderer(Renderer):
+    """
+    Specific implementation of the abstract Renderer for displaying Register information
+    """
     def __init__(
             self,
             request,
@@ -237,6 +290,29 @@ class RegisterRenderer(Renderer):
             default_view_token=None,
             super_register=None
     ):
+        """
+        Init function for class
+        :param request: the Flask request triggering this class object creation
+        :type request: Flask request
+        :param uri: the URI requested
+        :type uri: string
+        :param label: the label of the Register
+        :type label: string
+        :param comment: a description of the Register
+        :type comment: string
+        :param register_items: items within this register
+        :type register_items: list (of URIs (strings) or tuples like (URI, label) of (string, string)
+        :param contained_item_classes: list of URIs of each distinct class of item contained in this register
+        :type contained_item_classes: list (of strings)
+        :param register_total_count: total number of items in this Register (not of a page but the register as a whole)
+        :type register_total_count: int
+        :param views: a list of views available for this Register, apart from 'reg' which is auto-created
+        :type views: list (of Views)
+        :param default_view_token: the ID of the default view (key of a view in the list of Views)
+        :type default_view_token: string (key in views)
+        :param super_register: a super-register URI for this register. Can be within this API or external
+        :type super_register: string
+        """
         if views is None:
             self.views = self.add_standard_reg_view()
         if default_view_token is None:
@@ -418,14 +494,35 @@ class RegisterRenderer(Renderer):
 
 
 class RegisterOfRegistersRenderer(RegisterRenderer):
+    """
+    Specialised implementation of the RegisterRenderer for displaying Register of Register information
+
+    This subclass just auto-fills many of the RegisterRenderer options
+    """
     def __init__(
             self,
             request,
             uri,
             label,
             comment,
-            super_register=None
+            rofr_file_path,
+            super_register=None,
     ):
+        """
+        Init function for class
+        :param request: the Flask request triggering this class object creation
+        :type request: Flask request
+        :param uri: the URI requested
+        :type uri: string
+        :param label: the label of the Register
+        :type label: string
+        :param comment: a description of the Register
+        :type comment: string
+        :param rofr_file_path: the path to the Register of Register RDF file (used in API setup)
+        :type rofr_file_path: path (string)
+        :param super_register: a super-register URI for this register. Can be within this API or external
+        :type super_register: string
+        """
         super(RegisterOfRegistersRenderer, self).__init__(
             request,
             uri,
@@ -438,7 +535,7 @@ class RegisterOfRegistersRenderer(RegisterRenderer):
         )
 
         # find subregisters from rofr.ttl
-        g = Graph().parse('rofr.ttl', format='turtle')
+        g = Graph().parse(rofr_file_path, format='turtle')
         q = '''
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX reg: <http://purl.org/linked-data/registry#>
