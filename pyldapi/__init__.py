@@ -333,19 +333,28 @@ class RegisterRenderer(Renderer):
         self._paging()
 
     def _paging(self):
+        # calculate last page
+        self.last_page = int(round(self.register_total_count / self.per_page, 0)) + 1  # same as math.ceil()
+
+        # if we've gotten the last page value successfully, we can choke if someone enters a larger value
+        if self.page > self.last_page:
+            return Response(
+                'You must enter either no value for page or an integer <= {} which is the last page number.'
+                    .format(self.last_page),
+                status=400,
+                mimetype='text/plain'
+            )
+
+        # set up Link headers
         links = list()
         links.append('<http://www.w3.org/ns/ldp#Resource>; rel="type"')
         # signalling that this is, in fact, a resource described in pages
         links.append('<http://www.w3.org/ns/ldp#Page>; rel="type"')
-        links.append('<{}?per_page={}>; rel="first"'.format(self.uri, self.per_page))
 
-        # if this isn't the first page, add a link to "prev"
-        if self.page != 1:
-            links.append('<{}?per_page={}&page={}>; rel="prev"'.format(
-                self.uri,
-                self.per_page,
-                (self.page - 1)
-            ))
+        # always add a link to first, even if this is first
+        self.first_page = 1
+        links.append('<{}?per_page={}&page={}>; rel="first"'
+                     .format(self.uri, self.per_page, self.first_page))
 
         # if this isn't the first page, add a link to "prev"
         if self.page != 1:
@@ -358,36 +367,20 @@ class RegisterRenderer(Renderer):
         else:
             self.prev_page = None
 
-        # add a link to "next" and "last"
-        try:
-            self.last_page = int(round(self.register_total_count / self.per_page, 0)) + 1  # same as math.ceil()
-
-            # if we've gotten the last page value successfully, we can choke if someone enters a larger value
-            if self.page > self.last_page:
-                return Response(
-                    'You must enter either no value for page or an integer <= {} which is the last page number.'
-                    .format(self.last_page),
-                    status=400,
-                    mimetype='text/plain'
-                )
-
-            # add a link to "next"
-            if self.page != self.last_page:
-                self.next_page = self.page + 1
-                links.append('<{}?per_page={}&page={}>; rel="next"'
-                             .format(self.uri, self.per_page, (self.page + 1)))
-            else:
-                self.next_page = None
-
-            # add a link to "last"
-            links.append('<{}?per_page={}&page={}>; rel="last"'
-                         .format(self.uri, self.per_page, self.last_page))
-        except:
-            # if there's some error in getting the no of samples, add the "next" link but not the "last" link
+        # if this isn't the last page, add a link to next
+        if self.page > self.last_page:
             self.next_page = self.page + 1
-            links.append('<{}?per_page={}&page={}>; rel="next"'
-                         .format(self.uri, self.per_page, (self.page + 1)))
-            self.last_page = None
+            links.append('<{}?per_page={}&page={}>; rel="next"'.format(
+                self.uri,
+                self.per_page,
+                self.next_page
+            ))
+        else:
+            self.next_page = None
+
+        # always add a link to last, even if this is last
+        links.append('<{}?per_page={}&page={}>; rel="last"'
+                     .format(self.uri, self.per_page, self.last_page))
 
         self.headers = {
             'Link': ', '.join(links)
@@ -415,6 +408,7 @@ class RegisterRenderer(Renderer):
             register_items=self.register_items,
             page=self.page,
             per_page=self.per_page,
+            first_page=self.first_page,
             prev_page=self.prev_page,
             next_page=self.next_page,
             last_page=self.last_page,
@@ -470,11 +464,11 @@ class RegisterRenderer(Renderer):
                 item_uri = URIRef(item[0])
                 g.add((item_uri, RDF.type, URIRef(self.uri)))
                 g.add((item_uri, RDFS.label, Literal(item[1], datatype=XSD.string)))
-                g.add((item_uri, REG.register, page_uri))
+                g.add((item_uri, REG.register, register_uri))
             else:  # just URIs
                 item_uri = URIRef(item)
                 g.add((item_uri, RDF.type, URIRef(self.uri)))
-                g.add((item_uri, REG.register, page_uri))
+                g.add((item_uri, REG.register, register_uri))
 
         # serialize the RDF in whichever format was selected by the user, after converting from mimetype
         if self.format in ['application/rdf+json', 'application/json']:
