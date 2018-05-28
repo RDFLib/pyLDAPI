@@ -17,7 +17,6 @@ setup(
     license='LICENSE.txt',
     keywords=['Linked Data', 'Semantic Web', 'Flask', 'Python', 'API', 'RDF'],
     long_description=readme,
-    long_description_content_type='text/markdown',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Topic :: Utilities',
