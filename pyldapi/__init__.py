@@ -139,6 +139,10 @@ class ViewsFormatsException(ValueError):
     pass
 
 
+class PagingError(ValueError):
+    pass
+
+
 class Renderer:
     """
     Abstract class as a parent for classes that validate the views & formats for an API-delivered resource (typically
@@ -330,7 +334,12 @@ class RegisterRenderer(Renderer):
         self.page = request.args.get('page', type=int, default=1)
         self.super_register = super_register
 
-        self._paging()
+        self.paging_error = self._paging()
+
+        try:
+            self.format = self._get_requested_format()
+        except ViewsFormatsException as e:
+            self.vf_error = str(e)
 
     def _paging(self):
         # calculate last page
@@ -338,12 +347,7 @@ class RegisterRenderer(Renderer):
 
         # if we've gotten the last page value successfully, we can choke if someone enters a larger value
         if self.page > self.last_page:
-            return Response(
-                'You must enter either no value for page or an integer <= {} which is the last page number.'
-                    .format(self.last_page),
-                status=400,
-                mimetype='text/plain'
-            )
+            return 'You must enter either no value for page or an integer <= {} which is the last page number.'
 
         # set up Link headers
         links = list()
@@ -386,11 +390,16 @@ class RegisterRenderer(Renderer):
             'Link': ', '.join(links)
         }
 
+        return None
+
     def render(self):
         if self.view == 'alternates':
             return Response(self._render_alternates_view(), mimetype=self.format)
         elif self.view == 'reg':
-            return Response(self._render_reg_view(), mimetype=self.format, headers=self.headers)
+            if self.paging_error is None:
+                return Response(self._render_reg_view(), mimetype=self.format, headers=self.headers)
+            else:  # there is a paging error (e.g. page > last_page)
+                return Response(self.paging_error, status=400, mimetype='text/plain')
 
     def _render_reg_view(self):
         # add link headers for all formats of reg view
