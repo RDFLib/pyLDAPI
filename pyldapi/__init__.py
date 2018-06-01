@@ -4,6 +4,7 @@ from flask import Response, render_template
 from threading import Thread
 from time import sleep
 import requests
+import json
 from rdflib import Graph, Namespace, URIRef, BNode, Literal, RDF, RDFS, XSD
 from abc import ABCMeta, abstractmethod
 
@@ -182,12 +183,13 @@ class Renderer:
             )
         self.default_view_token = default_view_token
 
-        # auto-add in an alternates view
+        # auto-add in an Alternates view
         self.views['alternates'] = View(
             'Alternates',
             'The view that lists all other views',
             ['text/html', 'text/turtle', 'application/rdf+xml', 'application/rdf+json', 'application/json'],
-            'text/html'
+            'text/html',
+            namespace='http://promsns.org/def/alt'
         )
 
         # get view & format for this request, flag any errors but do not except out
@@ -238,6 +240,7 @@ class Renderer:
     def _render_alternates_view_html(self):
         return render_template(
             'alternates.html',
+            uri=self.uri,
             default_view_token=self.default_view_token,
             views=self.views
         )
@@ -263,13 +266,21 @@ class Renderer:
             if self.default_view_token == token:
                 g.add((URIRef(self.uri), EREG.hasDefaultView, v_node))
 
+        # because the rdflib JSON-LD serializer needs the tring 'json-ld', not a MIME type
         if self.format in ['application/rdf+json', 'application/json']:
-            self.format = 'json-ld'
-        return g.serialize(format=self.format)
+            return Response(g.serialize(format='json-ld'), mimetype=self.format)
+        else:
+            return Response(g.serialize(format=self.format), mimetype=self.format)
 
-    # TODO: consider adding a 'plain' JSON (i.e. not JSON-LD) version
-    # def _render_alternates_view_json(self):
-    #    return json.dumps({'views': self.views, 'default_view': self.default_view_token})
+    def _render_alternates_view_json(self):
+        return Response(
+            json.dumps({
+                'uri': self.uri,
+                'views': self.views,
+                'default_view': self.default_view_token
+            }),
+            mimetype='application/json'
+        )
 
     @abstractmethod
     def render(self):
@@ -318,7 +329,7 @@ class RegisterRenderer(Renderer):
         :type super_register: string
         """
         if views is None:
-            self.views = self.add_standard_reg_view()
+            self.views = self._add_standard_reg_view()
         if default_view_token is None:
             self.default_view_token = 'reg'
         super().__init__(request, uri, self.views, self.default_view_token)
@@ -479,12 +490,13 @@ class RegisterRenderer(Renderer):
                 g.add((item_uri, RDF.type, URIRef(self.uri)))
                 g.add((item_uri, REG.register, register_uri))
 
-        # serialize the RDF in whichever format was selected by the user, after converting from mimetype
+        # because the rdflib JSON-LD serializer needs the tring 'json-ld', not a MIME type
         if self.format in ['application/rdf+json', 'application/json']:
-            self.format = 'json-ld'
-        return g.serialize(format=self.format)
+            return Response(g.serialize(format='json-ld'), mimetype=self.format)
+        else:
+            return Response(g.serialize(format=self.format), mimetype=self.format)
 
-    def add_standard_reg_view(self):
+    def _add_standard_reg_view(self):
         return {
             'reg': View(
                 'Registry Ontology',
