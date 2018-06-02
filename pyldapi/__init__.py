@@ -206,12 +206,16 @@ class Renderer:
 
     def _get_requested_view(self):
         # if a particular _view is requested, if it's available, return it
+        # the _view selector, coming first (before profile neg) will override profile neg, if both are set
         if self.request.values.get('_view') is not None:
             if self.views.get(self.request.values.get('_view')) is not None:
                 return self.request.values.get('_view')
             else:
                 raise ViewsFormatsException(
                     'The requested view is not available for the resource for which it was requested')
+        # elif self.request.headers.get('Accept-Profile') is not None:
+        #     best_profile = self._get_profile_best_match()
+
         # if no _view is requested, return default view
         else:
             return self.default_view_token
@@ -231,7 +235,14 @@ class Renderer:
         else:
             return self.views[self.view].default_format
 
+    def _make_alternates_view_headers(self):
+        self.headers['Profile'] = 'https://promsns.org/def/alt'  # the profile of the Alternates View
+        self.headers['Content-Type'] = self.format  # the format of the Alternates View
+
+        # TODO: add in the list of all other available Profiles (views) here
+
     def _render_alternates_view(self):
+        self._make_alternates_view_headers()
         if self.format == 'text/html':
             return self._render_alternates_view_html()
         elif self.format in Renderer.RDF_MIMETYPES:
@@ -288,6 +299,24 @@ class Renderer:
             headers=self.headers
         )
 
+    # def _get_accept_profile_uris(self):
+    #     if self.headers.get('Accept-Profile') is not None:
+    #         profile_uris = []
+    #
+    #         # split on commas
+    #         uri_refs = self.headers.get('Accept-Profile').split(',')
+    #         # ignore all weights
+    #         # TODO: handle q values weightings
+    #         for uri_ref in uri_refs:
+    #             profile_uris.append(uri_ref.split(';')[0])  # discard the weights per URI-ref
+    #         return profile_uris
+    #     else:
+    #         return None
+    #
+    # def _get_profile_best_match(self):
+    #     pass
+
+
     @abstractmethod
     def render(self):
         # use the now gotten view & format to create a response
@@ -309,7 +338,8 @@ class RegisterRenderer(Renderer):
             register_total_count,
             views=None,
             default_view_token=None,
-            super_register=None
+            super_register=None,
+            page_size_max=1000
     ):
         """
         Init function for class
@@ -350,6 +380,7 @@ class RegisterRenderer(Renderer):
         self.per_page = request.args.get('per_page', type=int, default=20)
         self.page = request.args.get('page', type=int, default=1)
         self.super_register = super_register
+        self.page_size_max = page_size_max
 
         self.paging_error = self._paging()
 
@@ -367,8 +398,8 @@ class RegisterRenderer(Renderer):
             return 'You must enter either no value for page or an integer <= {} which is the last page number.'\
                 .format(self.last_page)
 
-        if self.per_page > config.PAGE_SIZE_MAX:
-            return 'You must choose a page size >= {}'.format(config.PAGE_SIZE_MAX)
+        if self.per_page > self.page_size_max:
+            return 'You must choose a page size >= {}'.format(self.page_size_max)
 
         # set up Link headers
         links = list()
@@ -414,6 +445,7 @@ class RegisterRenderer(Renderer):
         if self.view == 'alternates':
             return self._render_alternates_view()
         elif self.view == 'reg':
+            self.headers['Profile'] = 'http://purl.org/linked-data/registry#'
             if self.paging_error is None:
                 return self._render_reg_view()
             else:  # there is a paging error (e.g. page > last_page)
