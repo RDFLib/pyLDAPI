@@ -405,10 +405,10 @@ class RegisterRenderer(Renderer):
 
     def render(self):
         if self.view == 'alternates':
-            return Response(self._render_alternates_view(), mimetype=self.format)
+            return self._render_alternates_view()
         elif self.view == 'reg':
             if self.paging_error is None:
-                return Response(self._render_reg_view(), mimetype=self.format, headers=self.headers)
+                return self._render_reg_view()
             else:  # there is a paging error (e.g. page > last_page)
                 return Response(self.paging_error, status=400, mimetype='text/plain')
 
