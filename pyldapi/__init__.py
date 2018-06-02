@@ -421,6 +421,8 @@ class RegisterRenderer(Renderer):
                 self.per_page,
                 self.prev_page
             ))
+        else:
+            self.prev_page = None
 
         # if this isn't the last page, add a link to next
         if self.page < self.last_page:
@@ -430,6 +432,8 @@ class RegisterRenderer(Renderer):
                 self.per_page,
                 self.next_page
             ))
+        else:
+            self.next_page = None
 
         # always add a link to last
         links.append('<{}?per_page={}&page={}>; rel="last"'
