@@ -1,6 +1,6 @@
 import os
 import logging
-from flask import Response, render_template
+from flask import Response, render_template, make_response
 from threading import Thread
 from time import sleep
 import requests
@@ -202,6 +202,8 @@ class Renderer:
         except ViewsFormatsException as e:
             self.vf_error = str(e)
 
+        self.headers = None
+
     def _get_requested_view(self):
         # if a particular _view is requested, if it's available, return it
         if self.request.values.get('_view') is not None:
@@ -238,11 +240,14 @@ class Renderer:
             return self._render_alternates_view_json()
 
     def _render_alternates_view_html(self):
-        return render_template(
-            'alternates.html',
-            uri=self.uri,
-            default_view_token=self.default_view_token,
-            views=self.views
+        return Response(
+            render_template(
+                'alternates.html',
+                uri=self.uri,
+                default_view_token=self.default_view_token,
+                views=self.views
+            ),
+            headers=self.headers
         )
 
     def _render_alternates_view_rdf(self):
@@ -268,9 +273,9 @@ class Renderer:
 
         # because the rdflib JSON-LD serializer needs the tring 'json-ld', not a MIME type
         if self.format in ['application/rdf+json', 'application/json']:
-            return Response(g.serialize(format='json-ld'), mimetype=self.format)
+            return Response(g.serialize(format='json-ld'), mimetype=self.format, headers=self.headers)
         else:
-            return Response(g.serialize(format=self.format), mimetype=self.format)
+            return Response(g.serialize(format=self.format), mimetype=self.format, headers=self.headers)
 
     def _render_alternates_view_json(self):
         return Response(
@@ -279,7 +284,8 @@ class Renderer:
                 'views': self.views,
                 'default_view': self.default_view_token
             }),
-            mimetype='application/json'
+            mimetype='application/json',
+            headers=self.headers
         )
 
     @abstractmethod
@@ -358,7 +364,8 @@ class RegisterRenderer(Renderer):
 
         # if we've gotten the last page value successfully, we can choke if someone enters a larger value
         if self.page > self.last_page:
-            return 'You must enter either no value for page or an integer <= {} which is the last page number.'
+            return 'You must enter either no value for page or an integer <= {} which is the last page number.'\
+                .format(self.last_page)
 
         # set up Link headers
         links = list()
@@ -420,19 +427,22 @@ class RegisterRenderer(Renderer):
             return self._render_reg_view_rdf()
 
     def _render_reg_view_html(self):
-        return render_template(
-            'register.html',
-            uri=self.uri,
-            label=self.label,
-            contained_item_classes=self.contained_item_classes,
-            register_items=self.register_items,
-            page=self.page,
-            per_page=self.per_page,
-            first_page=self.first_page,
-            prev_page=self.prev_page,
-            next_page=self.next_page,
-            last_page=self.last_page,
-            super_register=self.super_register
+        return Response(
+            render_template(
+                'register.html',
+                uri=self.uri,
+                label=self.label,
+                contained_item_classes=self.contained_item_classes,
+                register_items=self.register_items,
+                page=self.page,
+                per_page=self.per_page,
+                first_page=self.first_page,
+                prev_page=self.prev_page,
+                next_page=self.next_page,
+                last_page=self.last_page,
+                super_register=self.super_register
+            ),
+            headers=self.headers
         )
 
     def _render_reg_view_rdf(self):
@@ -492,9 +502,9 @@ class RegisterRenderer(Renderer):
 
         # because the rdflib JSON-LD serializer needs the tring 'json-ld', not a MIME type
         if self.format in ['application/rdf+json', 'application/json']:
-            return Response(g.serialize(format='json-ld'), mimetype=self.format)
+            return Response(g.serialize(format='json-ld'), mimetype=self.format, headers=self.headers)
         else:
-            return Response(g.serialize(format=self.format), mimetype=self.format)
+            return Response(g.serialize(format=self.format), mimetype=self.format, headers=self.headers)
 
     def _add_standard_reg_view(self):
         return {
