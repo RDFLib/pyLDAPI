@@ -1,6 +1,6 @@
 import os
 import logging
-from flask import Response, render_template, make_response
+from flask import Response, render_template
 from threading import Thread
 from time import sleep
 import requests
@@ -367,40 +367,40 @@ class RegisterRenderer(Renderer):
             return 'You must enter either no value for page or an integer <= {} which is the last page number.'\
                 .format(self.last_page)
 
+        if self.per_page > config.PAGE_SIZE_MAX:
+            return 'You must choose a page size >= {}'.format(config.PAGE_SIZE_MAX)
+
         # set up Link headers
         links = list()
+        # signalling this is an LDP Resource
         links.append('<http://www.w3.org/ns/ldp#Resource>; rel="type"')
-        # signalling that this is, in fact, a resource described in pages
+        # signalling that this is, in fact, a Resource described in pages
         links.append('<http://www.w3.org/ns/ldp#Page>; rel="type"')
 
-        # always add a link to first, even if this is first
+        # always add a link to first
         self.first_page = 1
         links.append('<{}?per_page={}&page={}>; rel="first"'
                      .format(self.uri, self.per_page, self.first_page))
 
         # if this isn't the first page, add a link to "prev"
-        if self.page != 1:
+        if self.page > 1:
             self.prev_page = self.page - 1
             links.append('<{}?per_page={}&page={}>; rel="prev"'.format(
                 self.uri,
                 self.per_page,
                 self.prev_page
             ))
-        else:
-            self.prev_page = None
 
         # if this isn't the last page, add a link to next
-        if self.page > self.last_page:
+        if self.page < self.last_page:
             self.next_page = self.page + 1
             links.append('<{}?per_page={}&page={}>; rel="next"'.format(
                 self.uri,
                 self.per_page,
                 self.next_page
             ))
-        else:
-            self.next_page = None
 
-        # always add a link to last, even if this is last
+        # always add a link to last
         links.append('<{}?per_page={}&page={}>; rel="last"'
                      .format(self.uri, self.per_page, self.last_page))
 
