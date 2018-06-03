@@ -1,6 +1,7 @@
 import os
 import logging
 from flask import Response, render_template
+from flask_paginate import Pagination
 from threading import Thread
 from time import sleep
 import requests
@@ -202,7 +203,7 @@ class Renderer:
         except ViewsFormatsException as e:
             self.vf_error = str(e)
 
-        self.headers = None
+        self.headers = dict()
 
     def _get_requested_view(self):
         # if a particular _view is requested, if it's available, return it
@@ -449,8 +450,8 @@ class RegisterRenderer(Renderer):
         if self.view == 'alternates':
             return self._render_alternates_view()
         elif self.view == 'reg':
-            self.headers['Profile'] = 'http://purl.org/linked-data/registry#'
             if self.paging_error is None:
+                self.headers['Profile'] = 'http://purl.org/linked-data/registry#'
                 return self._render_reg_view()
             else:  # there is a paging error (e.g. page > last_page)
                 return Response(self.paging_error, status=400, mimetype='text/plain')
@@ -463,6 +464,8 @@ class RegisterRenderer(Renderer):
             return self._render_reg_view_rdf()
 
     def _render_reg_view_html(self):
+        pagination = Pagination(page=self.page, per_page=self.per_page, total=self.register_total_count)
+
         return Response(
             render_template(
                 'register.html',
@@ -476,7 +479,8 @@ class RegisterRenderer(Renderer):
                 prev_page=self.prev_page,
                 next_page=self.next_page,
                 last_page=self.last_page,
-                super_register=self.super_register
+                super_register=self.super_register,
+                pagination=pagination
             ),
             headers=self.headers
         )
