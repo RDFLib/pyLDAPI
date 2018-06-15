@@ -152,7 +152,7 @@ class Renderer:
     """
     __metaclass__ = ABCMeta
 
-    RDF_MIMETYPES = ['text/turtle', 'application/rdf+xml', 'application/rdf+json', 'text/n3', 'application/json']
+    RDF_MIMETYPES = ['text/turtle', 'application/rdf+xml', 'application/rdf+json', 'text/n3', 'text/nt']
 
     def __init__(self, request, uri, views, default_view_token):
         """
@@ -205,34 +205,77 @@ class Renderer:
 
         self.headers = dict()
 
+    def _get_accept_profiles_in_order(self):
+        """
+        Reads an Accept-Profile HTTP header and returns an array of Profile URIs in descending weighted order
+
+        :return: List of URIs of accept profiles in descending request order
+        :rtype: list
+        """
+        try:
+            # split the header into individual URIs, with weights still attached
+            profiles = self.request.headers['Accept-Profile'].split(',')
+            # remove <, >, and \s
+            profiles = [x.replace('<', '').replace('>', '').replace(' ', '').strip() for x in profiles]
+
+            # split off any weights and sort by them with no weight = 0
+            profiles = [(float(x.split(';')[1].replace('q=', '')) if len(x.split(';')) == 2 else 0, x.split(';')[0]) for x in profiles]
+
+            # sort profiles by weight, heaviest first
+            profiles.sort(reverse=True)
+
+            return[x[1] for x in profiles]
+        except Exception as e:
+            raise ViewsFormatsException(
+                'You have requested a profile using an Accept-Profile header that is incorrectly formatted.')
+
+    def _get_available_profile_uris(self):
+        uris = {}
+        for k, view in self.views.items():
+            uris[view.namespace] = k
+
+        return uris
+
+    def _get_best_accept_profile(self):
+        profiles_requested = self._get_accept_profiles_in_order()
+        profiles_available = self._get_available_profile_uris()
+
+        for profile in profiles_requested:
+            if profiles_available.get(profile):
+                return profiles_available.get(profile)  # return the profile token
+
+        return None  # if no match found
+
     def _get_requested_view(self):
         # if a particular _view is requested, if it's available, return it
         # the _view selector, coming first (before profile neg) will override profile neg, if both are set
-        if self.request.values.get('_view') is not None:
-            if self.views.get(self.request.values.get('_view')) is not None:
-                return self.request.values.get('_view')
-            else:
-                raise ViewsFormatsException(
-                    'The requested view is not available for the resource for which it was requested')
-        # elif self.request.headers.get('Accept-Profile') is not None:
-        #     best_profile = self._get_profile_best_match()
-
-        # if no _view is requested, return default view
+        if hasattr(self.request, 'values'):
+            if self.request.values.get('_view') is not None:
+                if self.views.get(self.request.values.get('_view')) is not None:
+                    return self.request.values.get('_view')
+                else:
+                    raise ViewsFormatsException(
+                        'The requested view is not available for the resource for which it was requested')
+            elif self.request.headers.get('Accept-Profile') is not None:
+                h = self._get_best_accept_profile()
+                return h if h is not None else self.default_view_token
         else:
             return self.default_view_token
 
     def _get_requested_format(self):
         # if a particular _format is requested, see if it's valid for the requested view
-        if self.request.values.get('_format') is not None:
-            requested_format = self.request.values.get('_format').replace(' ', '+')
-            if requested_format in self.views[self.view].formats:
-                return requested_format
-            else:
-                raise ViewsFormatsException(
-                    'The requested format for the {} view is not available for the resource for which '
-                    'it was requested'.format(self.view))
-        elif len(self.request.accept_mimetypes) > 1:  # if a particular format is requested by conneg, see if it's valid
-            return self.request.accept_mimetypes.best_match(self.views[self.view].formats)
+        if hasattr(self.request, 'values'):
+            if self.request.values.get('_format') is not None:
+                requested_format = self.request.values.get('_format').replace(' ', '+')
+                if requested_format in self.views[self.view].formats:
+                    return requested_format
+                else:
+                    raise ViewsFormatsException(
+                        'The requested format for the {} view is not available for the resource for which '
+                        'it was requested'.format(self.view))
+            if self.request.headers.get('Accept'):
+                if len(self.request.accept_mimetypes) > 1:  # if a particular format is requested by conneg, see if it's valid
+                    return self.request.accept_mimetypes.best_match(self.views[self.view].formats)
         else:
             return self.views[self.view].default_format
 
@@ -299,24 +342,6 @@ class Renderer:
             mimetype='application/json',
             headers=self.headers
         )
-
-    # def _get_accept_profile_uris(self):
-    #     if self.headers.get('Accept-Profile') is not None:
-    #         profile_uris = []
-    #
-    #         # split on commas
-    #         uri_refs = self.headers.get('Accept-Profile').split(',')
-    #         # ignore all weights
-    #         # TODO: handle q values weightings
-    #         for uri_ref in uri_refs:
-    #             profile_uris.append(uri_ref.split(';')[0])  # discard the weights per URI-ref
-    #         return profile_uris
-    #     else:
-    #         return None
-    #
-    # def _get_profile_best_match(self):
-    #     pass
-
 
     @abstractmethod
     def render(self):
@@ -594,7 +619,7 @@ class RegisterOfRegistersRenderer(RegisterRenderer):
             label,
             comment,
             None,
-            ['http://purl.org/linked-data/registry#register'],
+            ['http://purl.org/linked-data/registry#Register'],
             0,
             super_register
         )
