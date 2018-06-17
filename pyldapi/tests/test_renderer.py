@@ -1,19 +1,22 @@
 from pyldapi import Renderer, View
 
 
-def setup():
-    class MockRequest:
-        pass
+class MockRequest:
+    pass
 
+
+def accept_profile_testing_setup():
     # this tests Accept-Profile selection of 'test' view
     mr = MockRequest()
     mr.url = 'http://whocares.com'
-    mr.values = {'_format': 'text/turtle'}
-    mr.headers = {'Accept-Profile': 'http://nothing.com ,'
-                                    'http://nothing-else.com,'
-                                    '<http://notavailable.com>; q=0.9, '  # ignored - not available
-                                    '<http://test.linked.data.gov.au/def/auorg#>; q=0.1, '  # available but lower weight
-                                    '<http://test.com>; q=0.2'}  # chosen
+    mr.headers = {
+        'Accept-Profile': 'http://nothing.com ,'
+                          'http://nothing-else.com,'
+                          '<http://notavailable.com>; q=0.9, '  # ignored - not available
+                          '<http://test.linked.data.gov.au/def/auorg#>; q=0.1, '  # available but lower weight
+                          '<http://test.com>; q=0.2',
+        'Accept': 'text/turtle'
+    }
 
     views = {
         'auorg': View(
@@ -71,6 +74,35 @@ def setup():
         'auorg'
     )
 
+    # this tests QSA selection of 'alternates' view
+    mr3 = MockRequest()
+    mr3.url = 'http://whocares.com'
+
+    views3 = {
+        'auorg': View(
+            'AU Org View',
+            'A view of basic properties of main classes in the AU Org Ontology',
+            ['text/html'] + Renderer.RDF_MIMETYPES,
+            'text/turtle',
+            namespace='http://test.linked.data.gov.au/def/auorg#'
+        ),
+        'test': View(
+            'Test View',
+            'A view for testing',
+            ['text/xml'],
+            'text/xml',
+            namespace='http://test.com'
+        )
+    }
+
+    global r3
+    r3 = Renderer(
+        mr3,
+        'http://whocares.com',
+        views3,
+        'auorg'
+    )
+
 
 def test_get_accept_profiles_in_order():
     global r
@@ -109,15 +141,58 @@ def test_get_requested_view():
     assert r2._get_requested_view() == 'alternates', 'Failed test_get_requested_view() test 2'
 
 
+def test_render_alternates_view_rdf():
+    views3 = {
+        'auorg': View(
+            'AU Org View',
+            'A view of basic properties of main classes in the AU Org Ontology',
+            ['text/html'] + Renderer.RDF_MIMETYPES,
+            'text/turtle',
+            namespace='http://test.linked.data.gov.au/def/auorg#'
+        ),
+        'test': View(
+            'Test View',
+            'A view for testing',
+            ['text/xml'],
+            'text/xml',
+            namespace='http://test.com'
+        ),
+        'test2': View(
+            'Test2 View',
+            'A second view for testing',
+            Renderer.RDF_MIMETYPES,
+            'application/rdf+xml',
+            namespace='http://test2.com'
+        )
+    }
+
+    mr3 = MockRequest()
+    mr3.url = 'http://whocares.com'
+    mr3.values = {'_format': 'text/turtle'}
+    mr3.headers = {}
+
+    global r3
+    r3 = Renderer(
+        mr3,
+        'http://whocares.com',
+        views3,
+        'test2'  # default view
+    )
+    print(r3._render_alternates_view_rdf().decode('utf-8'))
+
+
 if __name__ == '__main__':
     global r
     global r2
+    global r3
 
-    setup()
-    test_get_accept_profiles_in_order()
-    test_get_available_profile_uris()
-    test_get_accept_profiles_in_order()
-    test_get_best_accept_profile()
+    accept_profile_testing_setup()
+    # test_get_accept_profiles_in_order()
+    # test_get_available_profile_uris()
+    # test_get_accept_profiles_in_order()
+    # test_get_best_accept_profile()
     test_get_requested_view()
+
+    # test_render_alternates_view_rdf()
 
     print('Passed all tests')
