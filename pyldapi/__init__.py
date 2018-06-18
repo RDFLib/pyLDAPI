@@ -190,7 +190,7 @@ class Renderer:
             'The view that lists all other views',
             ['text/html', 'text/turtle', 'application/rdf+xml', 'application/rdf+json', 'application/json'],
             'text/html',
-            namespace='http://promsns.org/def/alt'
+            namespace='https://promsns.org/def/alt'
         )
 
         # get view & format for this request, flag any errors but do not except out
@@ -228,7 +228,7 @@ class Renderer:
             # sort profiles by weight, heaviest first
             profiles.sort(reverse=True)
 
-            return[x[1] for x in profiles]
+            return [x[1] for x in profiles]
         except Exception as e:
             raise ViewsFormatsException(
                 'You have requested a profile using an Accept-Profile header that is incorrectly formatted.')
@@ -290,17 +290,14 @@ class Renderer:
     def _get_requested_view(self):
         # if a particular _view is requested, if it's available, return it
         # the _view selector, coming first (before profile neg) will override profile neg, if both are set
-        if hasattr(self.request, 'values'):
-            if self.request.values.get('_view') is not None:
-                if self.views.get(self.request.values.get('_view')) is not None:
-                    return self.request.values.get('_view')
-                else:
-                    raise ViewsFormatsException(
-                        'The requested view is not available for the resource for which it was requested')
+        # if nothing is set, return default view (not HTTP 406)
+        if self.request.values.get('_view') is not None:
+            if self.views.get(self.request.values.get('_view')) is not None:
+                return self.request.values.get('_view')
             else:
-                return self.default_view_token
-
-        if hasattr(self.request, 'headers'):
+                raise ViewsFormatsException(
+                    'The requested view is not available for the resource for which it was requested')
+        elif hasattr(self.request, 'headers'):
             if self.request.headers.get('Accept-Profile') is not None:
                 h = self._get_best_accept_profile()
                 return h if h is not None else self.default_view_token
@@ -309,18 +306,17 @@ class Renderer:
 
     def _get_requested_format(self):
         # try Query String Argument
-        if hasattr(self.request, 'values'):
-            if self.request.values.get('_format') is not None:
-                requested_format = self.request.values.get('_format').replace(' ', '+')
-                if requested_format in self.views[self.view].formats:
-                    return requested_format
-                else:
-                    raise ViewsFormatsException(
-                        'The requested format for the {} view is not available for the resource for which '
-                        'it was requested'.format(self.view))
+        if self.request.values.get('_format') is not None:
+            requested_format = self.request.values.get('_format').replace(' ', '+')
+            if requested_format in self.views[self.view].formats:
+                return requested_format
+            else:
+                raise ViewsFormatsException(
+                    'The requested format for the {} view is not available for the resource for which '
+                    'it was requested'.format(self.view))
 
         # try HTTP headers
-        if hasattr(self.request, 'headers'):
+        elif hasattr(self.request, 'headers'):
             if self.request.headers.get('Accept') is not None:
                 h = self._get_best_accept_mediatype()
                 return h if h is not None else self.views[self.view].default_format
