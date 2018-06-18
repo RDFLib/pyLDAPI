@@ -192,9 +192,9 @@ class Renderer:
         self.views['alternates'] = View(
             'Alternates',
             'The view that lists all other views',
-            ['text/html', 'text/turtle', 'application/rdf+xml', 'application/rdf+json', 'application/json'],
-            ['en'],  # default 'en' only for now
+            ['text/html', 'application/json'] + self.RDF_MIMETYPES,
             'text/html',
+            languages=['en'],  # default 'en' only for now
             namespace='https://promsns.org/def/alt'
         )
 
