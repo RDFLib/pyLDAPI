@@ -127,13 +127,17 @@ class View:
             label,
             comment,
             formats,
+            languages,
             default_format,
+            default_language='en',
             namespace=None
     ):
         self.label = label
         self.comment = comment
         self.formats = formats
         self.default_format = default_format
+        self.languages = set(['en'] + languages)  # auto-add English, deduplicate
+        self.default_language = default_language
         self.namespace = namespace
 
 
@@ -189,6 +193,7 @@ class Renderer:
             'Alternates',
             'The view that lists all other views',
             ['text/html', 'text/turtle', 'application/rdf+xml', 'application/rdf+json', 'application/json'],
+            [],  # default 'en' only for now
             'text/html',
             namespace='https://promsns.org/def/alt'
         )
@@ -199,7 +204,11 @@ class Renderer:
             try:
                 self.format = self._get_requested_format()
                 if self.format is None:
-                    self.format = 'text/html'  # default format
+                    self.format = self.views[self.view].default_format
+
+                self.language = self._get_requested_language()
+                if self.language is None:
+                    self.language = self.views[self.view].default_language
             except ViewsFormatsException as e:
                 print(e)
                 self.vf_error = str(e)
@@ -287,6 +296,43 @@ class Renderer:
 
         return None  # if no match found
 
+    def _get_accept_languages_in_order(self):
+        """
+        Reads an Accept HTTP header and returns an array of Media Type string in descending weighted order
+
+        :return: List of URIs of accept profiles in descending request order
+        :rtype: list
+        """
+        try:
+            # split the header into individual URIs, with weights still attached
+            profiles = self.request.headers['Accept-Language'].split(',')
+            # remove \s
+            profiles = [x.replace(' ', '').strip() for x in profiles]
+
+            # split off any weights and sort by them with default weight = 1
+            profiles = [(float(x.split(';')[1].replace('q=', '')) if len(x.split(';')) == 2 else 1, x.split(';')[0]) for x in profiles]
+
+            # sort profiles by weight, heaviest first
+            profiles.sort(reverse=True)
+
+            return[x[1] for x in profiles]
+        except Exception as e:
+            raise ViewsFormatsException(
+                'You have requested a language using an Accept-Language header that is incorrectly formatted.')
+
+    def _get_available_languages(self):
+        return self.views[self.view].languages
+
+    def _get_best_accept_language(self):
+        languages_requested = self._get_accept_languages_in_order()
+        languages_available = self._get_available_languages()
+
+        for languages in languages_requested:
+            if languages in languages_available:
+                return languages
+
+        return None  # if no match found
+
     def _get_requested_view(self):
         # if a particular _view is requested, if it's available, return it
         # the _view selector, coming first (before profile neg) will override profile neg, if both are set
@@ -310,10 +356,11 @@ class Renderer:
             requested_format = self.request.values.get('_format').replace(' ', '+')
             if requested_format in self.views[self.view].formats:
                 return requested_format
-            else:
-                raise ViewsFormatsException(
-                    'The requested format for the {} view is not available for the resource for which '
-                    'it was requested'.format(self.view))
+            # silently return default format
+            # else:
+            #     raise ViewsFormatsException(
+            #         'The requested format for the {} view is not available for the resource for which '
+            #         'it was requested'.format(self.view))
 
         # try HTTP headers
         elif hasattr(self.request, 'headers'):
@@ -322,6 +369,25 @@ class Renderer:
                 return h if h is not None else self.views[self.view].default_format
 
         return self.views[self.view].default_format
+
+    def _get_requested_language(self):
+        if self.request.values.get('_lang') is not None:
+            requested_lang = self.request.values.get('_lang')
+            if requested_lang in self.views[self.view].languages:
+                return requested_lang
+            # silently return default lang
+            # else:
+            #     raise ViewsFormatsException(
+            #         'The requested language for the {} view is not available for the resource for which '
+            #         'it was requested'.format(self.view))
+
+        # try HTTP headers
+        elif hasattr(self.request, 'headers'):
+            if self.request.headers.get('Accept-Language') is not None:
+                h = self._get_best_accept_language()
+                return h if h is not None else self.views[self.view].default_language
+
+        return self.views[self.view].default_language
 
     def _make_alternates_view_headers(self):
         self.headers['Profile'] = 'https://promsns.org/def/alt'  # the profile of the Alternates View
