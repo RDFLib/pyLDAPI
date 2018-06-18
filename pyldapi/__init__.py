@@ -127,8 +127,8 @@ class View:
             label,
             comment,
             formats,
-            languages,
             default_format,
+            languages=None,
             default_language='en',
             namespace=None
     ):
@@ -136,7 +136,7 @@ class View:
         self.comment = comment
         self.formats = formats
         self.default_format = default_format
-        self.languages = set(['en'] + languages)  # auto-add English, deduplicate
+        self.languages = languages if languages is not None else ['en']
         self.default_language = default_language
         self.namespace = namespace
 
@@ -193,7 +193,7 @@ class Renderer:
             'Alternates',
             'The view that lists all other views',
             ['text/html', 'text/turtle', 'application/rdf+xml', 'application/rdf+json', 'application/json'],
-            [],  # default 'en' only for now
+            ['en'],  # default 'en' only for now
             'text/html',
             namespace='https://promsns.org/def/alt'
         )
