@@ -17,7 +17,7 @@ def setup(app, api_home_dir, api_uri):
     """
     Used to set up the Register of Registers for this LDAPI
 
-    Must be fun before app.run like this: thread = pyldapi.setup(app, conf.URI_BASE)
+    Must be run before app.run like this: thread = pyldapi.setup(app, conf.URI_BASE)
     :param app: the Flask app containing this LDAPI
     :type app: Flask app
     :param api_uri: URI base of the API
@@ -149,12 +149,11 @@ class PagingError(ValueError):
     pass
 
 
-class Renderer:
+class Renderer(object, metaclass=ABCMeta):
     """
     Abstract class as a parent for classes that validate the views & formats for an API-delivered resource (typically
     either registers or objects) and also creates an 'alternates view' for them, based on all available views & formats.
     """
-    __metaclass__ = ABCMeta
 
     RDF_MIMETYPES = ['text/turtle', 'application/rdf+xml', 'application/rdf+json', 'text/n3', 'text/nt']
 
@@ -682,7 +681,7 @@ class RegisterRenderer(Renderer):
                 g.add((item_uri, RDF.type, URIRef(self.uri)))
                 g.add((item_uri, REG.register, register_uri))
 
-        # because the rdflib JSON-LD serializer needs the tring 'json-ld', not a MIME type
+        # because the rdflib JSON-LD serializer needs the string 'json-ld', not a MIME type
         if self.format in ['application/rdf+json', 'application/json']:
             return Response(g.serialize(format='json-ld'), mimetype=self.format, headers=self.headers)
         else:

@@ -4,10 +4,13 @@ __pycache__/
 *.pyo
 
 # PyCharm
-.idea/
+/.idea/
 
 # Mac
 .DS_Store
+
+#Dolphin
+.directory
 
 # log files
 *.log
@@ -17,3 +20,6 @@ build/
 dist/
 *.egg
 *.egg-info/
+
+# Virtualenv
+/venv/

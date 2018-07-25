@@ -37,10 +37,10 @@ setup(
     },
     install_requires=[
         'flask',
+        'flask_paginate',
         'requests',
         'rdflib',
         'rdflib-jsonld'
     ],
 )
 
- # use http://peterdowns.com/posts/first-time-with-pypi.html
