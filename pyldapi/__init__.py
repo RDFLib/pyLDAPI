@@ -10,9 +10,6 @@ from rdflib import Graph, Namespace, URIRef, BNode, Literal, RDF, RDFS, XSD
 from abc import ABCMeta, abstractmethod
 
 
-g = Graph()
-
-
 def setup(app, api_home_dir, api_uri):
     """
     Used to set up the Register of Registers for this LDAPI
@@ -23,7 +20,7 @@ def setup(app, api_home_dir, api_uri):
     :param api_uri: URI base of the API
     :type api_uri: string
     :return: the thread executing this task
-    :rtype: thread
+    :rtype: Thread
     """
     t = Thread(target=_make_rofr_rdf, args=(app, api_home_dir, api_uri))
     t.start()
@@ -45,13 +42,13 @@ def _make_rofr_rdf(app, api_home_dir, api_uri):
     """
     sleep(1)  # to ensure that this occurs after the Flask boot
     print('making RofR')
-
+    g = Graph()
     # get the RDF for each Register, extract the bits we need, write them to graph g
     for rule in app.url_map.iter_rules():
         if '<' not in str(rule):  # no registers can have a Flask variable in their path
             # make the register view URI for each possible register
             candidate_register_uri = api_uri + str(rule) + '?_view=reg&_format=text/turtle'
-            get_filtered_register_graph(candidate_register_uri)
+            get_filtered_register_graph(candidate_register_uri, g)
 
     # serialise g
     with open(os.path.join(api_home_dir, 'rofr.ttl'), 'w') as f:
@@ -60,16 +57,19 @@ def _make_rofr_rdf(app, api_home_dir, api_uri):
     print('finished making RofR')
 
 
-def get_filtered_register_graph(register_uri):
+def get_filtered_register_graph(register_uri, g):
     """
     Gets a filtered version (label, comment, contained item classes & subregisters only) of the each register for the
     Register of Registers
 
     :param register_uri: the public URI of the register
     :type register_uri: string
+    :param g: the rdf graph to append registers to
+    :type g: Graph
     :return: True if ok, else False
     :rtype: boolean
     """
+    assert isinstance(g, Graph)
     logging.debug('assessing register candidate ' + register_uri.replace('?_view=reg&_format=text/turtle', ''))
     try:
         r = requests.get(register_uri)
@@ -106,7 +106,6 @@ def get_filtered_register_graph(register_uri):
                 }}
             '''.format(register_uri.replace('?_view=reg&_format=text/turtle', ''))
 
-            global g
             g += g2.query(q)
 
             return True
@@ -120,7 +119,7 @@ def get_filtered_register_graph(register_uri):
 
 class View:
     """
-    A class containing elements for a Linked Data 'movel view', including MIME type 'formats'
+    A class containing elements for a Linked Data 'model view', including MIME type 'formats'
     """
     def __init__(
             self,
