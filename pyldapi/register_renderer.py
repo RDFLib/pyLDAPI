@@ -3,10 +3,10 @@ from flask import Response, render_template
 from flask_paginate import Pagination
 from rdflib import Graph, Namespace, URIRef, Literal, RDF, RDFS, XSD
 from rdflib.term import Identifier
-
+import json
 from pyldapi.renderer import Renderer
 from pyldapi.view import View
-from pyldapi.exceptions import ViewsFormatsException
+from pyldapi.exceptions import ViewsFormatsException, RegOfRegTtlError
 
 
 class RegisterRenderer(Renderer):
@@ -38,7 +38,7 @@ class RegisterRenderer(Renderer):
         :param comment: a description of the Register
         :type comment: string
         :param register_items: items within this register
-        :type register_items: list (of URIs (strings) or tuples like (URI, label) of (string, string)
+        :type register_items: list of URIs (strings) or tuples like (URI, label) of (string, string) or tuples like (URI, URI, label) if you want to manually specify an item's Class.
         :param contained_item_classes: list of URIs of each distinct class of item contained in this register
         :type contained_item_classes: list (of strings)
         :param register_total_count: total number of items in this Register (not of a page but the register as a whole)
@@ -143,10 +143,14 @@ class RegisterRenderer(Renderer):
 
     def _render_reg_view(self):
         # add link headers for all formats of reg view
-        if self.format == 'text/html':
+        if self.format == '_internal':
+            return self
+        elif self.format == 'text/html':
             return self._render_reg_view_html()
         elif self.format in Renderer.RDF_MIMETYPES:
             return self._render_reg_view_rdf()
+        else:
+            return self._render_reg_view_json()
 
     def _render_reg_view_html(self):
         pagination = Pagination(page=self.page, per_page=self.per_page, total=self.register_total_count)
@@ -247,14 +251,29 @@ class RegisterRenderer(Renderer):
         if self.format in ['application/ld+json', 'application/json']:
             return Response(g.serialize(format='json-ld'), mimetype=self.format, headers=self.headers)
         else:
-            return Response(g.serialize(format=self.format), mimetype=self.format, headers=self.headers)
+            _format = self.format if self.format in self.RDF_MIMETYPES else 'text/turtle'
+            return Response(g.serialize(format=_format), mimetype=_format, headers=self.headers)
 
+    def _render_reg_view_json(self):
+        return Response(
+            json.dumps({
+                'uri': self.uri,
+                'label': self.label,
+                'comment': self.comment,
+                'views': list(self.views.keys()),
+                'default_view': self.default_view_token,
+                'contained_item_classes': self.contained_item_classes,
+                'register_items': self.register_items
+            }),
+            mimetype='application/json',
+            headers=self.headers
+        )
     def _add_standard_reg_view(self):
         return {
             'reg': View(
                 'Registry Ontology',
                 'A simple list-of-items view taken from the Registry Ontology',
-                ['text/html', 'text/turtle', 'application/rdf+xml', 'application/ld+json'],
+                ['text/html', 'text/turtle', 'application/rdf+xml', 'application/ld+json', 'application/json', '_internal'],
                 'text/html',
                 'http://purl.org/linked-data/registry#'
             )
@@ -303,7 +322,10 @@ class RegisterOfRegistersRenderer(RegisterRenderer):
         )
 
         # find subregisters from rofr.ttl
-        g = Graph().parse(rofr_file_path, format='turtle')
+        try:
+            g = Graph().parse(rofr_file_path, format='turtle')
+        except FileNotFoundError:
+            raise RegOfRegTtlError()
         q = '''
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX reg: <http://purl.org/linked-data/registry#>

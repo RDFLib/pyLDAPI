@@ -49,7 +49,7 @@ class Renderer(object, metaclass=ABCMeta):
         self.views['alternates'] = View(
             'Alternates',
             'The view that lists all other views',
-            ['text/html', 'application/json'] + self.RDF_MIMETYPES,
+            ['text/html', 'application/json', '_internal'] + self.RDF_MIMETYPES,
             'text/html',
             languages=['en'],  # default 'en' only for now
             namespace='https://promsns.org/def/alt'
@@ -254,6 +254,8 @@ class Renderer(object, metaclass=ABCMeta):
 
     def _render_alternates_view(self):
         self._make_alternates_view_headers()
+        if self.format == '_internal':
+            return self
         if self.format == 'text/html':
             return self._render_alternates_view_html()
         elif self.format in Renderer.RDF_MIMETYPES:
@@ -290,6 +292,8 @@ class Renderer(object, metaclass=ABCMeta):
             g.add((v_node, RDFS.label, Literal(v.label, datatype=XSD.string)))
             g.add((v_node, RDFS.comment, Literal(v.comment, datatype=XSD.string)))
             for f in v.formats:
+                if str(f).startswith('_'):  # ignore formats like `_internal`
+                    continue
                 g.add((v_node, URIRef(DCT + 'format'), URIRef('http://w3id.org/mediatype/' + f)))
             g.add((v_node, ALT.hasDefaultFormat, Literal(v.default_format, datatype=XSD.string)))
             if v.namespace is not None:
