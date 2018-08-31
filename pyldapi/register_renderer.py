@@ -2,6 +2,8 @@
 from flask import Response, render_template
 from flask_paginate import Pagination
 from rdflib import Graph, Namespace, URIRef, Literal, RDF, RDFS, XSD
+from rdflib.term import Identifier
+
 from pyldapi.renderer import Renderer
 from pyldapi.view import View
 from pyldapi.exceptions import ViewsFormatsException
@@ -211,16 +213,34 @@ class RegisterRenderer(Renderer):
         if self.page != self.last_page:
             g.add((page_uri, XHV.next, URIRef(page_uri_str_nonum + str(self.page + 1))))
 
+        if len(self.contained_item_classes) == 1:
+            contained_item_class = URIRef(self.contained_item_classes[0])
+        else:
+            contained_item_class = None
+
         # add all the items
         for item in self.register_items:
-            if isinstance(item, tuple):  # if it's a tuple, add in the label
+            if isinstance(item, tuple):  # if it's a tuple, add in the type
+                if len(item) < 2:
+                    raise ValueError("Not enough items in register_item tuple.")
                 item_uri = URIRef(item[0])
-                g.add((item_uri, RDF.type, URIRef(self.uri)))
-                g.add((item_uri, RDFS.label, Literal(item[1], datatype=XSD.string)))
+                if item[1] and isinstance(item[1], Identifier):
+                    g.add((item_uri, RDF.type, item[1]))
+                    if len(item) > 2:
+                        g.add((item_uri, RDFS.label,
+                               Literal(item[2], datatype=XSD.string)))
+                elif item[1] and isinstance(item[1], (str, bytes, Literal)):
+                    g.add((item_uri, RDFS.label,
+                           Literal(item[1], datatype=XSD.string)))
+                    if len(item) > 2 and isinstance(item[2], Identifier):
+                        g.add((item_uri, RDF.type, item[2]))
+                    elif contained_item_class:
+                        g.add((item_uri, RDF.type, contained_item_class))
                 g.add((item_uri, REG.register, register_uri))
             else:  # just URIs
                 item_uri = URIRef(item)
-                g.add((item_uri, RDF.type, URIRef(self.uri)))
+                if contained_item_class:
+                    g.add((item_uri, RDF.type, contained_item_class))
                 g.add((item_uri, REG.register, register_uri))
 
         # because the rdflib JSON-LD serializer needs the string 'json-ld', not a MIME type

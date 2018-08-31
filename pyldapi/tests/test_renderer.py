@@ -5,10 +5,17 @@ class MockRequest:
     pass
 
 
+class MockRenderer(Renderer):
+    def render(self):
+        # use the now gotten view & format to create a response
+        pass
+
+
 def accept_profile_testing_setup():
     # this tests Accept-Profile selection of 'test' view
     mr = MockRequest()
     mr.url = 'http://whocares.com'
+    mr.values = {}
     mr.headers = {
         'Accept-Profile': 'http://nothing.com ,'
                           'http://nothing-else.com,'
@@ -36,7 +43,7 @@ def accept_profile_testing_setup():
     }
 
     global r
-    r = Renderer(
+    r = MockRenderer(
         mr,
         'http://whocares.com',
         views,
@@ -67,7 +74,7 @@ def accept_profile_testing_setup():
     }
 
     global r2
-    r2 = Renderer(
+    r2 = MockRenderer(
         mr2,
         'http://whocares.com',
         views2,
@@ -77,6 +84,8 @@ def accept_profile_testing_setup():
     # this tests QSA selection of 'alternates' view
     mr3 = MockRequest()
     mr3.url = 'http://whocares.com'
+    mr3.values = {}
+    mr3.headers = {}
 
     views3 = {
         'auorg': View(
@@ -96,7 +105,7 @@ def accept_profile_testing_setup():
     }
 
     global r3
-    r3 = Renderer(
+    r3 = MockRenderer(
         mr3,
         'http://whocares.com',
         views3,
@@ -108,11 +117,11 @@ def test_get_accept_profiles_in_order():
     global r
 
     aexpected_result = [
+        'http://nothing.com',
+        'http://nothing-else.com',
         'http://notavailable.com',
         'http://test.com',
-        'http://test.linked.data.gov.au/def/auorg#',
-        'http://nothing.com',
-        'http://nothing-else.com'
+        'http://test.linked.data.gov.au/def/auorg#'
     ]
     assert r._get_accept_profiles_in_order() == aexpected_result, \
         'Failed test_get_accept_profiles_in_order() test 4'
@@ -120,10 +129,11 @@ def test_get_accept_profiles_in_order():
 
 def test_get_available_profile_uris():
     global r
+
     assert r._get_available_profile_uris() == {
         'http://test.linked.data.gov.au/def/auorg#': 'auorg',
         'http://test.com': 'test',
-        'http://promsns.org/def/alt': 'alternates'
+        'https://promsns.org/def/alt': 'alternates'
     }, 'Failed test_get_available_profile_uris()'
 
 
@@ -172,7 +182,7 @@ def test_render_alternates_view_rdf():
     mr3.headers = {}
 
     global r3
-    r3 = Renderer(
+    r3 = MockRenderer(
         mr3,
         'http://whocares.com',
         views3,
@@ -187,10 +197,9 @@ if __name__ == '__main__':
     global r3
 
     accept_profile_testing_setup()
-    # test_get_accept_profiles_in_order()
-    # test_get_available_profile_uris()
-    # test_get_accept_profiles_in_order()
-    # test_get_best_accept_profile()
+    test_get_accept_profiles_in_order()
+    test_get_available_profile_uris()
+    test_get_best_accept_profile()
     test_get_requested_view()
 
     # test_render_alternates_view_rdf()
