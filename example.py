@@ -21,6 +21,20 @@ cats = [
     }
 ]
 
+dogs = [
+    {
+        "name": "Rex",
+        "breed": "Dachshund",
+        "age": 7,
+        "color": "brown",
+    }, {
+        "name": "Micky",
+        "breed": "Alsatian",
+        "age": 3,
+        "color": "black",
+    }
+]
+
 
 app = Flask(__name__)
 
@@ -34,15 +48,29 @@ def reg1():
                          "A complete register of my cats.",
                          cat_items,
                          ["http://example.com/Cat"],
-                         len(cat_items)
+                         len(cat_items),
+                         super_register=request.url_root
                          )
     return r.render()
 
+@app.route('/dogs')
+def reg2():
+    dog_items = [("http://example.com/id/dogs/{}".format(i['name']), i['name']) for i in dogs]
+    r = RegisterRenderer(request,
+                         request.url_root + 'dogs',
+                         "Dogs Register",
+                         "A complete register of my dogs.",
+                         dog_items,
+                         ["http://example.com/Dog"],
+                         len(dog_items),
+                         super_register=request.url_root
+                         )
+    return r.render()
 
 @app.route('/')
 def index():
     rofr = RegisterOfRegistersRenderer(request,
-                                       request.url,
+                                       request.url_root,
                                        "Register of Registers",
                                        "A register of all of my registers.",
                                        "./rofr.ttl"
