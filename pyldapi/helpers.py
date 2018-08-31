@@ -35,6 +35,10 @@ def _make_rofr_rdf(app, api_home_dir, api_uri):
     :rtype: None
     """
     from time import sleep
+    try:
+        os.remove(os.path.join(api_home_dir, 'rofr.ttl'))
+    except FileNotFoundError:
+        pass
     sleep(1)  # to ensure that this occurs after the Flask boot
     print('making RofR')
     g = Graph()
@@ -87,24 +91,25 @@ def get_filtered_register_graph(register_uri, g):
                 PREFIX reg: <http://purl.org/linked-data/registry#>
                 PREFIX ereg: <https://promsns.org/def/eregistry#>
                 CONSTRUCT {{
-                    <{0}> a reg:Register .
-                    ?r rdfs:label ?label .
-                    ?r rdfs:comment ?comment .
-                    ?r reg:containedItemClass ?cic .
-                    ?superregister reg:subregister ?r .
+                    <{0}> a reg:Register ;
+                          rdfs:label ?label ;
+                          rdfs:comment ?comment ;
+                          reg:containedItemClass ?cic ;
+                          ereg:superregister ?superregister ;
+                          reg:subregister ?subregister .
+                    ?superregister reg:subregister <{0}> .
                 }}
                 WHERE {{
-                    <{0}> a reg:Register .
-                    ?r rdfs:label ?label .
-                    ?r rdfs:comment ?comment .
-                    ?r reg:containedItemClass ?cic .
-                    OPTIONAL {{ ?r ereg:superregister ?superregister . }}
-                    OPTIONAL {{ ?r reg:subregister ?subregister . }}
+                    <{0}> a reg:Register ;
+                          rdfs:label ?label ;
+                          rdfs:comment ?comment ;
+                          reg:containedItemClass ?cic .
+                    OPTIONAL {{ <{0}> ereg:superregister ?superregister . }}
+                    OPTIONAL {{ <{0}> reg:subregister ?subregister . }}
                 }}
             '''.format(register_uri.replace('?_view=reg&_format=text/turtle', ''))
 
             g += g2.query(q)
-
             return True
         else:
             logging.debug(
