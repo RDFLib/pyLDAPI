@@ -314,7 +314,7 @@ class Renderer(object, metaclass=ABCMeta):
         return Response(
             json.dumps({
                 'uri': self.uri,
-                'views': self.views,
+                'views': list(self.views.keys()),
                 'default_view': self.default_view_token
             }),
             mimetype='application/json',
