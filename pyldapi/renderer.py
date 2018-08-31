@@ -13,7 +13,7 @@ class Renderer(object, metaclass=ABCMeta):
     either registers or objects) and also creates an 'alternates view' for them, based on all available views & formats.
     """
 
-    RDF_MIMETYPES = ['text/turtle', 'application/rdf+xml', 'application/rdf+json', 'text/n3', 'text/nt']
+    RDF_MIMETYPES = ['text/turtle', 'application/rdf+xml', 'application/ld+json', 'text/n3', 'text/nt']
 
     def __init__(self, request, uri, views, default_view_token):
         """
@@ -300,7 +300,7 @@ class Renderer(object, metaclass=ABCMeta):
                 g.add((URIRef(self.uri), ALT.hasDefaultView, v_node))
 
         # because the rdflib JSON-LD serializer needs the string 'json-ld', not a MIME type
-        if self.format in ['application/rdf+json', 'application/json']:
+        if self.format in ['application/ld+json', 'application/json']:
             return Response(g.serialize(format='json-ld'), mimetype=self.format, headers=self.headers)
         else:
             return g.serialize(format=self.format)

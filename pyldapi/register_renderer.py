@@ -224,7 +224,7 @@ class RegisterRenderer(Renderer):
                 g.add((item_uri, REG.register, register_uri))
 
         # because the rdflib JSON-LD serializer needs the string 'json-ld', not a MIME type
-        if self.format in ['application/rdf+json', 'application/json']:
+        if self.format in ['application/ld+json', 'application/json']:
             return Response(g.serialize(format='json-ld'), mimetype=self.format, headers=self.headers)
         else:
             return Response(g.serialize(format=self.format), mimetype=self.format, headers=self.headers)
@@ -234,7 +234,7 @@ class RegisterRenderer(Renderer):
             'reg': View(
                 'Registry Ontology',
                 'A simple list-of-items view taken from the Registry Ontology',
-                ['text/html', 'text/turtle', 'application/rdf+xml', 'application/rdf+json'],
+                ['text/html', 'text/turtle', 'application/rdf+xml', 'application/ld+json'],
                 'text/html',
                 'http://purl.org/linked-data/registry#'
             )
