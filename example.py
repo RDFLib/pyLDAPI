@@ -80,5 +80,4 @@ def index():
 thread = pyldapi_setup(app, '.', 'http://127.0.0.1:8081')
 
 if __name__ == "__main__":
-    app.run("127.0.0.1", 8081, debug=True, threaded=True)
-    thread.join()
+    app.run("127.0.0.1", 8081, debug=True, threaded=True, use_reloader=False)
