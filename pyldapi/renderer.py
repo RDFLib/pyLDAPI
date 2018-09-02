@@ -15,7 +15,7 @@ class Renderer(object, metaclass=ABCMeta):
 
     RDF_MIMETYPES = ['text/turtle', 'application/rdf+xml', 'application/ld+json', 'text/n3', 'text/nt']
 
-    def __init__(self, request, uri, views, default_view_token):
+    def __init__(self, request, uri, views, default_view_token, alternates_template=None):
         """
         Init function for class
         :param request: the Flask request object that triggered this class object creation
@@ -26,6 +26,8 @@ class Renderer(object, metaclass=ABCMeta):
         :type views: list (of View class objects)
         :param default_view_token: the ID of the default view (key of a view in the list of Views)
         :type default_view_token: string (key in views)
+        :param alternates_template: the jinja template to use for rendering the HTML alternates view
+        :type alternates_template: string | None
         """
         self.request = request
         self.uri = uri
@@ -44,7 +46,7 @@ class Renderer(object, metaclass=ABCMeta):
                 'The view token you specified for the default view is not in the list of views you supplied'
             )
         self.default_view_token = default_view_token
-
+        self.alternates_template = alternates_template
         # auto-add in an Alternates view
         self.views['alternates'] = View(
             'Alternates',
@@ -266,7 +268,7 @@ class Renderer(object, metaclass=ABCMeta):
     def _render_alternates_view_html(self):
         return Response(
             render_template(
-                'alternates.html',
+                self.alternates_template or 'alternates.html',
                 uri=self.uri,
                 default_view_token=self.default_view_token,
                 views=self.views

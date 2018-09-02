@@ -14,20 +14,10 @@ class RegisterRenderer(Renderer):
     """
     Specific implementation of the abstract Renderer for displaying Register information
     """
-    def __init__(
-            self,
-            request,
-            uri,
-            label,
-            comment,
-            register_items,
-            contained_item_classes,
-            register_total_count,
-            views=None,
-            default_view_token=None,
-            super_register=None,
-            page_size_max=1000
-    ):
+    def __init__(self, request, uri, label, comment, register_items,
+                 contained_item_classes, register_total_count, *args,
+                 views=None, default_view_token=None, super_register=None,
+                 page_size_max=1000, register_template=None, **kwargs):
         """
         Init function for class
         :param request: the Flask request triggering this class object creation
@@ -50,12 +40,15 @@ class RegisterRenderer(Renderer):
         :type default_view_token: string (key in views)
         :param super_register: a super-register URI for this register. Can be within this API or external
         :type super_register: string
+        :param register_template: the jinja template to use for rendering the HTML view of the register
+        :type register_template: string | None
         """
         if views is None:
             self.views = self._add_standard_reg_view()
         if default_view_token is None:
             self.default_view_token = 'reg'
-        super().__init__(request, uri, self.views, self.default_view_token)
+        super().__init__(request, uri, self.views,
+                         self.default_view_token, **kwargs)
         self.label = label
         self.comment = comment
         if register_items is not None:
@@ -68,7 +61,7 @@ class RegisterRenderer(Renderer):
         self.page = request.args.get('page', type=int, default=1)
         self.super_register = super_register
         self.page_size_max = page_size_max
-
+        self.register_template = register_template
         self.paging_error = self._paging()
 
         try:
@@ -158,7 +151,7 @@ class RegisterRenderer(Renderer):
 
         return Response(
             render_template(
-                'register.html',
+                self.register_template or 'register.html',
                 uri=self.uri,
                 label=self.label,
                 contained_item_classes=self.contained_item_classes,
@@ -290,15 +283,8 @@ class RegisterOfRegistersRenderer(RegisterRenderer):
 
     This subclass just auto-fills many of the RegisterRenderer options
     """
-    def __init__(
-            self,
-            request,
-            uri,
-            label,
-            comment,
-            rofr_file_path,
-            super_register=None,
-    ):
+    def __init__(self, request, uri, label, comment, rofr_file_path, *args,
+                 super_register=None, **kwargs):
         """
         Init function for class
         :param request: the Flask request triggering this class object creation
@@ -314,16 +300,9 @@ class RegisterOfRegistersRenderer(RegisterRenderer):
         :param super_register: a super-register URI for this register. Can be within this API or external
         :type super_register: string
         """
-        super(RegisterOfRegistersRenderer, self).__init__(
-            request,
-            uri,
-            label,
-            comment,
-            None,
-            ['http://purl.org/linked-data/registry#Register'],
-            0,
-            super_register
-        )
+        super(RegisterOfRegistersRenderer, self).__init__(request, uri, label,
+              comment, None, ['http://purl.org/linked-data/registry#Register'],
+              0, super_register=super_register, **kwargs)
         self.subregister_cics = defaultdict(lambda: set())
 
         # find subregisters from rofr.ttl

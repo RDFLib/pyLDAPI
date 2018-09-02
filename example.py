@@ -63,7 +63,9 @@ def reg2():
                          dog_items,
                          ["http://example.com/Dog"],
                          len(dog_items),
-                         super_register=request.url_root
+                         super_register=request.url_root,
+                         register_template='testme.html',
+                         alternates_template='testme2.html'
                          )
     return r.render()
 
