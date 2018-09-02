@@ -7,7 +7,7 @@ from pyldapi.register_renderer import RegisterRenderer,\
 from pyldapi.view import View
 from pyldapi.helpers import setup, get_filtered_register_graph
 
-__version__ = '2.0.6'
+__version__ = '2.0.7'
 
 __all__ = ['Renderer', 'RegisterRenderer', 'RegisterOfRegistersRenderer',
            'View', 'ViewsFormatsException', 'PagingError', 'setup',

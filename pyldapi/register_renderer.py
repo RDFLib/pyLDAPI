@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from collections import defaultdict
 from flask import Response, render_template
 from flask_paginate import Pagination
 from rdflib import Graph, Namespace, URIRef, Literal, RDF, RDFS, XSD
@@ -174,7 +175,7 @@ class RegisterRenderer(Renderer):
             headers=self.headers
         )
 
-    def _render_reg_view_rdf(self):
+    def _generate_reg_view_rdf(self):
         g = Graph()
 
         REG = Namespace('http://purl.org/linked-data/registry#')
@@ -228,18 +229,18 @@ class RegisterRenderer(Renderer):
                 if len(item) < 2:
                     raise ValueError("Not enough items in register_item tuple.")
                 item_uri = URIRef(item[0])
-                if item[1] and isinstance(item[1], Identifier):
-                    g.add((item_uri, RDF.type, item[1]))
-                    if len(item) > 2:
-                        g.add((item_uri, RDFS.label,
-                               Literal(item[2], datatype=XSD.string)))
-                elif item[1] and isinstance(item[1], (str, bytes, Literal)):
+                if item[1] and isinstance(item[1], (str, bytes, Literal)):
                     g.add((item_uri, RDFS.label,
                            Literal(item[1], datatype=XSD.string)))
                     if len(item) > 2 and isinstance(item[2], Identifier):
                         g.add((item_uri, RDF.type, item[2]))
                     elif contained_item_class:
                         g.add((item_uri, RDF.type, contained_item_class))
+                elif item[1] and isinstance(item[1], Identifier):
+                    g.add((item_uri, RDF.type, item[1]))
+                    if len(item) > 2:
+                        g.add((item_uri, RDFS.label,
+                               Literal(item[2], datatype=XSD.string)))
                 g.add((item_uri, REG.register, register_uri))
             else:  # just URIs
                 item_uri = URIRef(item)
@@ -247,12 +248,15 @@ class RegisterRenderer(Renderer):
                     g.add((item_uri, RDF.type, contained_item_class))
                 g.add((item_uri, REG.register, register_uri))
 
-        # because the rdflib JSON-LD serializer needs the string 'json-ld', not a MIME type
+        return g
+
+    def _render_reg_view_rdf(self):
+        g = self._generate_reg_view_rdf()
         if self.format in ['application/ld+json', 'application/json']:
-            return Response(g.serialize(format='json-ld'), mimetype=self.format, headers=self.headers)
+            _format = 'json-ld'
         else:
             _format = self.format if self.format in self.RDF_MIMETYPES else 'text/turtle'
-            return Response(g.serialize(format=_format), mimetype=_format, headers=self.headers)
+        return Response(g.serialize(format=_format), mimetype=_format, headers=self.headers)
 
     def _render_reg_view_json(self):
         return Response(
@@ -320,6 +324,7 @@ class RegisterOfRegistersRenderer(RegisterRenderer):
             0,
             super_register
         )
+        self.subregister_cics = defaultdict(lambda: set())
 
         # find subregisters from rofr.ttl
         try:
@@ -329,11 +334,34 @@ class RegisterOfRegistersRenderer(RegisterRenderer):
         q = '''
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX reg: <http://purl.org/linked-data/registry#>
-            SELECT ?uri ?label
+            SELECT ?uri ?label ?rofr ?cic
             WHERE {
+                ?uri a reg:Register ;
+                rdfs:label ?label ;
+                reg:containedItemClass ?cic .
                 ?rofr reg:subregister ?uri .
-                ?uri rdfs:label ?label .
             }
             '''
+        found_subregisters = set()
         for r in g.query(q):
-            self.register_items.append((r['uri'], r['label']))
+            target_rofr = r['rofr']
+            # TODO filter so we only add subregisters which
+            # match this rofr to target_rofr
+            subregister_uri = r['uri']
+            subregister_cic = r['cic']
+            if subregister_cic:
+                self.subregister_cics[subregister_uri].add(subregister_cic)
+            if subregister_uri in found_subregisters:
+                # don't add subregister to register_items more than once
+                continue
+            self.register_items.append((subregister_uri, r['label']))
+            found_subregisters.add(subregister_uri)
+
+    def _generate_reg_view_rdf(self):
+        g = super(RegisterOfRegistersRenderer, self)._generate_reg_view_rdf()
+        REG = Namespace('http://purl.org/linked-data/registry#')
+        for uri_str, cics in self.subregister_cics.items():
+            uri = URIRef(uri_str)
+            for cic in cics:
+                g.add((uri, REG.containedItemClass, cic))
+        return g

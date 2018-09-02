@@ -274,7 +274,7 @@ class Renderer(object, metaclass=ABCMeta):
             headers=self.headers
         )
 
-    def _render_alternates_view_rdf(self):
+    def _generate_alternates_view_rdf(self):
         g = Graph()
         ALT = Namespace('http://promsns.org/def/alt#')
         g.bind('alt', ALT)
@@ -303,12 +303,15 @@ class Renderer(object, metaclass=ABCMeta):
             if self.default_view_token == token:
                 g.add((URIRef(self.uri), ALT.hasDefaultView, v_node))
 
-        # because the rdflib JSON-LD serializer needs the string 'json-ld', not a MIME type
+        return g
+
+    def _render_alternates_view_rdf(self):
+        g = self._generate_alternates_view_rdf()
         if self.format in ['application/ld+json', 'application/json']:
-            return Response(g.serialize(format='json-ld'), mimetype=self.format, headers=self.headers)
+            _format = 'json-ld'
         else:
-            return g.serialize(format=self.format)
-            # return Response(g.serialize(format=self.format), mimetype=self.format, headers=self.headers)
+            _format = self.format if self.format in self.RDF_MIMETYPES else 'text/turtle'
+        return Response(g.serialize(format=_format), mimetype=_format, headers=self.headers)
 
     def _render_alternates_view_json(self):
         return Response(

@@ -67,10 +67,13 @@ def _make_rofr_rdf(app, api_home_dir, api_uri):
             if isinstance(resp, RegisterRenderer):
                 with test_context:
                     try:
+                        resp.format = 'text/html'
                         html_resp = resp._render_reg_view_html()
                     except TemplateNotFound:  # missing html template
                         pass  # TODO: Fail on this error
+                    resp.format = 'application/json'
                     json_resp = resp._render_reg_view_json()
+                    resp.format = 'text/turtle'
                     rdf_resp = resp._render_reg_view_rdf()
 
                 _filter_register_graph(
