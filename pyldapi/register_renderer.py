@@ -246,10 +246,13 @@ class RegisterRenderer(Renderer):
     def _render_reg_view_rdf(self):
         g = self._generate_reg_view_rdf()
         if self.format in ['application/ld+json', 'application/json']:
-            _format = 'json-ld'
+            serial_format = 'json-ld'
+        elif self.format in self.RDF_MIMETYPES:
+            serial_format = self.format
         else:
-            _format = self.format if self.format in self.RDF_MIMETYPES else 'text/turtle'
-        return Response(g.serialize(format=_format), mimetype=_format, headers=self.headers)
+            serial_format = 'text/turtle'
+            self.format = serial_format
+        return Response(g.serialize(format=serial_format), mimetype=self.format, headers=self.headers)
 
     def _render_reg_view_json(self):
         return Response(
@@ -265,6 +268,7 @@ class RegisterRenderer(Renderer):
             mimetype='application/json',
             headers=self.headers
         )
+
     def _add_standard_reg_view(self):
         return {
             'reg': View(
