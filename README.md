@@ -34,9 +34,9 @@ This repository is licensed under GNU General Public License (GPL) v3.0. See the
 
 Contacts
 --------
-| Developer and Point of Contact:
-| **Nicholas Car**
-| *Senior Experimental Scientist*
-| CSIRO Land & Water
-| `nicholas.car@csiro.au <nicholas.car@csiro.au>`_
-| `http://orcid.org/0000-0002-8742-7730 <http://orcid.org/0000-0002-8742-7730>`_
+| Developer and Point of Contact:  
+| **Nicholas Car**  
+| *Senior Experimental Scientist*  
+| CSIRO Land & Water  
+| `nicholas.car@csiro.au <nicholas.car@csiro.au>`_  
+| `http://orcid.org/0000-0002-8742-7730 <http://orcid.org/0000-0002-8742-7730>`_  
