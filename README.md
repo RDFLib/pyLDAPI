@@ -1,11 +1,9 @@
-Python Linked Data API (pyLDAPI)
-================================
+# Python Linked Data API (pyLDAPI)
 A very small module to add Linked Data API functionality to a Python Flask installation
 
 
-How to use
-----------
-This module contains only a single Python file with a few static methods and classes that are indented to be added to a Flask API in order to add a series of extra functions to endpoints that the API delivers. It will also require the addition of one API endpoint - a 'Register of Registers' (see below) - if it is not already present.
+## How to use
+This module contains only a small Python module which is indented to be added (imported) into a [Python Flask](http://flask.pocoo.org/) installation in order to add a series of extra functions to endpoints to the ones defined by you as a Flask user (URL routes).
 
 An API using this module will get:
 
@@ -16,27 +14,39 @@ An API using this module will get:
 * a basic, over-writeable, template for Registers' HTML & RDF
 
 
-
-Definitions
------------
-* **alternates view**: the *model view* that lists all other views. This API uses the definition of *alternates view* presented at `https://promsns.org/def/alt <https://promsns.org/def/alt>`_
-* **Linked Data principles**: principles of making things available over the Internet in both human and machine readable forms. codified by the World Wide Web Consortium. See `https://www.w3.org/standards/semanticweb/data <https://www.w3.org/standards/semanticweb/data>`_
+## Definitions
+* **alternates view**: the *model view* that lists all other views. This API uses the definition of *alternates view* presented at <https://promsns.org/def/alt>
+* **Linked Data principles**: principles of making things available over the Internet in both human and machine readable forms. codified by the World Wide Web Consortium. See <https://www.w3.org/standards/semanticweb/data>
 * *model view*: a set of properties of a Linked Data object codified according to a standard or profile of a standard
 * **Object**: any individual thing delivered according to *Linked Data principles*
 * **Register**: a simple listing of URIs of objects, delivered according to *Linked Data principles*
 * **Register of Registers**: a a *register* that lists all other *registers* that an API provides
 
 
-License
--------
+## Further Documentation
+Detailed documenatation is the subject of current work (September, 2018) so please revisit this location for it soon! Also, see the implementaitons below. The first is a small project.
+
+
+## Implementations
+* Register of Media Types
+    * <https://w3id.org/mediatype/>
+* Linked Data version of the Geocoded National Address File
+    * <http://linked.data.gov.au/dataset/gnaf>
+
+
+## License
 This repository is licensed under GNU General Public License (GPL) v3.0. See the [LICENSE deed](LICENSE) in this repository for details.
 
 
-Contacts
---------
-| Developer and Point of Contact:  
-| **Nicholas Car**  
-| *Senior Experimental Scientist*  
-| CSIRO Land & Water  
-| `nicholas.car@csiro.au <nicholas.car@csiro.au>`_  
-| `http://orcid.org/0000-0002-8742-7730 <http://orcid.org/0000-0002-8742-7730>`_  
+## Contacts
+Lead:  
+**Nicholas Car**  
+*Senior Experimental Scientist*  
+CSIRO Land & Water  
+<nicholas.car@csiro.au>  
+<http://orcid.org/0000-0002-8742-7730>  
+
+Senior Developer:  
+**Ashley Sommer**  
+*Informatics Software Engineer*  
+<ashley.sommer@csiro.au>  
