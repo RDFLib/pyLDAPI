@@ -27,3 +27,7 @@ dist/
 
 # generated rofr.ttl
 rofr.ttl
+
+# the config
+_config/__init__.py
+
