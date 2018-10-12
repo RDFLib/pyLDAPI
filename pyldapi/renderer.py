@@ -13,7 +13,20 @@ class Renderer(object, metaclass=ABCMeta):
     either registers or objects) and also creates an 'alternates view' for them, based on all available views & formats.
     """
 
-    RDF_MIMETYPES = ['text/turtle', 'application/rdf+xml', 'application/ld+json', 'text/n3', 'text/nt']
+    RDF_MIMETYPES = ['text/turtle', 'application/rdf+xml', 'application/ld+json', 'text/n3', 'application/n-triples']
+    RDF_SERIALIZER_MAP = {
+        "text/turtle": "turtle",
+        "text/n3": "n3",
+        "application/n-triples": "nt",
+        "application/ld+json": "json-ld",
+        "application/rdf+xml": "xml",
+        # Some common but incorrect mimetypes
+        "application/rdf": "xml",
+        "application/json": "json-ld",
+        "text/ttl": "turtle",
+        "text/ntriples": "nt",
+        "text/n-triples": "nt",
+    }
 
     def __init__(self, request, uri, views, default_view_token, alternates_template=None):
         """
@@ -255,6 +268,8 @@ class Renderer(object, metaclass=ABCMeta):
         # TODO: add in the list of all other available Profiles (views) here
 
     def _render_alternates_view(self):
+        # TODO: Pass self.uri to here. WHY?
+        # https://github.com/RDFLib/pyLDAPI/issues/3
         self._make_alternates_view_headers()
         if self.format == '_internal':
             return self
@@ -307,16 +322,23 @@ class Renderer(object, metaclass=ABCMeta):
 
         return g
 
+    def _make_rdf_response(self, graph, mimetype=None, headers=None):
+        if headers is None:
+            headers = self.headers
+        serial_format = self.RDF_SERIALIZER_MAP.get(self.format, None)
+        if serial_format is None:
+            serial_format = "turtle"
+            response_mimetype = "text/turtle"
+        else:
+            response_mimetype = self.format
+        if mimetype is not None:
+            # override mimetype?
+            response_mimetype = mimetype
+        return Response(graph.serialize(format=serial_format), mimetype=response_mimetype, headers=headers)
+
     def _render_alternates_view_rdf(self):
         g = self._generate_alternates_view_rdf()
-        if self.format in ['application/ld+json', 'application/json']:
-            serial_format = 'json-ld'
-        elif self.format in self.RDF_MIMETYPES:
-            serial_format = self.format
-        else:
-            serial_format = 'text/turtle'
-            self.format = serial_format
-        return Response(g.serialize(format=serial_format), mimetype=self.format, headers=self.headers)
+        return self._make_rdf_response(g)
 
     def _render_alternates_view_json(self):
         return Response(

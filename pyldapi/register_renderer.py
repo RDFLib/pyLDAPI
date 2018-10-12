@@ -245,14 +245,7 @@ class RegisterRenderer(Renderer):
 
     def _render_reg_view_rdf(self):
         g = self._generate_reg_view_rdf()
-        if self.format in ['application/ld+json', 'application/json']:
-            serial_format = 'json-ld'
-        elif self.format in self.RDF_MIMETYPES:
-            serial_format = self.format
-        else:
-            serial_format = 'text/turtle'
-            self.format = serial_format
-        return Response(g.serialize(format=serial_format), mimetype=self.format, headers=self.headers)
+        return self._make_rdf_response(g)
 
     def _render_reg_view_json(self):
         return Response(
@@ -274,7 +267,7 @@ class RegisterRenderer(Renderer):
             'reg': View(
                 'Registry Ontology',
                 'A simple list-of-items view taken from the Registry Ontology',
-                ['text/html', 'text/turtle', 'application/rdf+xml', 'application/ld+json', 'application/json', '_internal'],
+                ['text/html', 'application/json', '_internal'] + self.RDF_MIMETYPES,
                 'text/html',
                 'http://purl.org/linked-data/registry#'
             )
