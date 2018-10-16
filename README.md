@@ -1,6 +1,7 @@
 # Python Linked Data API (pyLDAPI)
 A very small module to add Linked Data API functionality to a Python Flask installation
 
+[![PyPI version](https://badge.fury.io/py/pyldapi.svg)](https://badge.fury.io/py/pyldapi)
 
 ## How to use
 This module contains only a small Python module which is indented to be added (imported) into a [Python Flask](http://flask.pocoo.org/) installation in order to add a series of extra functions to endpoints to the ones defined by you as a Flask user (URL routes).
