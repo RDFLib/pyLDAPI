@@ -1,6 +1,10 @@
-from flask import Flask, Response, request
+import json
+
+from flask import Flask, Response, request, render_template
 from pyldapi import setup as pyldapi_setup
-from pyldapi import RegisterOfRegistersRenderer, RegisterRenderer
+from pyldapi import RegisterOfRegistersRenderer, RegisterRenderer, Renderer, View
+
+API_BASE = 'http://127.0.0.1:8081'
 
 cats = [
     {
@@ -35,50 +39,106 @@ dogs = [
     }
 ]
 
+MyPetView = View("PetView", "A profile of my pet.", ['text/html', 'application/json'],
+                 'text/html', namespace="http://example.org/def/mypetview")
 
 app = Flask(__name__)
 
 
+class PetRenderer(Renderer):
+    def __init__(self, request, uri, instance, pet_html_template, **kwargs):
+        self.views = {'mypetview': MyPetView}
+        self.default_view_token = 'mypetview'
+        super(PetRenderer, self).__init__(
+            request, uri, self.views, self.default_view_token, **kwargs)
+        self.instance = instance
+        self.pet_html_template = pet_html_template
+
+    def _render_mypetview(self):
+        if self.format == "application/json":
+            return Response(json.dumps(self.instance),
+                            mimetype="application/json", status=200)
+        elif self.format == "text/html":
+            return Response(render_template(self.pet_html_template, **self.instance))
+
+    def render(self):
+        if self.view == 'alternates':
+            return self._render_alternates_view()
+        elif self.view == 'mypetview':
+            self.headers['Profile'] = 'http://example.org/def/mypetview'
+            return self._render_mypetview()
+        else:
+            raise NotImplementedError(self.view)
+
+
+@app.route('/id/dog/<string:dog_id>')
+def dog_instance(dog_id):
+    instance = None
+    for d in dogs:
+        if d['name'] == dog_id:
+            instance = d
+            break
+    if instance is None:
+        return Response("Not Found", status=404)
+    renderer = PetRenderer(request, request.base_url, instance, 'dog.html')
+    return renderer.render()
+
+
+@app.route('/id/cat/<string:cat_id>')
+def cat_instance(cat_id):
+    instance = None
+    for c in cats:
+        if c['name'] == cat_id:
+            instance = c
+            break
+    if instance is None:
+        return Response("Not Found", status=404)
+    renderer = PetRenderer(request, request.base_url, instance, 'cat.html')
+    return renderer.render()
+
+
 @app.route('/cats')
-def reg1():
+def cats_reg():
     cat_items = [("http://example.com/id/cat/{}".format(i['name']), i['name']) for i in cats]
     r = RegisterRenderer(request,
-                         request.url_root + 'cats',
+                         API_BASE + '/cats',
                          "Cats Register",
                          "A complete register of my cats.",
                          cat_items,
                          ["http://example.com/Cat"],
                          len(cat_items),
-                         super_register=request.url_root
+                         super_register=API_BASE + '/'
                          )
     return r.render()
 
 @app.route('/dogs')
-def reg2():
-    dog_items = [("http://example.com/id/dogs/{}".format(i['name']), i['name']) for i in dogs]
+def dogs_reg():
+    dog_items = [("http://example.com/id/dog/{}".format(i['name']), i['name']) for i in dogs]
     r = RegisterRenderer(request,
-                         request.url_root + 'dogs',
+                         API_BASE + '/dogs',
                          "Dogs Register",
                          "A complete register of my dogs.",
                          dog_items,
                          ["http://example.com/Dog"],
                          len(dog_items),
-                         super_register=request.url_root,
-                         register_template='testme.html',
-                         alternates_template='testme2.html'
+                         super_register=API_BASE + '/',
+                         register_template='register.html',
+                         alternates_template='alternates.html'
                          )
     return r.render()
+
 
 @app.route('/')
 def index():
     rofr = RegisterOfRegistersRenderer(request,
-                                       request.url_root,
+                                       API_BASE,
                                        "Register of Registers",
                                        "A register of all of my registers.",
                                        "./rofr.ttl"
                                        )
     return rofr.render()
 
+
 if __name__ == "__main__":
-    pyldapi_setup(app, '.', 'http://127.0.0.1:8081')
+    pyldapi_setup(app, '.', API_BASE)
     app.run("127.0.0.1", 8081, debug=True, threaded=True, use_reloader=False)
