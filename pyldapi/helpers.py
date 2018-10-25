@@ -52,10 +52,11 @@ def _make_rofr_rdf(app, api_home_dir, api_uri):
                 endpoint_func = app.view_functions[rule.endpoint]
             except (AttributeError, KeyError):
                 continue
+            candidate_register_uri = api_uri + str(rule)
             try:
-                candidate_register_uri = api_uri + str(
+                dummy_request_uri = "http://localhost:5000" + str(
                     rule) + '?_view=reg&_format=_internal'
-                test_context = app.test_request_context(candidate_register_uri)
+                test_context = app.test_request_context(dummy_request_uri)
                 with test_context:
                     resp = endpoint_func()
             except RegOfRegTtlError:  # usually an RofR renderer cannot find its rofr.ttl.
@@ -76,9 +77,7 @@ def _make_rofr_rdf(app, api_home_dir, api_uri):
                     resp.format = 'text/turtle'
                     rdf_resp = resp._render_reg_view_rdf()
 
-                _filter_register_graph(
-                    candidate_register_uri.replace('?_view=reg&_format=_internal', ''),
-                    rdf_resp, g)
+                _filter_register_graph(candidate_register_uri, rdf_resp, g)
 
     # serialise g
     with open(os.path.join(api_home_dir, 'rofr.ttl'), 'w') as f:
