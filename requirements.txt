@@ -1,5 +1,4 @@
 flask
 flask_paginate
-requests
 rdflib
 rdflib-jsonld

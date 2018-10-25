@@ -22,10 +22,13 @@ class Renderer(object, metaclass=ABCMeta):
         "application/rdf+xml": "xml",
         # Some common but incorrect mimetypes
         "application/rdf": "xml",
+        "application/rdf xml": "xml",
         "application/json": "json-ld",
+        "application/ld json": "json-ld",
         "text/ttl": "turtle",
         "text/ntriples": "nt",
         "text/n-triples": "nt",
+        "text/plain": "nt",  # text/plain is the old/deprecated mimetype for n-triples
     }
 
     def __init__(self, request, uri, views, default_view_token, alternates_template=None):

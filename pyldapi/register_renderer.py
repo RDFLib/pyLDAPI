@@ -304,8 +304,12 @@ class RegisterOfRegistersRenderer(RegisterRenderer):
 
         # find subregisters from rofr.ttl
         try:
-            g = Graph().parse(rofr_file_path, format='turtle')
+            with open(rofr_file_path, 'rb') as file:
+                g = Graph().parse(file=file, format='turtle')
+            assert g, "Could not parse the RofR TTL file."
         except FileNotFoundError:
+            raise RegOfRegTtlError()
+        except AssertionError:
             raise RegOfRegTtlError()
         q = '''
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
