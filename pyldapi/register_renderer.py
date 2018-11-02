@@ -155,6 +155,7 @@ class RegisterRenderer(Renderer):
                 self.register_template or 'register.html',
                 uri=self.uri,
                 label=self.label,
+                comment=self.comment,
                 contained_item_classes=self.contained_item_classes,
                 register_items=self.register_items,
                 page=self.page,
