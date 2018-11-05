@@ -130,7 +130,7 @@ class RegisterRenderer(Renderer):
             return self._render_alternates_view()
         elif self.view == 'reg':
             if self.paging_error is None:
-                self.headers['Profile'] = 'http://purl.org/linked-data/registry#'
+                self.headers['Profile'] = str(self.views['reg'].namespace)
                 return self._render_reg_view()
             else:  # there is a paging error (e.g. page > last_page)
                 return Response(self.paging_error, status=400, mimetype='text/plain')
@@ -271,7 +271,8 @@ class RegisterRenderer(Renderer):
                 'A simple list-of-items view taken from the Registry Ontology',
                 ['text/html', 'application/json', '_internal'] + self.RDF_MIMETYPES,
                 'text/html',
-                'http://purl.org/linked-data/registry#'
+                languages=['en'],  # default 'en' only for now
+                namespace='http://purl.org/linked-data/registry'
             )
         }
 
