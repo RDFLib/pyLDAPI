@@ -10,13 +10,13 @@
    :caption: Background:
 
    README
-   example
 
 
 .. toctree::
    :maxdepth: 2
    :caption: API:
 
+   example
    renderer
    view
 

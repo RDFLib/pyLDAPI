@@ -42,7 +42,7 @@ Definitions
 
 
 
-pyLDAPI in Action
+pyLDAPI in action
 =================
 
 * Register of Media Types
