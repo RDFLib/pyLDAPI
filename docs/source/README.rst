@@ -7,7 +7,7 @@ Welcome to pyLDAPI
 What is it?
 ===========
 
-This module contains only a small Python module which is indented to be added (imported) into a `Python Flask`_ installation in order to add a series of extra functions to endpoints to the ones defined by you as a Flask user (URL routes).
+This module contains only a small Python module which is intended to be added (imported) into a `Python Flask`_ installation in order to add a series of extra functions to endpoints to the ones defined by you as a Flask user (URL routes).
 
 .. _Python Flask: http://flask.pocoo.org/
 
