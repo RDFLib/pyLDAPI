@@ -2,3 +2,5 @@ flask
 flask_paginate
 rdflib
 rdflib-jsonld
+sphinx
+sphinx_rtd_theme

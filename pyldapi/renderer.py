@@ -33,17 +33,21 @@ class Renderer(object, metaclass=ABCMeta):
 
     def __init__(self, request, uri, views, default_view_token, alternates_template=None):
         """
-        Init function for class
-        :param request: the Flask request object that triggered this class object creation
+        Constructor
+
+        :param request: Flask request object that triggered this class object's creation.
         :type request: Flask request object
-        :param uri: the URI called that triggered this API endpoint (can be via redirects but the main URI is needed)
-        :type uri: string
-        :param views: a list of views available for this resource
-        :type views: list (of View class objects)
-        :param default_view_token: the ID of the default view (key of a view in the list of Views)
-        :type default_view_token: string (key in views)
-        :param alternates_template: the jinja template to use for rendering the HTML alternates view
-        :type alternates_template: string | None
+        :param uri: The URI that triggered this API endpoint (can be via redirects but the main URI is needed).
+        :type uri: str
+        :param views: A dictionary of views available for this resource.
+        :type views: dict (of :class:`.View` class objects)
+        :param default_view_token: The ID of the default view (key of a view in the dictionary of :class:`.View` objects)
+        :type default_view_token: str (a key in views)
+        :param alternates_template: the jinja2 template to use for rendering the HTML alternates view
+        :type alternates_template: str
+
+        Note: See the :class:`.View` class on how to create a dictionary of views.
+
         """
         self.request = request
         self.uri = uri
@@ -356,5 +360,23 @@ class Renderer(object, metaclass=ABCMeta):
 
     @abstractmethod
     def render(self):
-        # use the now gotten view & format to create a response
+        """
+        Use the received view and format to create a response back to the client.
+
+        This is an abstract method.
+
+        Example:
+
+        .. code-block:: python
+
+            if self.view == 'alternates':
+                return self._render_alternates_view()
+            elif self.view == 'igsn-o':
+                if self.format == 'text/html':
+                    return self.export_html(model_view=self.view)
+                else:
+                    return Response(self.export_rdf(self.view, self.format), mimetype=self.format)
+
+        The example code determines the response based on the set *view* and *format* of the object.
+        """
         pass
