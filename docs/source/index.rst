@@ -16,10 +16,17 @@
    :maxdepth: 2
    :caption: API:
 
-   example
    renderer
    view
 
+   register_renderer
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Examples:
+
+   example_renderer_view_usage
+   example
 
 Indices and tables
 ==================

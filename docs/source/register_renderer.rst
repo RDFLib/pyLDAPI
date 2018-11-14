@@ -1,0 +1,4 @@
+Register Renderer
+=================
+
+Example

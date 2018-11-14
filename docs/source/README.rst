@@ -4,6 +4,7 @@ Welcome to pyLDAPI
 *A very small module to add Linked Data API functionality to a Python Flask installation*.
 
 
+
 What is it?
 ===========
 
@@ -24,21 +25,34 @@ An API using this module will get:
 Definitions
 ===========
 
-* **Alternates view**: the *model view* that lists all other views. This API uses the definition of *alternates view* presented at `https://promsns.org/def/alt`_.
+Alternates View
+---------------
+The *model view* that lists all other views. This API uses the definition of *alternates view* presented at `https://promsns.org/def/alt`_.
 
 .. _https://promsns.org/def/alt: https://promsns.org/def/alt
 
-* **Linked Data principles**: principles of making things available over the internet in both human and machine-readable forms. Codified by the World Wide Web Consortium. See `https://www.w3.org/standards/semanticweb/data`_.
+Linked Data Principles
+----------------------
+The principles of making things available over the internet in both human and machine-readable forms. Codified by the World Wide Web Consortium. See `https://www.w3.org/standards/semanticweb/data`_.
 
 .. _https://www.w3.org/standards/semanticweb/data: https://www.w3.org/standards/semanticweb/data
 
-* **Model view**: a set of properties of a Linked Data object codified according to a standard or profile of a standard.
 
-* **Object**: any individual thing delivered according to *Linked Data* principles
+Model View
+----------
+A set of properties of a Linked Data object codified according to a standard or profile of a standard.
 
-* **Register**: a simple listing of URIs of objects, delivered according to *Linked Data principles*
+Object
+------
+Any individual thing delivered according to *Linked Data* principles
 
-* **Register of Registers**: a *register* that lists all other registers that an API provides
+Register
+--------
+A simple listing of URIs of objects, delivered according to *Linked Data principles*
+
+Register of Registers
+---------------------
+A *register* that lists all other registers that an API provides
 
 
 
@@ -78,7 +92,6 @@ Nicholas Car (lead)
 
 .. _nicholas.car@csiro.au: nicholas.car@csiro.au
 .. _http://orcid.org/0000-0002-8742-7730: http://orcid.org/0000-0002-8742-7730
-
 
 Ashley Sommer (senior developer)
 --------------------------------

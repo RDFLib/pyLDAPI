@@ -46,7 +46,7 @@ class Renderer(object, metaclass=ABCMeta):
         :param alternates_template: the jinja2 template to use for rendering the HTML alternates view
         :type alternates_template: str
 
-        Note: See the :class:`.View` class on how to create a dictionary of views.
+        .. seealso:: See the :class:`.View` class on how to create a dictionary of views.
 
         """
         self.request = request
@@ -369,14 +369,26 @@ class Renderer(object, metaclass=ABCMeta):
 
         .. code-block:: python
 
-            if self.view == 'alternates':
-                return self._render_alternates_view()
-            elif self.view == 'igsn-o':
-                if self.format == 'text/html':
-                    return self.export_html(model_view=self.view)
-                else:
-                    return Response(self.export_rdf(self.view, self.format), mimetype=self.format)
+            def render(self):
+                if self.site_no is None:
+                    return Response('Site {} not found.'.format(self.site_no), status=404, mimetype='text/plain')
+                if self.view == 'alternates':
+                    # you need to define self._render_alternates_view()
+                    return self._render_alternates_view()
+                elif self.view == 'pdm':
+                    # render the view with the token 'pdm' as text/html
+                    if self.format == 'text/html':
+                        # you need to define your own self.export_html()
+                        return self.export_html(model_view=self.view)
+                    else:
+                        # you need to define your own self.export_rdf()
+                        return Response(self.export_rdf(self.view, self.format), mimetype=self.format)
+                elif self.view == 'nemsr':
+                    # you need to define your own self.export_nemsr_geojson()
+                    return self.export_nemsr_geojson()
 
         The example code determines the response based on the set *view* and *format* of the object.
+
+        .. note:: The render() requires you to implement your own business logic to render custom responses back to the client using Flask's render_template().
         """
         pass

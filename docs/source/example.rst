@@ -1,5 +1,5 @@
-Example Usage
-=============
+A Toy pyLDAPI Example Usage
+===========================
 
 .. warning:: TODO: Explain the import statements and the example code.
 
