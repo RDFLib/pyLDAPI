@@ -14,3 +14,6 @@ Note: To see changes for the toctree, the documents must be generated again. In 
 * `make clean`
 * `make html`
 * `python -m http.server 5000` to start the server again
+
+# PyCharm optional but recommended settings
+* https://www.jetbrains.com/help/pycharm/documenting-source-code.html
