@@ -17,3 +17,4 @@ Note: To see changes for the toctree, the documents must be generated again. In 
 
 # PyCharm optional but recommended settings
 * https://www.jetbrains.com/help/pycharm/documenting-source-code.html
+* https://www.jetbrains.com/help/pycharm/restructured-text.html
