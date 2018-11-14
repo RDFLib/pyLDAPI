@@ -9,7 +9,7 @@
    :maxdepth: 2
    :caption: Background:
 
-   README
+   readme_symlink
 
 
 .. toctree::
@@ -28,9 +28,4 @@
    example_renderer_view_usage
    example
 
-Indices and tables
-==================
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
