@@ -36,7 +36,7 @@ class Renderer(object, metaclass=ABCMeta):
         Constructor
 
         :param request: Flask request object that triggered this class object's creation.
-        :type request: Flask request object
+        :type request: :class:`flask.request`
         :param uri: The URI that triggered this API endpoint (can be via redirects but the main URI is needed).
         :type uri: str
         :param views: A dictionary of views available for this resource.
@@ -365,30 +365,6 @@ class Renderer(object, metaclass=ABCMeta):
 
         This is an abstract method.
 
-        Example:
-
-        .. code-block:: python
-
-            def render(self):
-                if self.site_no is None:
-                    return Response('Site {} not found.'.format(self.site_no), status=404, mimetype='text/plain')
-                if self.view == 'alternates':
-                    # you need to define self._render_alternates_view()
-                    return self._render_alternates_view()
-                elif self.view == 'pdm':
-                    # render the view with the token 'pdm' as text/html
-                    if self.format == 'text/html':
-                        # you need to define your own self.export_html()
-                        return self.export_html(model_view=self.view)
-                    else:
-                        # you need to define your own self.export_rdf()
-                        return Response(self.export_rdf(self.view, self.format), mimetype=self.format)
-                elif self.view == 'nemsr':
-                    # you need to define your own self.export_nemsr_geojson()
-                    return self.export_nemsr_geojson()
-
-        The example code determines the response based on the set *view* and *format* of the object.
-
-        .. note:: The render() requires you to implement your own business logic to render custom responses back to the client using Flask's render_template().
+        .. note:: The :class:`pyldapi.Renderer.render` requires you to implement your own business logic to render custom responses back to the client using :func:`flask.render_template` or :class:`flask.Response` object.
         """
         pass

@@ -6,3 +6,4 @@ A Toy pyLDAPI Example Usage
 Here is a very simple example usage of pyLDAPI.
 
 .. literalinclude:: ../../example.py
+

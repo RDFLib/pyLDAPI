@@ -49,6 +49,9 @@ extensions = [
     'sphinx.ext.viewcode',
 ]
 
+# intersphinx mappings
+
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

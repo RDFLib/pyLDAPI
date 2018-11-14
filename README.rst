@@ -44,15 +44,15 @@ A set of properties of a Linked Data object codified according to a standard or 
 
 Object
 ------
-Any individual thing delivered according to *Linked Data* principles
+Any individual thing delivered according to *Linked Data* principles.
 
 Register
 --------
-A simple listing of URIs of objects, delivered according to *Linked Data principles*
+A simple listing of URIs of objects, delivered according to *Linked Data principles*.
 
 Register of Registers
 ---------------------
-A *register* that lists all other registers that an API provides
+A *register* that lists all other registers which this API provides.
 
 
 

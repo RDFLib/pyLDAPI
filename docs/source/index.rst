@@ -7,23 +7,32 @@
 
 .. toctree::
    :maxdepth: 2
-   :caption: Background:
+   :caption: Background
 
    readme_symlink
 
 
 .. toctree::
    :maxdepth: 2
-   :caption: API:
+   :caption: Installation
 
-   renderer
-   view
-
-   register_renderer
+   requirements
+   getting_started
 
 .. toctree::
    :maxdepth: 2
-   :caption: Examples:
+   :caption: API
+
+   renderer
+   view
+   register_renderer
+   register_of_registers_renderer
+   ror_setup
+   exceptions
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Examples
 
    example_renderer_view_usage
    example

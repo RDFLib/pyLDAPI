@@ -674,7 +674,6 @@ class SampleRenderer(Renderer):
             g.add((alternate_identifier, RDF.type, ADMS.Identifier))
             g.add((alternate_identifier, SKOS.notation, Literal(self.igsn, datatype=XSD.string)))
             g.add((alternate_identifier, ADMS.schemeAgency, URIRef('http://igsn.org')))
-            # TODO: add in a schema identifier, as per ADMS documentation
             g.add((this_sample, DCT.identifier, alternate_identifier))
 
             # Geometry
@@ -707,7 +706,7 @@ class SampleRenderer(Renderer):
                        Literal(self.date_acquired.isoformat(), datatype=XSD.datetime)))
 
             g.add((this_sample, DCT.accessRights, URIRef(TERM_LOOKUP['access_rights']['public'])))
-            # TODO: make a register of Entities
+
             if self.entity_uri is not None:
                 site = URIRef(self.entity_uri)
 
@@ -725,7 +724,7 @@ class SampleRenderer(Renderer):
 
                 site_geometry = BNode()
                 g.add((site, GEOSP.hasGeometry, site_geometry))
-                g.add((site_geometry, RDF.type, SAMFL.Point))  # TODO: extend this for other geometry types
+                g.add((site_geometry, RDF.type, SAMFL.Point))
                 g.add((site_geometry, GEOSP.asWKT,
                        Literal(self._generate_parent_wkt(), datatype=GEOSP.wktLiteral)))
                 g.add((site_geometry, GEOSP.asGML,
@@ -839,7 +838,7 @@ class SampleRenderer(Renderer):
             # procedure = BNode()
             # g.add((procedure, RDF.type, SOSA.Procedure))
             # # g.add((this_sample, RDF.type, SOSA.Procedure))
-            #  TODO: domsthing about missing if any method info is not known
+
             # # associate Procedure
             # g.add((this_sample, SOSA.usedProcedure, procedure))
 
@@ -852,7 +851,7 @@ class SampleRenderer(Renderer):
                 sr = BNode()
                 g.add((sr, RDF.type, SAMP.SampleRelationship))
                 g.add((sr, SAMP.relatedSample, site))
-                # TODO: replace with a real Concept URI
+
                 g.add((sr, SAMP.natureOfRelationship,
                        URIRef('http://example.org/sampling/relationship/subsample')))
                 g.add((this_sample, SAMP.hasSampleRelationship, sr))  # associate

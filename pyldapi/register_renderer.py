@@ -19,29 +19,30 @@ class RegisterRenderer(Renderer):
                  views=None, default_view_token=None, super_register=None,
                  page_size_max=1000, register_template=None, **kwargs):
         """
-        Init function for class
-        :param request: the Flask request triggering this class object creation
-        :type request: Flask request
-        :param uri: the URI requested
-        :type uri: string
-        :param label: the label of the Register
-        :type label: string
-        :param comment: a description of the Register
-        :type comment: string
-        :param register_items: items within this register
-        :type register_items: list of URIs (strings) or tuples like (URI, label) of (string, string) or tuples like (URI, URI, label) if you want to manually specify an item's Class.
-        :param contained_item_classes: list of URIs of each distinct class of item contained in this register
-        :type contained_item_classes: list (of strings)
-        :param register_total_count: total number of items in this Register (not of a page but the register as a whole)
+        Constructor
+
+        :param request: The Flask request object triggering this class object's creation.
+        :type request: :class:`.flask.request`
+        :param uri: The URI requested.
+        :type uri: str
+        :param label: The label of the Register.
+        :type label: str
+        :param comment: A description of the Register.
+        :type comment: str
+        :param register_items: The items within this register as a list of URI strings or tuples with string elements like (URI, label). They can also be tuples like (URI, URI, label) if you want to manually specify an item's class.
+        :type register_items: list
+        :param contained_item_classes: The list of URI strings of each distinct class of item contained in this Register.
+        :type contained_item_classes: list
+        :param register_total_count: The total number of items in this Register (not of a page but the register as a whole).
         :type register_total_count: int
-        :param views: a list of views available for this Register, apart from 'reg' which is auto-created
-        :type views: list (of Views)
-        :param default_view_token: the ID of the default view (key of a view in the list of Views)
-        :type default_view_token: string (key in views)
-        :param super_register: a super-register URI for this register. Can be within this API or external
-        :type super_register: string
-        :param register_template: the jinja template to use for rendering the HTML view of the register
-        :type register_template: string | None
+        :param views: A list of :class:`.View` objects available for this Register, apart from 'reg' which is auto-created.
+        :type views: list
+        :param default_view_token: The ID of the default :class:`.View` (key of a view in the list of Views).
+        :type default_view_token: str
+        :param super_register: A super-Register URI for this register. Can be within this API or external.
+        :type super_register: str
+        :param register_template: The jinja2 template to use for rendering the HTML view of the register.
+        :type register_template: str or None
         """
         if views is None:
             self.views = self._add_standard_reg_view()
@@ -126,6 +127,12 @@ class RegisterRenderer(Renderer):
         return None
 
     def render(self):
+        """
+        Renders the register view.
+
+        :return: A Flask Response object.
+        :rtype: :py:class:`flask.Response`
+        """
         if self.view == 'alternates':
             return self._render_alternates_view()
         elif self.view == 'reg':
@@ -279,26 +286,27 @@ class RegisterRenderer(Renderer):
 
 class RegisterOfRegistersRenderer(RegisterRenderer):
     """
-    Specialised implementation of the RegisterRenderer for displaying Register of Register information
+    Specialised implementation of the RegisterRenderer for displaying Register of Registers information.
 
-    This subclass just auto-fills many of the RegisterRenderer options
+    This subclass just auto-fills many of the RegisterRenderer options.
     """
     def __init__(self, request, uri, label, comment, rofr_file_path, *args,
                  super_register=None, **kwargs):
         """
-        Init function for class
-        :param request: the Flask request triggering this class object creation
-        :type request: Flask request
-        :param uri: the URI requested
-        :type uri: string
-        :param label: the label of the Register
-        :type label: string
-        :param comment: a description of the Register
-        :type comment: string
-        :param rofr_file_path: the path to the Register of Register RDF file (used in API setup)
-        :type rofr_file_path: path (string)
-        :param super_register: a super-register URI for this register. Can be within this API or external
-        :type super_register: string
+        Constructor
+
+        :param request: The Flask request object triggering this class object's creation.
+        :type request: :class:`flask.request`
+        :param uri: The URI requested.
+        :type uri: str
+        :param label: The label of the Register.
+        :type label: str
+        :param comment: A description of the Register.
+        :type comment: str
+        :param rofr_file_path: The path to the Register of Registers RDF file (used in API setup).
+        :type rofr_file_path: str
+        :param super_register: A super-Register URI for this Register. Can be within this API or external.
+        :type super_register: str
         """
         super(RegisterOfRegistersRenderer, self).__init__(request, uri, label,
               comment, None, ['http://purl.org/linked-data/registry#Register'],
