@@ -3,24 +3,27 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+pyLDAPI
+=======
 
+*A very small module to add Linked Data API functionality to a Python Flask installation*.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Background
 
    readme_symlink
 
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Installation
+   :maxdepth: 1
+   :caption: Getting Started
 
    requirements
-   getting_started
+   installation
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: API
 
    renderer
@@ -31,10 +34,10 @@
    exceptions
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Examples
 
    example_renderer_view_usage
-   example
+   example_usage
 
 

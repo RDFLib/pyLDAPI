@@ -43,7 +43,7 @@ class Renderer(object, metaclass=ABCMeta):
         :type views: dict (of :class:`.View` class objects)
         :param default_view_token: The ID of the default view (key of a view in the dictionary of :class:`.View` objects)
         :type default_view_token: str (a key in views)
-        :param alternates_template: the jinja2 template to use for rendering the HTML alternates view
+        :param alternates_template: The Jinja2 template to use for rendering the HTML *alternates view*. If None, then it will default to try and use a template called :code:`alternates.html`.
         :type alternates_template: str
 
         .. seealso:: See the :class:`.View` class on how to create a dictionary of views.
