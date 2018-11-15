@@ -33,17 +33,21 @@ class Renderer(object, metaclass=ABCMeta):
 
     def __init__(self, request, uri, views, default_view_token, alternates_template=None):
         """
-        Init function for class
-        :param request: the Flask request object that triggered this class object creation
-        :type request: Flask request object
-        :param uri: the URI called that triggered this API endpoint (can be via redirects but the main URI is needed)
-        :type uri: string
-        :param views: a list of views available for this resource
-        :type views: list (of View class objects)
-        :param default_view_token: the ID of the default view (key of a view in the list of Views)
-        :type default_view_token: string (key in views)
-        :param alternates_template: the jinja template to use for rendering the HTML alternates view
-        :type alternates_template: string | None
+        Constructor
+
+        :param request: Flask request object that triggered this class object's creation.
+        :type request: :class:`flask.request`
+        :param uri: The URI that triggered this API endpoint (can be via redirects but the main URI is needed).
+        :type uri: str
+        :param views: A dictionary of views available for this resource.
+        :type views: dict (of :class:`.View` class objects)
+        :param default_view_token: The ID of the default view (key of a view in the dictionary of :class:`.View` objects)
+        :type default_view_token: str (a key in views)
+        :param alternates_template: The Jinja2 template to use for rendering the HTML *alternates view*. If None, then it will default to try and use a template called :code:`alternates.html`.
+        :type alternates_template: str
+
+        .. seealso:: See the :class:`.View` class on how to create a dictionary of views.
+
         """
         self.request = request
         self.uri = uri
@@ -270,7 +274,13 @@ class Renderer(object, metaclass=ABCMeta):
 
         # TODO: add in the list of all other available Profiles (views) here
 
-    def _render_alternates_view(self):
+    def render_alternates_view(self):
+        """
+        Return a Flask Response object depending on the value assigned to :code:`self.format`.
+
+        :return: A Flask Response object
+        :rtype: :class:`flask.Response`
+        """
         # TODO: Pass self.uri to here. WHY?
         # https://github.com/RDFLib/pyLDAPI/issues/3
         self._make_alternates_view_headers()
@@ -356,5 +366,11 @@ class Renderer(object, metaclass=ABCMeta):
 
     @abstractmethod
     def render(self):
-        # use the now gotten view & format to create a response
+        """
+        Use the received view and format to create a response back to the client.
+
+        This is an abstract method.
+
+        .. note:: The :class:`pyldapi.Renderer.render` requires you to implement your own business logic to render custom responses back to the client using :func:`flask.render_template` or :class:`flask.Response` object.
+        """
         pass

@@ -10,15 +10,16 @@ from pyldapi.exceptions import RegOfRegTtlError
 
 def setup(app, api_home_dir, api_uri):
     """
-    Used to set up the Register of Registers for this LDAPI
+    This is used to set up the :class:`.RegisterOfRegistersRenderer` for this pyLDAPI instance.
 
-    Must be run before app.run like this: pyldapi.setup(app, '.', conf.URI_BASE)
-    :param app: the Flask app containing this LDAPI
-    :type app: Flask app
-    :param api_uri: URI base of the API
-    :type api_uri: string
+    .. note:: This must run before Flask's :func:`app.run` like this: :code:`pyldapi.setup(app, '.', conf.URI_BASE)`. See the example below.
+
+    :param app: The Flask app containing this pyLDAPI instance.
+    :type app: :class:`flask.request`
+    :param api_uri: The URI base of the API.
+    :type api_uri: str
     :return: None
-    :rtype: NoneType
+    :rtype: None
     """
     return _make_rofr_rdf(app, api_home_dir, api_uri)
 
