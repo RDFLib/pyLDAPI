@@ -86,7 +86,7 @@ Contact
 Nicholas Car (lead)
 -------------------
 | *Senior Experimental Scientist*
-| CSIRO Land and Water
+| `CSIRO Land and Water`_
 | `nicholas.car@csiro.au`_
 | `http://orcid.org/0000-0002-8742-7730`_
 
@@ -96,7 +96,9 @@ Nicholas Car (lead)
 Ashley Sommer (senior developer)
 --------------------------------
 | *Informatics Software Engineer*
-| CSIRO Land and Water
+| `CSIRO Land and Water`_
 | `ashley.sommer@csiro.au`_
 
 .. _ashley.sommer@csiro.au: ashley.sommer@csiro.au
+
+.. _CSIRO Land and Water: https://www.csiro.au/en/Research/LWF

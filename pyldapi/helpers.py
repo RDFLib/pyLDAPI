@@ -10,9 +10,9 @@ from pyldapi.exceptions import RegOfRegTtlError
 
 def setup(app, api_home_dir, api_uri):
     """
-    This is used to set up the Register of Registers for this pyLDAPI instance. See :class:`.RegisterOfRegistersRenderer`.
+    This is used to set up the :class:`.RegisterOfRegistersRenderer` for this pyLDAPI instance.
 
-    .. note:: This must run before Flask's :func:`app.run` like this: :code:`pyldapi.setup(app, '.', conf.URI_BASE)`.
+    .. note:: This must run before Flask's :func:`app.run` like this: :code:`pyldapi.setup(app, '.', conf.URI_BASE)`. See the example below.
 
     :param app: The Flask app containing this pyLDAPI instance.
     :type app: :class:`flask.request`

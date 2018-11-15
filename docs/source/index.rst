@@ -24,6 +24,14 @@ pyLDAPI
 
 .. toctree::
    :maxdepth: 1
+   :caption: Jinja2 Templates
+
+   register_template
+   alternates_template
+   class_item_template
+
+.. toctree::
+   :maxdepth: 1
    :caption: API
 
    renderer

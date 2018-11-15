@@ -2,19 +2,21 @@ Renderer
 ========
 
 .. autoclass:: pyldapi.Renderer
-    :members: __init__, render
+    :members: __init__, render_alternates_view, render
 
 Example Implementation of :func:`pyldapi.Renderer.render`
 ---------------------------------------------------------
 
 .. code-block:: python
 
+    # context: a custom Renderer class which inherits from pyldapi.Renderer
+
     def render(self):
         if self.site_no is None:
             return Response('Site {} not found.'.format(self.site_no), status=404, mimetype='text/plain')
         if self.view == 'alternates':
-            # you need to define self._render_alternates_view()
-            return self._render_alternates_view()
+            # call the base class' render alternates view method
+            return self.render_alternates_view()
         elif self.view == 'pdm':
             # render the view with the token 'pdm' as text/html
             if self.format == 'text/html':

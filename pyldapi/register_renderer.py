@@ -41,7 +41,7 @@ class RegisterRenderer(Renderer):
         :type default_view_token: str
         :param super_register: A super-Register URI for this register. Can be within this API or external.
         :type super_register: str
-        :param register_template: The jinja2 template to use for rendering the HTML view of the register.
+        :param register_template: The Jinja2 template to use for rendering the HTML view of the register. If None, then it will default to try and use a template called :code:`alternates.html`.
         :type register_template: str or None
         """
         if views is None:
@@ -286,9 +286,9 @@ class RegisterRenderer(Renderer):
 
 class RegisterOfRegistersRenderer(RegisterRenderer):
     """
-    Specialised implementation of the RegisterRenderer for displaying Register of Registers information.
+    Specialised implementation of the :class:`.RegisterRenderer` for displaying Register of Registers information.
 
-    This subclass just auto-fills many of the RegisterRenderer options.
+    This sub-class auto-fills many of the :class:`.RegisterRenderer` options.
     """
     def __init__(self, request, uri, label, comment, rofr_file_path, *args,
                  super_register=None, **kwargs):

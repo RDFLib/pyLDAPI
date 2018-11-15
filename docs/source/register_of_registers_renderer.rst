@@ -15,10 +15,11 @@ A Flask route at the root of the application serving the *Register of Registers*
 
     @app.route('/')
     def index():
-        rofr = RegisterOfRegistersRenderer(request,
-                                           API_BASE,
-                                           "Register of Registers",
-                                           "A register of all of my registers.",
-                                           "./rofr.ttl"
-                                           )
+        rofr = RegisterOfRegistersRenderer(
+            request,
+            API_BASE,
+            "Register of Registers",
+            "A register of all of my registers.",
+            "./rofr.ttl"
+        )
         return rofr.render()
