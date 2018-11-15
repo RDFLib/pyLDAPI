@@ -274,7 +274,13 @@ class Renderer(object, metaclass=ABCMeta):
 
         # TODO: add in the list of all other available Profiles (views) here
 
-    def _render_alternates_view(self):
+    def render_alternates_view(self):
+        """
+        Return a Flask Response object depending on the value assigned to :code:`self.format`.
+
+        :return: A Flask Response object
+        :rtype: :class:`flask.Response`
+        """
         # TODO: Pass self.uri to here. WHY?
         # https://github.com/RDFLib/pyLDAPI/issues/3
         self._make_alternates_view_headers()
