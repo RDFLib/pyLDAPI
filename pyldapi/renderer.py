@@ -274,7 +274,7 @@ class Renderer(object, metaclass=ABCMeta):
 
         # TODO: add in the list of all other available Profiles (views) here
 
-    def render_alternates_view(self):
+    def _render_alternates_view(self):
         """
         Return a Flask Response object depending on the value assigned to :code:`self.format`.
 
