@@ -5,8 +5,10 @@ The Python Linked Data API (pyLDAPI) is:
 
 *A very small module to add Linked Data API functionality to a Python Flask installation*.
 
-[![PyPI version](https://badge.fury.io/py/pyldapi.svg)](https://badge.fury.io/py/pyldapi)
+|PyPI version|
 
+.. |PyPI version| image:: https://badge.fury.io/py/pyldapi.svg
+    :target: https://badge.fury.io/py/pyldapi
 
 What is it?
 ===========
