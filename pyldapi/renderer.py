@@ -297,7 +297,7 @@ class Renderer(object, metaclass=ABCMeta):
         else:  # application/json
             return self._render_alternates_view_json()
 
-    def _render_alternates_view_html(self):
+    def _render_alternates_view_html(self, template_context=None):
         views = {}
         for token, v in self.views.items():
             view = {'label': str(v.label), 'comment': str(v.comment),
@@ -307,13 +307,17 @@ class Renderer(object, metaclass=ABCMeta):
                     'default_language': str(v.default_language),
                     'namespace': str(v.namespace)}
             views[token] = view
-
+        _template_context = {
+            'uri': self.uri,
+            'default_view_token': self.default_view_token,
+            'views': views
+        }
+        if template_context is not None and isinstance(template_context, dict):
+            _template_context.update(template_context)
         return Response(
             render_template(
                 self.alternates_template or 'alternates.html',
-                uri=self.uri,
-                default_view_token=self.default_view_token,
-                views=views
+                **_template_context
             ),
             headers=self.headers
         )
