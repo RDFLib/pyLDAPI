@@ -73,6 +73,15 @@ pyLDAPI in action
 
 
 
+Documentation
+=============
+
+Detailed documentation can be found at `https://pyldapi.readthedocs.io/en/latest/`_
+
+.. _https://pyldapi.readthedocs.io/en/latest/: https://pyldapi.readthedocs.io/en/latest/
+
+
+
 Licence
 =======
 
