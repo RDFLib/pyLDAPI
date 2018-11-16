@@ -126,14 +126,14 @@ class RegisterRenderer(Renderer):
         return None
 
     def render(self):
-        if self.view == 'alternates':
-            return self._render_alternates_view()
-        elif self.view == 'reg':
+        response = super(RegisterRenderer, self).render()
+        if not response and self.view == 'reg':
             if self.paging_error is None:
                 self.headers['Profile'] = str(self.views['reg'].namespace)
-                return self._render_reg_view()
+                response = self._render_reg_view()
             else:  # there is a paging error (e.g. page > last_page)
-                return Response(self.paging_error, status=400, mimetype='text/plain')
+                response = Response(self.paging_error, status=400, mimetype='text/plain')
+        return response
 
     def _render_reg_view(self):
         # add link headers for all formats of reg view
@@ -269,7 +269,7 @@ class RegisterRenderer(Renderer):
             'reg': View(
                 'Registry Ontology',
                 'A simple list-of-items view taken from the Registry Ontology',
-                ['text/html', 'application/json', '_internal'] + self.RDF_MIMETYPES,
+                ['text/html', 'application/json'] + self.RDF_MIMETYPES,
                 'text/html',
                 languages=['en'],  # default 'en' only for now
                 namespace='http://purl.org/linked-data/registry'

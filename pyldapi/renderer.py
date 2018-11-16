@@ -212,10 +212,16 @@ class Renderer(object, metaclass=ABCMeta):
         # if a particular _view is requested, if it's available, return it
         # the _view selector, coming first (before profile neg) will override profile neg, if both are set
         # if nothing is set, return default view (not HTTP 406)
-        if self.request.values.get('_view') is not None:
-            if self.views.get(self.request.values.get('_view')) is not None:
-                return self.request.values.get('_view')
+        query_view = self.request.values.get('_view', None)
+        if query_view is not None:
+            requested_view = str(query_view).replace(' ', '+')
+            if requested_view == "_internal":
+                return requested_view
+            if self.views.get(requested_view, None) is not None:
+                return requested_view
             else:
+                # TODO: determine whether or not to
+                # silently return default view
                 raise ViewsFormatsException(
                     'The requested view is not available for the resource for which it was requested')
         elif hasattr(self.request, 'headers'):
@@ -227,10 +233,15 @@ class Renderer(object, metaclass=ABCMeta):
 
     def _get_requested_format(self):
         # try Query String Argument
-        if self.request.values.get('_format') is not None:
-            requested_format = self.request.values.get('_format').replace(' ', '+')
+        query_format = self.request.values.get('_format', None)
+        if query_format is not None:
+            requested_format = str(query_format).replace(' ', '+')
+            if requested_format == "_internal":
+                return requested_format
             if requested_format in self.views[self.view].formats:
                 return requested_format
+
+            # TODO: determine whether or not to
             # silently return default format
             # else:
             #     raise ViewsFormatsException(
@@ -246,10 +257,15 @@ class Renderer(object, metaclass=ABCMeta):
         return self.views[self.view].default_format
 
     def _get_requested_language(self):
-        if self.request.values.get('_lang') is not None:
-            requested_lang = self.request.values.get('_lang')
+        query_lang = self.request.values.get('_lang', None)
+        if query_lang is not None:
+            # turn "en AU" into "en_AU" and turn "en+AU" into "en_AU"
+            requested_lang = str(query_lang).replace(' ', '_').replace('+', '_')
+            if requested_lang == "_internal":
+                return requested_lang
             if requested_lang in self.views[self.view].languages:
                 return requested_lang
+            # TODO: determine whether or not to
             # silently return default lang
             # else:
             #     raise ViewsFormatsException(
@@ -271,8 +287,6 @@ class Renderer(object, metaclass=ABCMeta):
         # TODO: add in the list of all other available Profiles (views) here
 
     def _render_alternates_view(self):
-        # TODO: Pass self.uri to here. WHY?
-        # https://github.com/RDFLib/pyLDAPI/issues/3
         self._make_alternates_view_headers()
         if self.format == '_internal':
             return self
@@ -284,12 +298,22 @@ class Renderer(object, metaclass=ABCMeta):
             return self._render_alternates_view_json()
 
     def _render_alternates_view_html(self):
+        views = {}
+        for token, v in self.views.items():
+            view = {'label': str(v.label), 'comment': str(v.comment),
+                    'formats': (f for f in v.formats if not f.startswith('_')),
+                    'default_format': str(v.default_format),
+                    'languages': v.languages if v.languages is not None else ['en'],
+                    'default_language': str(v.default_language),
+                    'namespace': str(v.namespace)}
+            views[token] = view
+
         return Response(
             render_template(
                 self.alternates_template or 'alternates.html',
                 uri=self.uri,
                 default_view_token=self.default_view_token,
-                views=self.views
+                views=views
             ),
             headers=self.headers
         )
@@ -322,10 +346,10 @@ class Renderer(object, metaclass=ABCMeta):
 
             if self.default_view_token == token:
                 g.add((URIRef(self.uri), ALT.hasDefaultView, v_node))
-
         return g
 
-    def _make_rdf_response(self, graph, mimetype=None, headers=None):
+    def _make_rdf_response(self, graph, mimetype=None, headers=None,
+                           delete_graph=True):
         if headers is None:
             headers = self.headers
         serial_format = self.RDF_SERIALIZER_MAP.get(self.format, None)
@@ -337,7 +361,15 @@ class Renderer(object, metaclass=ABCMeta):
         if mimetype is not None:
             # override mimetype?
             response_mimetype = mimetype
-        return Response(graph.serialize(format=serial_format), mimetype=response_mimetype, headers=headers)
+        response_text = graph.serialize(format=serial_format)
+        if delete_graph:
+            # destroy the triples in the triplestore, then delete the triplestore
+            # this helps to prevent a memory leak in rdflib
+            graph.store.remove((None, None, None))
+            graph.destroy({})
+            del graph
+        return Response(response_text,
+                        mimetype=response_mimetype, headers=headers)
 
     def _render_alternates_view_rdf(self):
         g = self._generate_alternates_view_rdf()
@@ -354,7 +386,7 @@ class Renderer(object, metaclass=ABCMeta):
             headers=self.headers
         )
 
-    @abstractmethod
     def render(self):
-        # use the now gotten view & format to create a response
-        pass
+        if self.view == 'alternates':
+            return self._render_alternates_view()
+        return None

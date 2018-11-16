@@ -9,9 +9,9 @@ API_BASE = 'http://127.0.0.1:8081'
 cats = [
     {
         "name": "Jonny",
-        "breed": "Tortoiseshell",
+        "breed": "DomesticShorthair",
         "age": 10,
-        "color": "orange",
+        "color": "tortoiseshell",
     }, {
         "name": "Sally",
         "breed": "Manx",
@@ -55,6 +55,7 @@ class PetRenderer(Renderer):
         self.pet_html_template = pet_html_template
 
     def _render_mypetview(self):
+        self.headers['Profile'] = 'http://example.org/def/mypetview'
         if self.format == "application/json":
             return Response(json.dumps(self.instance),
                             mimetype="application/json", status=200)
@@ -62,13 +63,12 @@ class PetRenderer(Renderer):
             return Response(render_template(self.pet_html_template, **self.instance))
 
     def render(self):
-        if self.view == 'alternates':
-            return self._render_alternates_view()
-        elif self.view == 'mypetview':
-            self.headers['Profile'] = 'http://example.org/def/mypetview'
-            return self._render_mypetview()
+        response = super(PetRenderer, self).render()
+        if not response and self.view == 'mypetview':
+            response = self._render_mypetview()
         else:
             raise NotImplementedError(self.view)
+        return response
 
 
 @app.route('/id/dog/<string:dog_id>')

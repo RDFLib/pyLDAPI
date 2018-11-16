@@ -7,7 +7,7 @@ from pyldapi.register_renderer import RegisterRenderer,\
 from pyldapi.view import View
 from pyldapi.helpers import setup
 
-__version__ = '2.0.13'
+__version__ = '2.1.0.pre1'
 
 __all__ = ['Renderer', 'RegisterRenderer', 'RegisterOfRegistersRenderer',
            'View', 'ViewsFormatsException', 'PagingError', 'setup',
