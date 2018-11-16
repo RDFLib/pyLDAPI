@@ -21,7 +21,7 @@ with open_local(['pyldapi', '__init__.py'], encoding='latin1') as fp:
     except IndexError:
         raise RuntimeError('Unable to determine version.')
 
-with open_local(['README.md']) as readme:
+with open_local(['README.rst']) as readme:
     long_description = readme.read()
 
 with open_local(['requirements.txt']) as req:
