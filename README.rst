@@ -1,6 +1,8 @@
 Welcome to pyLDAPI
 ==================
 
+The Python Linked Data API (pyLDAPI) is:
+
 *A very small module to add Linked Data API functionality to a Python Flask installation*.
 
 
