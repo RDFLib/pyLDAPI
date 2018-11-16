@@ -133,14 +133,14 @@ class RegisterRenderer(Renderer):
         :return: A Flask Response object.
         :rtype: :py:class:`flask.Response`
         """
-        if self.view == 'alternates':
-            return self._render_alternates_view()
-        elif self.view == 'reg':
+        response = super(RegisterRenderer, self).render()
+        if not response and self.view == 'reg':
             if self.paging_error is None:
                 self.headers['Profile'] = str(self.views['reg'].namespace)
-                return self._render_reg_view()
+                response = self._render_reg_view()
             else:  # there is a paging error (e.g. page > last_page)
-                return Response(self.paging_error, status=400, mimetype='text/plain')
+                response = Response(self.paging_error, status=400, mimetype='text/plain')
+        return response
 
     def _render_reg_view(self):
         # add link headers for all formats of reg view
@@ -153,26 +153,32 @@ class RegisterRenderer(Renderer):
         else:
             return self._render_reg_view_json()
 
-    def _render_reg_view_html(self):
+    def _render_reg_view_html(self, template_context=None):
         pagination = Pagination(page=self.page, per_page=self.per_page,
                                 total=self.register_total_count,
                                 page_parameter='page', per_page_parameter='per_page')
+        _template_context = {
+            'uri': self.uri,
+            'label': self.label,
+            'comment': self.comment,
+            'contained_item_classes': self.contained_item_classes,
+            'register_items': self.register_items,
+            'page': self.page,
+            'per_page': self.per_page,
+            'first_page': self.first_page,
+            'prev_page': self.prev_page,
+            'next_page': self.next_page,
+            'last_page': self.last_page,
+            'super_register': self.super_register,
+            'pagination': pagination
+        }
+        if template_context is not None and isinstance(template_context, dict):
+            _template_context.update(template_context)
+
         return Response(
             render_template(
                 self.register_template or 'register.html',
-                uri=self.uri,
-                label=self.label,
-                comment=self.comment,
-                contained_item_classes=self.contained_item_classes,
-                register_items=self.register_items,
-                page=self.page,
-                per_page=self.per_page,
-                first_page=self.first_page,
-                prev_page=self.prev_page,
-                next_page=self.next_page,
-                last_page=self.last_page,
-                super_register=self.super_register,
-                pagination=pagination
+                **_template_context
             ),
             headers=self.headers
         )
@@ -276,7 +282,7 @@ class RegisterRenderer(Renderer):
             'reg': View(
                 'Registry Ontology',
                 'A simple list-of-items view taken from the Registry Ontology',
-                ['text/html', 'application/json', '_internal'] + self.RDF_MIMETYPES,
+                ['text/html', 'application/json'] + self.RDF_MIMETYPES,
                 'text/html',
                 languages=['en'],  # default 'en' only for now
                 namespace='http://purl.org/linked-data/registry'
