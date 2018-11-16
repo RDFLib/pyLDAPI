@@ -301,7 +301,7 @@ class Renderer(object, metaclass=ABCMeta):
         views = {}
         for token, v in self.views.items():
             view = {'label': str(v.label), 'comment': str(v.comment),
-                    'formats': (f for f in v.formats if not f.startswith('_')),
+                    'formats': tuple(f for f in v.formats if not f.startswith('_')),
                     'default_format': str(v.default_format),
                     'languages': v.languages if v.languages is not None else ['en'],
                     'default_language': str(v.default_language),
