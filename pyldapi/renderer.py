@@ -407,6 +407,7 @@ class Renderer(object, metaclass=ABCMeta):
         """
         Use the received view and format to create a response back to the client.
 
+        TODO: Ashley, are you able to update this description with your new changes please? What is the method for rendering other views now? - Edmond
         This is an abstract method.
 
         .. note:: The :class:`pyldapi.Renderer.render` requires you to implement your own business logic to render custom responses back to the client using :func:`flask.render_template` or :class:`flask.Response` object.
