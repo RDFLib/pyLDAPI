@@ -3,10 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-pyLDAPI
-=======
+
+pyLDAPI Documentation
+*********************
 
 *A very small module to add Linked Data API functionality to a Python Flask installation*.
+
 
 .. toctree::
    :maxdepth: 1
@@ -22,6 +24,7 @@ pyLDAPI
    requirements
    installation
 
+
 .. toctree::
    :maxdepth: 1
    :caption: Jinja2 Templates
@@ -29,6 +32,7 @@ pyLDAPI
    register_template
    alternates_template
    class_item_template
+
 
 .. toctree::
    :maxdepth: 1
@@ -40,6 +44,7 @@ pyLDAPI
    register_of_registers_renderer
    ror_setup
    exceptions
+
 
 .. toctree::
    :maxdepth: 1

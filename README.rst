@@ -1,5 +1,5 @@
 Welcome to pyLDAPI
-==================
+******************
 
 The Python Linked Data API (pyLDAPI) is:
 
@@ -116,3 +116,15 @@ Ashley Sommer (senior developer)
 .. _ashley.sommer@csiro.au: ashley.sommer@csiro.au
 
 .. _CSIRO Land and Water: https://www.csiro.au/en/Research/LWF
+
+
+Related work
+************
+
+`pyLDAPI Client`_
+ ================
+
+*A Simple helper library for consuming registers, indexes, and instances of classes exposed via a pyLDAPI endpoint.*
+
+.. _pyLDAPI Client: http://pyldapi-client.readthedocs.io/
+
