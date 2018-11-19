@@ -4,8 +4,9 @@
    contain the root `toctree` directive.
 
 
+=====================
 pyLDAPI Documentation
-*********************
+=====================
 
 *A very small module to add Linked Data API functionality to a Python Flask installation*.
 
