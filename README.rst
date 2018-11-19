@@ -119,7 +119,7 @@ Ashley Sommer (senior developer)
 
 
 Related work
-============
+------------
 
 `pyLDAPI Client`_
  ----------------
