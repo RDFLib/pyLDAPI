@@ -122,9 +122,7 @@ Related work
 ------------
 
 `pyLDAPI Client`_
- ----------------
 
-*A Simple helper library for consuming registers, indexes, and instances of classes exposed via a pyLDAPI endpoint.*
+* *A Simple helper library for consuming registers, indexes, and instances of classes exposed via a pyLDAPI endpoint.*
 
 .. _pyLDAPI Client: http://pyldapi-client.readthedocs.io/
-
