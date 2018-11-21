@@ -24,6 +24,7 @@ pyLDAPI Documentation
 
    requirements
    installation
+   indices_and_tables
 
 
 .. toctree::
