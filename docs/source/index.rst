@@ -34,6 +34,7 @@ pyLDAPI Documentation
    register_template
    alternates_template
    class_item_template
+   download_jinja_templates
 
 
 .. toctree::
