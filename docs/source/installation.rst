@@ -5,8 +5,7 @@ Installation
 
 To install, use Python's PyPI by invoking :code:`pip install pyldapi` on the command line interface.
 
-Alternatively, add it to your project's **requirements.txt** file.
-
+Now download the set of :ref:`demo-jinja-templates` and put them into a directory called :code:`view/templates` in your Flask project.
 
 
 Recommended project structure

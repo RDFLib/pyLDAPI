@@ -8,14 +8,7 @@
 pyLDAPI Documentation
 =====================
 
-*A very small module to add Linked Data API functionality to a Python Flask installation*.
-
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Background
-
-   readme_symlink
+.. include:: ../../README.rst
 
 
 .. toctree::

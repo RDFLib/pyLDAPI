@@ -1,3 +1,5 @@
+.. _`demo-jinja-templates`:
+
 Download Jinja Templates
 ========================
 
