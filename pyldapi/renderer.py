@@ -297,8 +297,6 @@ class Renderer(object, metaclass=ABCMeta):
         :return: A Flask Response object
         :rtype: :class:`flask.Response`
         """
-        # TODO: Pass self.uri to here. WHY?
-        # https://github.com/RDFLib/pyLDAPI/issues/3
 
         self._make_alternates_view_headers()
         if self.format == '_internal':
