@@ -61,6 +61,8 @@ class Renderer(object, metaclass=ABCMeta):
         self.views = views
 
         # ensure that the default view is actually a given view
+        if default_view_token == "alternates":
+            raise ViewsFormatsException("You cannot specify \'alternates\' as the default view.")
         if default_view_token not in self.views.keys():
             raise ViewsFormatsException(
                 'The view token you specified for the default view is not in the list of views you supplied'

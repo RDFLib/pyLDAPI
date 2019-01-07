@@ -35,8 +35,8 @@ class RegisterRenderer(Renderer):
         :type contained_item_classes: list
         :param register_total_count: The total number of items in this Register (not of a page but the register as a whole).
         :type register_total_count: int
-        :param views: A list of :class:`.View` objects available for this Register, apart from 'reg' which is auto-created.
-        :type views: list
+        :param views: A dictionary of named :class:`.View` objects available for this Register, apart from 'reg' which is auto-created.
+        :type views: dict
         :param default_view_token: The ID of the default :class:`.View` (key of a view in the list of Views).
         :type default_view_token: str
         :param super_register: A super-Register URI for this register. Can be within this API or external.
@@ -45,11 +45,17 @@ class RegisterRenderer(Renderer):
         :type register_template: str or None
         """
         if views is None:
-            self.views = self._add_standard_reg_view()
+            views = {}
+        for k, v in views.items():
+            if k == 'reg':
+                raise ViewsFormatsException(
+                    'You must not manually add a view with token \'reg\' as this is auto-created'
+                )
+        views.update(self._add_standard_reg_view())
         if default_view_token is None:
             self.default_view_token = 'reg'
-        super().__init__(request, uri, self.views,
-                         self.default_view_token, **kwargs)
+        super(RegisterRenderer, self).__init__(request, uri, views,
+                                               self.default_view_token, **kwargs)
         self.label = label
         self.comment = comment
         if register_items is not None:
@@ -342,8 +348,8 @@ class RegisterOfRegistersRenderer(RegisterRenderer):
         found_subregisters = set()
         for r in g.query(q):
             target_rofr = r['rofr']
-            # TODO filter so we only add subregisters which
-            # match this rofr to target_rofr
+            # TODO: filter so we only add subregisters which
+            #       match this rofr to target_rofr
             subregister_uri = r['uri']
             subregister_cic = r['cic']
             if subregister_cic:
