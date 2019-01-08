@@ -1,0 +1,42 @@
+{% extends "page.html" %}
+
+{% block content %}
+    <h1>Register</h1>
+    <h2>Of <em>{{ register_item_type_string }}</em></h2>
+    <p></p>
+     <table>
+        <tr>
+            <td style="width:50%; vertical-align:top;">
+                <h3>Instances</h3>
+                <ul>
+                {%- for item in register_items -%}
+                    {%- if item is not string %}
+                    <li><a href="{{ item[0] }}">{{ item[1] }}</a></li>
+                    {%- else %}
+                    <li><a href="{{ item }}">{{ item.split('#')[-1].split('/')[-1] }}</a></li>
+                    {%- endif %}
+                {%- endfor -%}
+                </ul>
+                <!-- pagination links as per MediaTypes -->
+            </td>
+            <td style="width:50%; vertical-align:top;">
+                <h3>Alternate views</h3>
+                <p>Different views of this register are at its <a href="{{ request.base_url }}?_view=alternates">Alternate views</a>.</p>
+                <h3>Automated Pagination</h3>
+                <p>To paginate this register, use the query string arguments 'page' for the page number and 'per_page' for the number of {{ register_class }} per page.</p>
+                <p>HTTP <code>Link</code> headers of <code>first</code>, <code>prev</code>, <code>next</code> &amp; <code>last</code> are given to indicate URIs to the first, a previous, a next and the last page.</p>
+                <p>Example, for Page #7 with 50 {{ register_class }} per page:</p>
+                <pre>
+{{  request.base_url }}?page=7&per_page=500
+                </pre>
+                <p>The Link header would contain:</p>
+                <pre>
+Link:   &lt;{{ request.base_url }}?per_page=50&gt; rel="first",
+        &lt;{{ request.base_url }}?per_page=50&page=6&gt; rel="prev",
+        &lt;{{ request.base_url }}?per_page=50&page=8&gt; rel="next",
+        &lt;{{ request.base_url }}?per_page=50&page=10&gt; rel="last"
+                </pre>
+            </td>
+        </tr>
+    </table>
+{% endblock %}

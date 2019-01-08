@@ -1,0 +1,37 @@
+{% extends "page.html" %}
+
+    {% block content %}
+        <h1>Alternates View</h1>
+        <h2>Instance <a href="{{ uri }}">{{ uri }}</a></h2>
+        <h4>Default view: <a href="{{ uri }}">{{ default_view_token }}</a></h4>
+        <table class="layout">
+            <tr>
+                <th style="font-weight: bold;">Token</th>
+                <th style="font-weight: bold;">Name</th>
+                <th style="font-weight: bold;">Formats</th>
+                <th style="font-weight: bold; padding-right: 30px;">Languages</th>
+                <th style="font-weight: bold;">Description</th>
+                <th style="font-weight: bold;">Namespace</th>
+            </tr>
+        {% for token, vals in views.items() %}
+            <tr style="border-bottom: 1px solid black; border-top: 1px solid black;">
+                <td style="padding-right: 30px;"><a href="{{ request.base_url }}?vocab_id={{ vocab_id }}&_view={{ token }}&_format={{ vals['default_format'] }}&uri={{ uri }}">{{ token }}</a></td>
+                <td>{{ vals['label'] }}</td>
+                <td>
+                {% for f in vals['formats'] %}
+                    <a href="{{ request.base_url }}?vocab_id={{ vocab_id }}&_view={{ token }}&_format={{ f }}&uri={{ uri }}">{{ f }}</a><br />
+                {% endfor %}
+                </td>
+                <td style="text-align: center;">
+                {% for l in vals['languages'] %}
+                    <a href="{{ url_for('routes.object') }}?vocab_id={{ vocab_id }}&url={{ uri }}&_view={{ token }}&_lang={{ l }}">{{ l }}</a><br />
+                {% endfor %}
+                </td>
+                <td>{{ vals['comment'] }}</td>
+                {% if vals['namespace'] is not none %}
+                <td><a href="{{ vals['namespace'] }}">{{ vals['namespace'] }}</a></td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+        </table>
+    {% endblock %}

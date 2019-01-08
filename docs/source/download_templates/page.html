@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='vanilla_theme.css')}}" />
+</head>
+<body>
+    <div id="widther">
+        <div id="header">
+            <div style="float:left;">
+                <em>Logo Placeholder</em>
+            </div>
+            <div style="float:right;">
+                {% for nav in navs %}
+                    {{ nav|safe }}
+                {% endfor %}
+                <a href="{{ url_for('routes.index') }}">System Home</a> |
+                <a href="{{ url_for('routes.vocabularies') }}">Vocabularies</a> |
+                <a href="{{ url_for('routes.about') }}">About</a>
+
+            </div>
+            <div style="clear:both;"></div>
+        </div>
+
+        <div id="container-content">
+            {% block content %}{% endblock %}
+        </div>
+        <div id="footer">
+
+        </div>
+    </div>
+</body>
+</html>
