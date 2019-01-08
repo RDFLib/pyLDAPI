@@ -62,6 +62,7 @@ class PetRenderer(Renderer):
         elif self.format == "text/html":
             return Response(render_template(self.pet_html_template, **self.instance))
 
+    # All `Renderer` subclasses _must_ implement render
     def render(self):
         response = super(PetRenderer, self).render()
         if not response and self.view == 'mypetview':

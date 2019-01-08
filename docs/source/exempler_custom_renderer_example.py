@@ -17,7 +17,7 @@ class MediaTypeRenderer(Renderer):
                 namespace='http://test.linked.data.gov.au/def/mt#'
             )
         }
-        super().__init__(
+        super(MediaTypeRenderer, self).__init__(
             request,
             uri,
             views,
