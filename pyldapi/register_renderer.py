@@ -53,9 +53,9 @@ class RegisterRenderer(Renderer):
                 )
         views.update(self._add_standard_reg_view())
         if default_view_token is None:
-            self.default_view_token = 'reg'
+            default_view_token = 'reg'
         super(RegisterRenderer, self).__init__(request, uri, views,
-                                               self.default_view_token, **kwargs)
+                                               default_view_token, **kwargs)
         self.label = label
         self.comment = comment
         if register_items is not None:
