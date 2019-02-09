@@ -86,7 +86,7 @@ class RegisterRenderer(Renderer):
                 .format(self.last_page)
 
         if self.per_page > self.page_size_max:
-            return 'You must choose a page size >= {}'.format(self.page_size_max)
+            return 'You must choose a page size <= {}'.format(self.page_size_max)
 
         # set up Link headers
         links = list()
