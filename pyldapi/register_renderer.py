@@ -243,9 +243,15 @@ class RegisterRenderer(Renderer):
                 if len(item) < 2:
                     raise ValueError("Not enough items in register_item tuple.")
                 item_uri = URIRef(item[0])
-                if item[1] and isinstance(item[1], (str, bytes, Literal)):
+                if item[1] and isinstance(item[1], (str, bytes)):
                     g.add((item_uri, RDFS.label,
                            Literal(item[1], datatype=XSD.string)))
+                    if len(item) > 2 and isinstance(item[2], Identifier):
+                        g.add((item_uri, RDF.type, item[2]))
+                    elif contained_item_class:
+                        g.add((item_uri, RDF.type, contained_item_class))
+                elif item[1] and isinstance(item[1], Literal):
+                    g.add((item_uri, RDFS.label, item[1]))
                     if len(item) > 2 and isinstance(item[2], Identifier):
                         g.add((item_uri, RDF.type, item[2]))
                     elif contained_item_class:
@@ -255,6 +261,28 @@ class RegisterRenderer(Renderer):
                     if len(item) > 2:
                         g.add((item_uri, RDFS.label,
                                Literal(item[2], datatype=XSD.string)))
+                g.add((item_uri, REG.register, register_uri))
+            elif isinstance(item, dict):
+                label = item.get("label", None)
+                uri = item.get("uri", None)
+                type_ = item.get("type", None)
+                if uri is None:
+                    raise RuntimeError("uri must be passed in the item dict.")
+                item_uri = URIRef(uri)
+                if label is not None:
+                    if isinstance(label, (str, bytes)):
+                        g.add((item_uri, RDFS.label, Literal(label, datatype=XSD.string)))
+                    elif isinstance(label, Literal):
+                        g.add((item_uri, RDFS.label, label))
+                    else:
+                        raise RuntimeError("label is wrong type. Use str or Literal.")
+                if type_ is not None:
+                    if isinstance(type_, Identifier):
+                        g.add((item_uri, RDF.type, type_))
+                    else:
+                        raise RuntimeError("type passed in item dict must be URIRef, literal, or Blank Node.")
+                elif contained_item_class:
+                    g.add((item_uri, RDF.type, contained_item_class))
                 g.add((item_uri, REG.register, register_uri))
             else:  # just URIs
                 item_uri = URIRef(item)
