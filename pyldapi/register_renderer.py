@@ -263,7 +263,7 @@ class RegisterRenderer(Renderer):
                                Literal(item[2], datatype=XSD.string)))
                 g.add((item_uri, REG.register, register_uri))
             elif isinstance(item, dict):
-                label = item.get("label", None)
+                label = item.get("title", None)
                 uri = item.get("uri", None)
                 type_ = item.get("type", None)
                 if uri is None:
