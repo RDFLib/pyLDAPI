@@ -243,15 +243,15 @@ class RegisterRenderer(Renderer):
                 if len(item) < 2:
                     raise ValueError("Not enough items in register_item tuple.")
                 item_uri = URIRef(item[0])
-                if item[1] and isinstance(item[1], (str, bytes)):
-                    g.add((item_uri, RDFS.label,
-                           Literal(item[1], datatype=XSD.string)))
+                if item[1] and isinstance(item[1], Literal):
+                    g.add((item_uri, RDFS.label, item[1]))
                     if len(item) > 2 and isinstance(item[2], Identifier):
                         g.add((item_uri, RDF.type, item[2]))
                     elif contained_item_class:
                         g.add((item_uri, RDF.type, contained_item_class))
-                elif item[1] and isinstance(item[1], Literal):
-                    g.add((item_uri, RDFS.label, item[1]))
+                elif item[1] and isinstance(item[1], (str, bytes)):
+                    g.add((item_uri, RDFS.label,
+                           Literal(item[1], datatype=XSD.string)))
                     if len(item) > 2 and isinstance(item[2], Identifier):
                         g.add((item_uri, RDF.type, item[2]))
                     elif contained_item_class:
@@ -270,10 +270,10 @@ class RegisterRenderer(Renderer):
                     raise RuntimeError("uri must be passed in the item dict.")
                 item_uri = URIRef(uri)
                 if label is not None:
-                    if isinstance(label, (str, bytes)):
-                        g.add((item_uri, RDFS.label, Literal(label, datatype=XSD.string)))
-                    elif isinstance(label, Literal):
+                    if isinstance(label, Literal):
                         g.add((item_uri, RDFS.label, label))
+                    elif isinstance(label, (str, bytes)):
+                        g.add((item_uri, RDFS.label, Literal(label, datatype=XSD.string)))
                     else:
                         raise RuntimeError("label is wrong type. Use str or Literal.")
                 if type_ is not None:
