@@ -154,7 +154,7 @@ class Renderer(object, metaclass=ABCMeta):
             profiles = [x.replace(' ', '').strip() for x in profiles]
 
             # split off any weights and sort by them with default weight = 1
-            profiles = [(float(x.split(';')[1].replace('q=', '')) if x.contains(";q=") else 1, x.split(';')[0]) for x in profiles]
+            profiles = [(float(x.split(';')[1].replace('q=', '')) if ";q=" in x else 1, x.split(';')[0]) for x in profiles]
 
             # sort profiles by weight, heaviest first
             profiles.sort(reverse=True)
