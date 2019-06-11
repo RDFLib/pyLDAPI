@@ -14,10 +14,13 @@ class RegisterRenderer(Renderer):
     """
     Specific implementation of the abstract Renderer for displaying Register information
     """
+    DEFAULT_ITEMS_PER_PAGE = 20
+    
     def __init__(self, request, uri, label, comment, register_items,
                  contained_item_classes, register_total_count, *args,
                  views=None, default_view_token=None, super_register=None,
-                 page_size_max=1000, register_template=None, **kwargs):
+                 page_size_max=1000, register_template=None, 
+                 per_page=None, **kwargs):
         """
         Constructor
 
@@ -43,6 +46,8 @@ class RegisterRenderer(Renderer):
         :type super_register: str
         :param register_template: The Jinja2 template to use for rendering the HTML view of the register. If None, then it will default to try and use a template called :code:`alternates.html`.
         :type register_template: str or None
+        :param per_page: Number of items to show per page if not specified in request. If None, then it will default to RegisterRenderer.DEFAULT_ITEMS_PER_PAGE.
+        :type per_page: int or None
         """
         if views is None:
             views = {}
@@ -64,7 +69,7 @@ class RegisterRenderer(Renderer):
             self.register_items = []
         self.contained_item_classes = contained_item_classes
         self.register_total_count = register_total_count
-        self.per_page = request.args.get('per_page', type=int, default=20)
+        self.per_page = request.args.get('per_page', type=int, default=(per_page or RegisterRenderer.DEFAULT_ITEMS_PER_PAGE))
         self.page = request.args.get('page', type=int, default=1)
         self.super_register = super_register
         self.page_size_max = page_size_max
