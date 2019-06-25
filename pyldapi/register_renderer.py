@@ -32,21 +32,28 @@ class RegisterRenderer(Renderer):
         :type label: str
         :param comment: A description of the Register.
         :type comment: str
-        :param register_items: The items within this register as a list of URI strings or tuples with string elements like (URI, label). They can also be tuples like (URI, URI, label) if you want to manually specify an item's class.
+        :param register_items: The items within this register as a list of URI strings or tuples with string elements
+                like (URI, label). They can also be tuples like (URI, URI, label) if you want to manually specify an
+                's class.
         :type register_items: list
-        :param contained_item_classes: The list of URI strings of each distinct class of item contained in this Register.
+        :param contained_item_classes: The list of URI strings of each distinct class of item contained in this
+                Register.
         :type contained_item_classes: list
-        :param register_total_count: The total number of items in this Register (not of a page but the register as a whole).
+        :param register_total_count: The total number of items in this Register (not of a page but the register as a
+                whole).
         :type register_total_count: int
-        :param views: A dictionary of named :class:`.View` objects available for this Register, apart from 'reg' which is auto-created.
+        :param views: A dictionary of named :class:`.View` objects available for this Register, apart from 'reg' which
+                is auto-created.
         :type views: dict
         :param default_view_token: The ID of the default :class:`.View` (key of a view in the list of Views).
         :type default_view_token: str
         :param super_register: A super-Register URI for this register. Can be within this API or external.
         :type super_register: str
-        :param register_template: The Jinja2 template to use for rendering the HTML view of the register. If None, then it will default to try and use a template called :code:`alternates.html`.
+        :param register_template: The Jinja2 template to use for rendering the HTML view of the register. If None, then
+                it will default to try and use a template called :code:`alternates.html`.
         :type register_template: str or None
-        :param per_page: Number of items to show per page if not specified in request. If None, then it will default to RegisterRenderer.DEFAULT_ITEMS_PER_PAGE.
+        :param per_page: Number of items to show per page if not specified in request. If None, then it will default to
+                RegisterRenderer.DEFAULT_ITEMS_PER_PAGE.
         :type per_page: int or None
         """
         if views is None:
@@ -69,7 +76,9 @@ class RegisterRenderer(Renderer):
             self.register_items = []
         self.contained_item_classes = contained_item_classes
         self.register_total_count = register_total_count
-        self.per_page = request.args.get('per_page', type=int, default=(per_page or RegisterRenderer.DEFAULT_ITEMS_PER_PAGE))
+        self.per_page = request.args.get('per_page', type=int, default=(
+                                            per_page or RegisterRenderer.DEFAULT_ITEMS_PER_PAGE)
+                                         )
         self.page = request.args.get('page', type=int, default=1)
         self.super_register = super_register
         self.page_size_max = page_size_max
@@ -350,9 +359,17 @@ class RegisterOfRegistersRenderer(RegisterRenderer):
         :param super_register: A super-Register URI for this Register. Can be within this API or external.
         :type super_register: str
         """
-        super(RegisterOfRegistersRenderer, self).__init__(request, uri, label,
-              comment, None, ['http://purl.org/linked-data/registry#Register'],
-              0, super_register=super_register, **kwargs)
+        super(RegisterOfRegistersRenderer, self).__init__(
+            request,
+            uri,
+            label,
+            comment,
+            None,
+            ['http://purl.org/linked-data/registry#Register'],
+            0,
+            super_register=super_register,
+            **kwargs
+        )
         self.subregister_cics = defaultdict(lambda: set())
 
         # find subregisters from rofr.ttl
