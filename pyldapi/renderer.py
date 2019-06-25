@@ -41,9 +41,11 @@ class Renderer(object, metaclass=ABCMeta):
         :type uri: str
         :param views: A dictionary of views available for this resource.
         :type views: dict (of :class:`.View` class objects)
-        :param default_view_token: The ID of the default view (key of a view in the dictionary of :class:`.View` objects)
+        :param default_view_token: The ID of the default view (key of a view in the dictionary of :class:`.View`
+        objects)
         :type default_view_token: str (a key in views)
-        :param alternates_template: The Jinja2 template to use for rendering the HTML *alternates view*. If None, then it will default to try and use a template called :code:`alternates.html`.
+        :param alternates_template: The Jinja2 template to use for rendering the HTML *alternates view*. If None, then
+        it will default to try and use a template called :code:`alternates.html`.
         :type alternates_template: str
 
         .. seealso:: See the :class:`.View` class on how to create a dictionary of views.
@@ -113,7 +115,10 @@ class Renderer(object, metaclass=ABCMeta):
             profiles = [x.replace('<', '').replace('>', '').replace(' ', '').strip() for x in profiles]
 
             # split off any weights and sort by them with default weight = 1
-            profiles = [(float(x.split(';')[1].replace('q=', '')) if len(x.split(';')) == 2 else 1, x.split(';')[0]) for x in profiles]
+            profiles = [
+                (float(x.split(';')[1].replace('q=', ''))
+                 if len(x.split(';')) == 2 else 1, x.split(';')[0]) for x in profiles
+            ]
 
             # sort profiles by weight, heaviest first
             profiles.sort(reverse=True)
@@ -154,7 +159,9 @@ class Renderer(object, metaclass=ABCMeta):
             profiles = [x.replace(' ', '').strip() for x in profiles]
 
             # split off any weights and sort by them with default weight = 1
-            profiles = [(float(x.split(';')[1].replace('q=', '')) if ";q=" in x else 1, x.split(';')[0]) for x in profiles]
+            profiles = [
+                (float(x.split(';')[1].replace('q=', '')) if ";q=" in x else 1, x.split(';')[0]) for x in profiles
+            ]
 
             # sort profiles by weight, heaviest first
             profiles.sort(reverse=True)
@@ -191,7 +198,10 @@ class Renderer(object, metaclass=ABCMeta):
             profiles = [x.replace(' ', '').strip() for x in profiles]
 
             # split off any weights and sort by them with default weight = 1
-            profiles = [(float(x.split(';')[1].replace('q=', '')) if len(x.split(';')) == 2 else 1, x.split(';')[0]) for x in profiles]
+            profiles = [
+                (float(x.split(';')[1].replace('q=', ''))
+                 if len(x.split(';')) == 2 else 1, x.split(';')[0]) for x in profiles
+            ]
 
             # sort profiles by weight, heaviest first
             profiles.sort(reverse=True)
@@ -407,10 +417,13 @@ class Renderer(object, metaclass=ABCMeta):
         """
         Use the received view and format to create a response back to the client.
 
-        TODO: Ashley, are you able to update this description with your new changes please? What is the method for rendering other views now? - Edmond
+        TODO: Ashley, are you able to update this description with your new changes please?
+        What is the method for rendering other views now? - Edmond
+
         This is an abstract method.
 
-        .. note:: The :class:`pyldapi.Renderer.render` requires you to implement your own business logic to render custom responses back to the client using :func:`flask.render_template` or :class:`flask.Response` object.
+        .. note:: The :class:`pyldapi.Renderer.render` requires you to implement your own business logic to render
+        custom responses back to the client using :func:`flask.render_template` or :class:`flask.Response` object.
         """
         if self.view == 'alternates':
             return self._render_alternates_view()

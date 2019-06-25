@@ -4,7 +4,7 @@ class View:
     A class containing elements for a Linked Data 'model view',
     including MIME type 'formats'.
 
-    The syntax for these formats can be found at iana org: https://www.iana.org/assignments/media-types/media-types.xhtml
+    The syntax for formats can be found at iana org: https://www.iana.org/assignments/media-types/media-types.xhtml
 
     Example of common media formats and languages as a list:
 
@@ -49,4 +49,3 @@ class View:
         self.languages = languages if languages is not None else ['en']
         self.default_language = default_language
         self.namespace = namespace
-

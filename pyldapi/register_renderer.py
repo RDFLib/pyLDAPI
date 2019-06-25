@@ -206,9 +206,6 @@ class RegisterRenderer(Renderer):
         XHV = Namespace('https://www.w3.org/1999/xhtml/vocab#')
         g.bind('xhv', XHV)
 
-        EREG = Namespace('https://promsns.org/def/eregistry#')
-        g.bind('ereg', EREG)
-
         register_uri = URIRef(self.uri)
         g.add((register_uri, RDF.type, REG.Register))
         g.add((register_uri, RDFS.label, Literal(self.label, datatype=XSD.string)))
@@ -216,7 +213,7 @@ class RegisterRenderer(Renderer):
         for cic in self.contained_item_classes:
             g.add((register_uri, REG.containedItemClass, URIRef(cic)))
         if self.super_register is not None:
-            g.add((register_uri, EREG.superregister, URIRef(self.super_register)))
+            g.add((register_uri, REG.register, URIRef(self.super_register)))
 
         page_uri_str = self.uri + '?per_page=' + str(self.per_page) + '&page=' + str(self.page)
         page_uri_str_nonum = self.uri + '?per_page=' + str(self.per_page) + '&page='
