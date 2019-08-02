@@ -16,11 +16,22 @@ class RegisterRenderer(Renderer):
     """
     DEFAULT_ITEMS_PER_PAGE = 20
     
-    def __init__(self, request, uri, label, comment, register_items,
-                 contained_item_classes, register_total_count, *args,
-                 views=None, default_view_token=None, super_register=None,
-                 page_size_max=1000, register_template=None, 
-                 per_page=None, **kwargs):
+    def __init__(self, 
+                 request, 
+                 uri, 
+                 label, 
+                 comment, 
+                 register_items,
+                 contained_item_classes, 
+                 register_total_count, 
+                 *args,
+                 views=None, 
+                 default_view_token=None, 
+                 super_register=None,
+                 page_size_max=1000, 
+                 register_template=None, 
+                 per_page=None, 
+                 **kwargs):
         """
         Constructor
 
@@ -75,6 +86,7 @@ class RegisterRenderer(Renderer):
         self.page_size_max = page_size_max
         self.register_template = register_template
         self.paging_error = self._paging()
+        self.template_extras = kwargs
 
         try:
             self.format = self._get_requested_format()
@@ -183,6 +195,8 @@ class RegisterRenderer(Renderer):
             'super_register': self.super_register,
             'pagination': pagination
         }
+        if self.template_extras is not None:
+            _template_context.update(self.template_extras)
         if template_context is not None and isinstance(template_context, dict):
             _template_context.update(template_context)
 
