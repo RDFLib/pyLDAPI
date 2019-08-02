@@ -31,7 +31,14 @@ class Renderer(object, metaclass=ABCMeta):
         "text/plain": "nt",  # text/plain is the old/deprecated mimetype for n-triples
     }
 
-    def __init__(self, request, uri, views, default_view_token, alternates_template=None):
+    def __init__(self, 
+                 request, 
+                 uri, 
+                 views, 
+                 default_view_token, 
+                 alternates_template=None, 
+                 **kwargs
+                 ):
         """
         Constructor
 
