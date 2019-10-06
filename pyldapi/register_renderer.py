@@ -364,16 +364,23 @@ class RegisterOfRegistersRenderer(RegisterRenderer):
         :param super_register: A super-Register URI for this Register. Can be within this API or external.
         :type super_register: str
         """
-        super(RegisterOfRegistersRenderer, self).__init__(request, uri, label,
-              comment, None, ['http://purl.org/linked-data/registry#Register'],
-              0, super_register=super_register, **kwargs)
+        super(RegisterOfRegistersRenderer, self).__init__(
+            request,
+            uri,
+            label,
+            comment,
+            None,  # will be replaced further down
+            ['http://purl.org/linked-data/registry#Register'],
+            0,  # will be replaced further down
+            super_register=super_register, **kwargs
+        )
         self.subregister_cics = defaultdict(lambda: set())
 
-        # find subregisters from rofr.ttl
+        # find things (Registers) within the R of R from rofr.ttl
         try:
             with open(rofr_file_path, 'rb') as file:
                 g = Graph().parse(file=file, format='turtle')
-            assert g, "Could not parse the RofR TTL file."
+            assert g, "Could not parse the RofR RDF file."
         except FileNotFoundError:
             raise RegOfRegTtlError()
         except AssertionError:
@@ -381,28 +388,17 @@ class RegisterOfRegistersRenderer(RegisterRenderer):
         q = '''
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX reg: <http://purl.org/linked-data/registry#>
-            SELECT ?uri ?label ?rofr ?cic
-            WHERE {
-                ?uri a reg:Register ;
-                rdfs:label ?label ;
-                reg:containedItemClass ?cic .
-                ?rofr reg:subregister ?uri .
-            }
-            '''
-        found_subregisters = set()
+            SELECT ?uri ?label
+            WHERE {{
+                # all the things of type reg:Register that are within (reg:register) the RofR
+                ?uri a reg:RegisteredItem ;
+                     rdfs:label ?label ;
+                     reg:register <{register_uri}> .
+            }}
+            '''.format(**{'register_uri': request.url})
         for r in g.query(q):
-            target_rofr = r['rofr']
-            # TODO: filter so we only add subregisters which
-            #       match this rofr to target_rofr
-            subregister_uri = r['uri']
-            subregister_cic = r['cic']
-            if subregister_cic:
-                self.subregister_cics[subregister_uri].add(subregister_cic)
-            if subregister_uri in found_subregisters:
-                # don't add subregister to register_items more than once
-                continue
-            self.register_items.append((subregister_uri, r['label']))
-            found_subregisters.add(subregister_uri)
+            self.register_items.append((r['uri'], r['label']))
+        self.register_total_count = len(self.register_items)
 
     def _generate_reg_view_rdf(self):
         g = super(RegisterOfRegistersRenderer, self)._generate_reg_view_rdf()
