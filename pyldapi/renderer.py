@@ -108,6 +108,10 @@ class Renderer(object, metaclass=ABCMeta):
 
         self.headers = dict()
 
+        # Conneg by P functions
+        self.generate_conneg_p_token_links()
+        self.generate_conneg_p_qsa()
+
     def _get_accept_profiles_in_order(self):
         """
         Reads an Accept-Profile HTTP header and returns an array of Profile URIs in descending weighted order
@@ -419,6 +423,50 @@ class Renderer(object, metaclass=ABCMeta):
             mimetype='application/json',
             headers=self.headers
         )
+
+    def generate_conneg_p_token_links(self):
+        individual_links = []
+        link_header_template = \
+            '<http://www.w3.org/ns/dx/prof/Profile>; ' \
+            'rel="type"; ' \
+            'token="{}"; ' \
+            'anchor=<{}>, '
+
+        for token, view in self.views.items():
+            individual_links.append(link_header_template.format(token, view.namespace))
+
+        # append to, or create, Link header
+        if 'Link' in self.headers:
+            self.headers['Link'] = self.headers['Link'] + ''.join(individual_links).rstrip().rstrip(',')
+        else:
+            self.headers['Link'] = ''.join(individual_links).rstrip().rstrip(',')
+
+    def generate_conneg_p_qsa(self):
+        individual_links = []
+        for token, view in self.views.items():
+            # create an individual Link statement per Media Type
+            for format_ in view.formats:
+                # set the rel="self" just for this view & format
+                if format_ != '_internal':
+                    if token == self.view and format_ == self.format:
+                        rel = 'self'
+                    else:
+                        rel = 'alternate'
+
+                    individual_links.append(
+                        '<{}?view={}>; rel="{}"; type="{}"; profile="{}", '.format(
+                            self.request.args.get('uri'),
+                            token,
+                            rel,
+                            format_,
+                            view.namespace)
+                    )
+
+        # append to, or create, Link header
+        if 'Link' in self.headers:
+            self.headers['Link'] = self.headers['Link'] + ''.join(individual_links).rstrip().rstrip(',')
+        else:
+            self.headers['Link'] = ''.join(individual_links).rstrip().rstrip(',')
 
     def render(self):
         """
