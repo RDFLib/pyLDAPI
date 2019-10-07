@@ -85,7 +85,7 @@ class Renderer(object, metaclass=ABCMeta):
             ['text/html', 'application/json', '_internal'] + self.RDF_MIMETYPES,
             'text/html',
             languages=['en'],  # default 'en' only for now
-            namespace='https://promsns.org/def/alt'
+            namespace='https://w3id.org/profile/alt'
         )
 
         # get view & format for this request, flag any errors but do not except out
@@ -308,7 +308,7 @@ class Renderer(object, metaclass=ABCMeta):
         return self.views[self.view].default_language
 
     def _make_alternates_view_headers(self):
-        self.headers['Profile'] = 'https://promsns.org/def/alt'  # the profile of the Alternates View
+        self.headers['Profile'] = '<https://w3id.org/profile/alt>'  # the profile of the Alternates View
         self.headers['Content-Type'] = self.format  # the format of the Alternates View
 
         # TODO: add in the list of all other available Profiles (views) here
@@ -358,7 +358,7 @@ class Renderer(object, metaclass=ABCMeta):
 
     def _generate_alternates_view_rdf(self):
         g = Graph()
-        ALT = Namespace('http://promsns.org/def/alt#')
+        ALT = Namespace('http://w3id.org/profile/alt#')
         g.bind('alt', ALT)
 
         DCT = Namespace('http://purl.org/dc/terms/')

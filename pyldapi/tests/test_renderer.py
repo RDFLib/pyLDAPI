@@ -133,7 +133,7 @@ def test_get_available_profile_uris():
     assert r._get_available_profile_uris() == {
         'http://test.linked.data.gov.au/def/auorg#': 'auorg',
         'http://test.com': 'test',
-        'https://promsns.org/def/alt': 'alternates'
+        'https://w3id.org/profile/alt': 'alternates'
     }, 'Failed test_get_available_profile_uris()'
 
 
