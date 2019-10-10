@@ -159,7 +159,7 @@ class RegisterRenderer(Renderer):
         response = super(RegisterRenderer, self).render()
         if not response and self.view == 'reg':
             if self.paging_error is None:
-                self.headers['Profile'] = str(self.views['reg'].namespace)
+                self.headers['Content-Profile'] = str(self.views['reg'].namespace)
                 response = self._render_reg_view()
             else:  # there is a paging error (e.g. page > last_page)
                 response = Response(self.paging_error, status=400, mimetype='text/plain')

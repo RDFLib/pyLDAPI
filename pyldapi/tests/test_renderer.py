@@ -123,7 +123,7 @@ def test_get_accept_profiles_in_order():
         'http://test.com',
         'http://test.linked.data.gov.au/def/auorg#'
     ]
-    assert r._get_accept_profiles_in_order() == aexpected_result, \
+    assert r._get_profiles_from_http() == aexpected_result, \
         'Failed test_get_accept_profiles_in_order() test 4'
 
 
@@ -140,7 +140,7 @@ def test_get_available_profile_uris():
 def test_get_best_accept_profile():
     global r
 
-    assert r._get_best_accept_profile() == 'test', 'Failed test_get_best_accept_profile()'
+    assert r._get_best_profile() == 'test', 'Failed test_get_best_accept_profile()'
 
 
 def test_get_requested_view():
