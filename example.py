@@ -40,17 +40,17 @@ dogs = [
 ]
 
 MyPetView = View("PetView", "A profile of my pet.", ['text/html', 'application/json'],
-                 'text/html', namespace="http://example.org/def/mypetview")
+                 'text/html', profile_uri="http://example.org/def/mypetview")
 
 app = Flask(__name__)
 
 
 class PetRenderer(Renderer):
-    def __init__(self, request, uri, instance, pet_html_template, **kwargs):
+    def __init__(self, request, instance_uri, instance, pet_html_template, **kwargs):
         self.views = {'mypetview': MyPetView}
         self.default_view_token = 'mypetview'
         super(PetRenderer, self).__init__(
-            request, uri, self.views, self.default_view_token, **kwargs)
+            request, instance_uri, self.views, self.default_view_token, **kwargs)
         self.instance = instance
         self.pet_html_template = pet_html_template
 

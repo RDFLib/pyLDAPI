@@ -6,7 +6,7 @@ import _conf as conf
 
 
 class MediaTypeRenderer(Renderer):
-    def __init__(self, request, uri):
+    def __init__(self, request, instance_uri):
         views = {
             'mt': View(
                 'Mediatype View',
@@ -14,12 +14,12 @@ class MediaTypeRenderer(Renderer):
                 ['text/html'] + Renderer.RDF_MIMETYPES,
                 'text/turtle',
                 languages=['en', 'pl'],
-                namespace='http://test.linked.data.gov.au/def/mt#'
+                profile_uri='http://test.linked.data.gov.au/def/mt#'
             )
         }
         super(MediaTypeRenderer, self).__init__(
             request,
-            uri,
+            instance_uri,
             views,
             'mt'
         )
@@ -42,7 +42,7 @@ class MediaTypeRenderer(Renderer):
                     if deets is None:
                         return Response('That URI yielded no data', status=404, mimetype='text/plain')
                     else:
-                        mediatype = self.uri.replace('%2B', '+').replace('%2F', '/').split('/mediatype/')[1]
+                        mediatype = self.instance_uri.replace('%2B', '+').replace('%2F', '/').split('/mediatype/')[1]
                         if self.language == 'pl':
                             return render_template(
                                 'mediatype-pl.html',
@@ -66,7 +66,7 @@ class MediaTypeRenderer(Renderer):
                 <{0[uri]}>  rdfs:label ?label .
                 OPTIONAL {{ <{0[uri]}> dct:contributor ?contributor . }}
             }}
-        '''.format({'uri': self.uri})
+        '''.format({'uri': self.instance_uri})
         sparql.setQuery(q)
         d = sparql.query().convert()
         d = d.get('results').get('bindings')
@@ -90,15 +90,15 @@ class MediaTypeRenderer(Renderer):
         g = Graph()
         DCT = Namespace('http://purl.org/dc/terms/')
         g.bind('dct', DCT)
-        me = URIRef(self.uri)
+        me = URIRef(self.instance_uri)
         g.add((me, RDF.type, DCT.FileFormat))
         g.add((
             me,
             OWL.sameAs,
-            URIRef(self.uri.replace('https://w3id.org/mediatype/', 'https://www.iana.org/assignments/media-types/'))
+            URIRef(self.instance_uri.replace('https://w3id.org/mediatype/', 'https://www.iana.org/assignments/media-types/'))
         ))
         g.add((me, RDFS.label, Literal(deets.get('label'), datatype=XSD.string)))
-        source = 'https://www.iana.org/assignments/media-types/' + self.uri.replace('%2B', '+').replace('%2F', '/').split('/mediatype/')[1]
+        source = 'https://www.iana.org/assignments/media-types/' + self.instance_uri.replace('%2B', '+').replace('%2F', '/').split('/mediatype/')[1]
         g.add((me, DCT.source, URIRef(source)))
         if deets.get('contributors') is not None:
             for contributor in deets.get('contributors'):
