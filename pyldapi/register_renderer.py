@@ -16,29 +16,29 @@ class RegisterRenderer(Renderer):
     """
     DEFAULT_ITEMS_PER_PAGE = 20
     
-    def __init__(self, 
-                 request, 
-                 uri, 
-                 label, 
-                 comment, 
+    def __init__(self,
+                 request,
+                 instance_uri,
+                 label,
+                 comment,
                  register_items,
-                 contained_item_classes, 
-                 register_total_count, 
+                 contained_item_classes,
+                 register_total_count,
                  *args,
-                 views=None, 
-                 default_view_token=None, 
+                 views=None,
+                 default_view_token=None,
                  super_register=None,
-                 page_size_max=1000, 
-                 register_template=None, 
-                 per_page=None, 
+                 page_size_max=1000,
+                 register_template=None,
+                 per_page=None,
                  **kwargs):
         """
         Constructor
 
         :param request: The Flask request object triggering this class object's creation.
         :type request: :class:`.flask.request`
-        :param uri: The URI requested.
-        :type uri: str
+        :param instance_uri: The URI requested.
+        :type instance_uri: str
         :param label: The label of the Register.
         :type label: str
         :param comment: A description of the Register.
@@ -70,28 +70,24 @@ class RegisterRenderer(Renderer):
         views.update(self._add_standard_reg_view())
         if default_view_token is None:
             default_view_token = 'reg'
-        super(RegisterRenderer, self).__init__(request, uri, views,
+        super(RegisterRenderer, self).__init__(request, instance_uri, views,
                                                default_view_token, **kwargs)
-        self.label = label
-        self.comment = comment
-        if register_items is not None:
-            self.register_items = register_items
-        else:
-            self.register_items = []
-        self.contained_item_classes = contained_item_classes
-        self.register_total_count = register_total_count
-        self.per_page = request.args.get('per_page', type=int, default=(per_page or RegisterRenderer.DEFAULT_ITEMS_PER_PAGE))
-        self.page = request.args.get('page', type=int, default=1)
-        self.super_register = super_register
-        self.page_size_max = page_size_max
-        self.register_template = register_template
-        self.paging_error = self._paging()
-        self.template_extras = kwargs
-
-        try:
-            self.format = self._get_requested_format()
-        except ViewsFormatsException as e:
-            self.vf_error = str(e)
+        if self.vf_error is None:
+            self.label = label
+            self.comment = comment
+            if register_items is not None:
+                self.register_items = register_items
+            else:
+                self.register_items = []
+            self.contained_item_classes = contained_item_classes
+            self.register_total_count = register_total_count
+            self.per_page = request.args.get('per_page', type=int, default=(per_page or RegisterRenderer.DEFAULT_ITEMS_PER_PAGE))
+            self.page = request.args.get('page', type=int, default=1)
+            self.super_register = super_register
+            self.page_size_max = page_size_max
+            self.register_template = register_template
+            self.paging_error = self._paging()
+            self.template_extras = kwargs
 
     def _paging(self):
         # calculate last page
@@ -115,13 +111,13 @@ class RegisterRenderer(Renderer):
         # always add a link to first
         self.first_page = 1
         links.append('<{}?per_page={}&page={}>; rel="first"'
-                     .format(self.uri, self.per_page, self.first_page))
+                     .format(self.instance_uri, self.per_page, self.first_page))
 
         # if this isn't the first page, add a link to "prev"
         if self.page > 1:
             self.prev_page = self.page - 1
             links.append('<{}?per_page={}&page={}>; rel="prev"'.format(
-                self.uri,
+                self.instance_uri,
                 self.per_page,
                 self.prev_page
             ))
@@ -132,7 +128,7 @@ class RegisterRenderer(Renderer):
         if self.page < self.last_page:
             self.next_page = self.page + 1
             links.append('<{}?per_page={}&page={}>; rel="next"'.format(
-                self.uri,
+                self.instance_uri,
                 self.per_page,
                 self.next_page
             ))
@@ -141,11 +137,9 @@ class RegisterRenderer(Renderer):
 
         # always add a link to last
         links.append('<{}?per_page={}&page={}>; rel="last"'
-                     .format(self.uri, self.per_page, self.last_page))
+                     .format(self.instance_uri, self.per_page, self.last_page))
 
-        self.headers = {
-            'Link': ', '.join(links)
-        }
+        self.headers['Link'] += ', ' + ', '.join(links)
 
         return None
 
@@ -157,9 +151,8 @@ class RegisterRenderer(Renderer):
         :rtype: :py:class:`flask.Response`
         """
         response = super(RegisterRenderer, self).render()
-        if not response and self.view == 'reg':
+        if response is None and self.view == 'reg':
             if self.paging_error is None:
-                self.headers['Content-Profile'] = str(self.views['reg'].namespace)
                 response = self._render_reg_view()
             else:  # there is a paging error (e.g. page > last_page)
                 response = Response(self.paging_error, status=400, mimetype='text/plain')
@@ -181,7 +174,7 @@ class RegisterRenderer(Renderer):
                                 total=self.register_total_count,
                                 page_parameter='page', per_page_parameter='per_page')
         _template_context = {
-            'uri': self.uri,
+            'uri': self.instance_uri,
             'label': self.label,
             'comment': self.comment,
             'contained_item_classes': self.contained_item_classes,
@@ -220,7 +213,7 @@ class RegisterRenderer(Renderer):
         XHV = Namespace('https://www.w3.org/1999/xhtml/vocab#')
         g.bind('xhv', XHV)
 
-        register_uri = URIRef(self.uri)
+        register_uri = URIRef(self.instance_uri)
         g.add((register_uri, RDF.type, REG.Register))
         g.add((register_uri, RDFS.label, Literal(self.label, datatype=XSD.string)))
         g.add((register_uri, RDFS.comment, Literal(self.comment, datatype=XSD.string)))
@@ -229,8 +222,8 @@ class RegisterRenderer(Renderer):
         if self.super_register is not None:
             g.add((register_uri, REG.register, URIRef(self.super_register)))
 
-        page_uri_str = self.uri + '?per_page=' + str(self.per_page) + '&page=' + str(self.page)
-        page_uri_str_nonum = self.uri + '?per_page=' + str(self.per_page) + '&page='
+        page_uri_str = self.instance_uri + '?per_page=' + str(self.per_page) + '&page=' + str(self.page)
+        page_uri_str_nonum = self.instance_uri + '?per_page=' + str(self.per_page) + '&page='
         page_uri = URIRef(page_uri_str)
 
         # pagination
@@ -315,7 +308,7 @@ class RegisterRenderer(Renderer):
     def _render_reg_view_json(self):
         return Response(
             json.dumps({
-                'uri': self.uri,
+                'uri': self.instance_uri,
                 'label': self.label,
                 'comment': self.comment,
                 'views': list(self.views.keys()),
@@ -335,7 +328,7 @@ class RegisterRenderer(Renderer):
                 ['text/html', 'application/json'] + self.RDF_MIMETYPES,
                 'text/html',
                 languages=['en'],  # default 'en' only for now
-                namespace='http://purl.org/linked-data/registry'
+                profile_uri='http://purl.org/linked-data/registry'
             )
         }
 
@@ -346,15 +339,15 @@ class RegisterOfRegistersRenderer(RegisterRenderer):
 
     This sub-class auto-fills many of the :class:`.RegisterRenderer` options.
     """
-    def __init__(self, request, uri, label, comment, rofr_file_path, *args,
+    def __init__(self, request, instance_uri, label, comment, rofr_file_path, *args,
                  super_register=None, **kwargs):
         """
         Constructor
 
         :param request: The Flask request object triggering this class object's creation.
         :type request: :class:`flask.request`
-        :param uri: The URI requested.
-        :type uri: str
+        :param instance_uri: The URI requested.
+        :type instance_uri: str
         :param label: The label of the Register.
         :type label: str
         :param comment: A description of the Register.
@@ -366,7 +359,7 @@ class RegisterOfRegistersRenderer(RegisterRenderer):
         """
         super(RegisterOfRegistersRenderer, self).__init__(
             request,
-            uri,
+            instance_uri,
             label,
             comment,
             None,  # will be replaced further down
