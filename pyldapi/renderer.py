@@ -3,6 +3,7 @@ from abc import ABCMeta
 import json
 from flask import Response, render_template
 from rdflib import Graph, Namespace, URIRef, BNode, Literal, RDF, RDFS, XSD
+from rdflib.namespace import DCTERMS
 from pyldapi.view import View
 from pyldapi.exceptions import ViewsFormatsException
 import connegp
@@ -92,6 +93,15 @@ class Renderer(object, metaclass=ABCMeta):
             'text/html',
             languages=['en'],  # default 'en' only for now
             profile_uri='https://w3id.org/profile/alt'  # the registered URI for the Alternates View Profile
+        )
+
+        self.views['all'] = View(
+            'Alternate Representations',
+            'The representation of the resource that lists all other representations (profiles and Media Types)',
+            ['text/html', 'application/json'] + self.RDF_MIMETYPES,
+            'text/html',
+            languages=['en'],  # default 'en' only for now
+            profile_uri='http://www.w3.org/ns/dx/conneg/altr'  # the ConnegP URI for RRD Functional Profile
         )
 
         # get view & format for this request, flag any errors but do not except out
@@ -369,9 +379,10 @@ class Renderer(object, metaclass=ABCMeta):
                         rel = 'alternate'
 
                     individual_links.append(
-                        '<{}?_view={}>; rel="{}"; type="{}"; profile="{}", '.format(
+                        '<{}?_view={}&_format={}>; rel="{}"; type="{}"; profile="{}", '.format(
                             self.instance_uri,
                             token,
+                            format_,
                             rel,
                             format_,
                             view.namespace)
@@ -432,10 +443,9 @@ class Renderer(object, metaclass=ABCMeta):
         ALT = Namespace('http://w3id.org/profile/alt#')
         g.bind('alt', ALT)
 
-        DCT = Namespace('http://purl.org/dc/terms/')
-        g.bind('dct', DCT)
+        g.bind('dct', DCTERMS)
 
-        PROF = Namespace('https://w3c.github.io/dxwg/profiledesc#')
+        PROF = Namespace('http://www.w3.org/ns/prof/')
         g.bind('prof', PROF)
 
         for token, v in self.views.items():
@@ -447,10 +457,10 @@ class Renderer(object, metaclass=ABCMeta):
             for f in v.formats:
                 if str(f).startswith('_'):  # ignore formats like `_internal`
                     continue
-                g.add((v_node, URIRef(DCT + 'format'), URIRef('http://w3id.org/mediatype/' + f)))
+                g.add((v_node, URIRef(DCTERMS + 'format'), URIRef('http://w3id.org/mediatype/' + f)))
             g.add((v_node, ALT.hasDefaultFormat, Literal(v.default_format, datatype=XSD.string)))
             if v.namespace is not None:
-                g.add((v_node, DCT.conformsTo, URIRef(v.namespace)))
+                g.add((v_node, DCTERMS.conformsTo, URIRef(v.namespace)))
             g.add((URIRef(self.instance_uri), ALT.view, v_node))
 
             if self.default_view_token == token:
@@ -494,6 +504,76 @@ class Renderer(object, metaclass=ABCMeta):
             headers=self.headers
         )
 
+    def _render_rdd_view_html(self, template_context=None):
+        views = {}
+        for token, v in self.views.items():
+            view = {'label': str(v.label), 'comment': str(v.comment),
+                    'formats': tuple(f for f in v.formats if not f.startswith('_')),
+                    'default_format': str(v.default_format),
+                    'languages': v.languages if v.languages is not None else ['en'],
+                    'default_language': str(v.default_language),
+                    'namespace': str(v.namespace)}
+            views[token] = view
+        _template_context = {
+            'uri': self.instance_uri,
+            'default_view_token': self.default_view_token,
+            'views': views
+        }
+        if template_context is not None and isinstance(template_context, dict):
+            _template_context.update(template_context)
+        return Response(
+            render_template(
+                self.alternates_template or 'alternates.html',
+                **_template_context
+            ),
+            headers=self.headers
+        )
+
+    # TODO: languages not included
+    def _render_rdd_view_rdf(self):
+        g = Graph()
+        ALTR = Namespace('http://www.w3.org/ns/dx/conneg/altr#')
+        g.bind('altr', ALTR)
+
+        g.bind('dct', DCTERMS)
+
+        PROF = Namespace('http://www.w3.org/ns/prof/')
+        g.bind('prof', PROF)
+
+        res = URIRef(self.instance_uri)
+        g.add((res, RDF.type, RDFS.Resource))
+
+        for token, v in self.views.items():
+            for f in v.formats:
+                if str(f).startswith('_'):  # ignore formats like `_internal`
+                    continue
+                v_node = BNode()
+                g.add((v_node, RDF.type, ALTR.Representation))
+                g.add((v_node, PROF.token, Literal(token, datatype=XSD.token)))
+                g.add((v_node, RDFS.label, Literal(v.label, datatype=XSD.string)))
+                g.add((v_node, RDFS.comment, Literal(v.comment, datatype=XSD.string)))
+
+                g.add((v_node, DCTERMS.conformsTo, URIRef(v.namespace)))
+
+                if self.default_view_token == token:
+                    g.add((URIRef(self.instance_uri), ALTR.hasDefaultRepresentation, v_node))
+                else:
+                    g.add((URIRef(self.instance_uri), ALTR.hasRepresentation, v_node))
+
+                g.add((v_node, URIRef(DCTERMS + 'format'), URIRef('http://w3id.org/mediatype/' + f)))
+                if f == v.default_format:
+                    g.add((v_node, ALTR.isProfilesDefault, Literal(True, datatype=XSD.boolean)))
+
+        return self._make_rdf_response(g)
+
+    def _render_rdd_view(self):
+        if self.format == '_internal':
+            return self
+        if self.format == 'text/html':
+            return self._render_rdd_view_html()
+        else:  # self.format in Renderer.RDF_MIMETYPES:
+            return self._render_rdd_view_rdf()
+
     def render(self):
         """
         Use the received view and format to create a response back to the client.
@@ -513,6 +593,8 @@ class Renderer(object, metaclass=ABCMeta):
             return Response(self.vf_error, status_code=400, mimtype='text/plain')
         elif self.view == 'alternates':
             return self._render_alternates_view()
+        elif self.view == 'all':
+            return self._render_rdd_view()
         return None
 
     # end making response content
