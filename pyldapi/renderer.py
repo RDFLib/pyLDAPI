@@ -373,7 +373,7 @@ class Renderer(object, metaclass=ABCMeta):
             for format_ in view.formats:
                 # set the rel="self" just for this view & format
                 if format_ != '_internal':
-                    if token == self.view and format_ == self.format:
+                    if token == self.default_view_token and format_ == self.view['default_format']:
                         rel = 'self'
                     else:
                         rel = 'alternate'
