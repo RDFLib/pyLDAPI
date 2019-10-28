@@ -24,7 +24,11 @@ An API using this module will get:
 * a *Register of Registers*
    * a start-up function that auto-generates a Register of Registers is run when the API is launched.
 * a basic, over-writeable template for Registers' HTML & RDF
+* all of the functionality defined by the W3C's specification `Content Negotiation by Profile`_
+   * to allow for requests of content that conform to data specifications and profiles
 
+
+.. _Content Negotiation by Profile: https://www.w3.org/TR/dx-prof-conneg/
 
 
 Definitions
@@ -99,12 +103,13 @@ Contact
 
 Nicholas Car (lead)
 ~~~~~~~~~~~~~~~~~~~
-| *Senior Experimental Scientist*
-| `CSIRO Land and Water`_
-| `nicholas.car@csiro.au`_
+| *Data Systems Architect*
+| `SURROUND Australia Pty Ltd`_
+| `nicholas.car@surroundaustralia.com`_
 | `http://orcid.org/0000-0002-8742-7730`_
 
-.. _nicholas.car@csiro.au: nicholas.car@csiro.au
+.. _SURROUND Australia Pty Ltd: https://surroundaustralia.com
+.. _nicholas.car@surroundaustralia.com: nicholas.car@surroundaustralia.com
 .. _http://orcid.org/0000-0002-8742-7730: http://orcid.org/0000-0002-8742-7730
 
 Ashley Sommer (senior developer)
