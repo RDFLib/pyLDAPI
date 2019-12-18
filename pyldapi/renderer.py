@@ -166,15 +166,21 @@ class Renderer(object, metaclass=ABCMeta):
             profiles = [x.replace(' ', '').strip() for x in profiles]
 
             # split off any weights and sort by them with default weight = 1
-            profiles = [
-                (float(x.split(';')[1].replace('q=', '')) if ";q=" in x else 1, x.split(';')[0]) for x in profiles
-            ]
+            profiles_list = []
+            for x in profiles:
+               #get the q val
+               qval = None
+               for y in x.split(';'): 
+                  if y.startswith("q="):
+                     qval = y.replace("q=", '')
+               a = (float(qval) if qval is not None else 1, x.split(';')[0])
+               profiles_list.append(a)
 
-            # sort profiles by weight, heaviest first
-            profiles.sort(reverse=True)
+            profiles_list.sort(reverse=True)
 
-            return[x[1] for x in profiles]
+            return[x[1] for x in profiles_list]
         except Exception as e:
+            print(e)
             raise ViewsFormatsException(
                 'You have requested a Media Type using an Accept header that is incorrectly formatted.')
 
