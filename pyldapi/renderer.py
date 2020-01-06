@@ -122,15 +122,25 @@ class Renderer(object, metaclass=ABCMeta):
             profiles = [x.replace('<', '').replace('>', '').replace(' ', '').strip() for x in profiles]
 
             # split off any weights and sort by them with default weight = 1
-            profiles = [
-                (float(x.split(';')[1].replace('q=', ''))
-                 if len(x.split(';')) == 2 else 1, x.split(';')[0]) for x in profiles
-            ]
+            weighted_profiles = []
+            for mtype in profiles:
+                mtype_parts = iter(mtype.split(";"))
+                mimetype = next(mtype_parts)
+                try:
+                    qweight = 0.0
+                    while True:
+                        part = next(mtype_parts)
+                        if part.startswith("q="):
+                            qweight = float(part.replace("q=", ""))
+                            break
+                except StopIteration:
+                    qweight = 1.0
+                weighted_profiles.append((qweight, mimetype))
 
             # sort profiles by weight, heaviest first
-            profiles.sort(reverse=True)
+            weighted_profiles.sort(reverse=True)
 
-            return [x[1] for x in profiles]
+            return [x[1] for x in weighted_profiles]
         except Exception as e:
             raise ViewsFormatsException(
                 'You have requested a profile using an Accept-Profile header that is incorrectly formatted.')
@@ -161,19 +171,30 @@ class Renderer(object, metaclass=ABCMeta):
         """
         try:
             # split the header into individual URIs, with weights still attached
-            profiles = self.request.headers['Accept'].split(',')
+            mtypes_list = self.request.headers['Accept'].split(',')
             # remove \s
-            profiles = [x.replace(' ', '').strip() for x in profiles]
+            mtypes_list = [x.replace(' ', '').strip() for x in mtypes_list]
 
             # split off any weights and sort by them with default weight = 1
-            profiles = [
-                (float(x.split(';')[1].replace('q=', '')) if ";q=" in x else 1, x.split(';')[0]) for x in profiles
-            ]
+            weighted_mtypes = []
+            for mtype in mtypes_list:
+                mtype_parts = iter(mtype.split(";"))
+                mimetype = next(mtype_parts)
+                try:
+                    qweight = 0.0
+                    while True:
+                        part = next(mtype_parts)
+                        if part.startswith("q="):
+                            qweight = float(part.replace("q=",""))
+                            break
+                except StopIteration:
+                    qweight = 1.0
+                weighted_mtypes.append((qweight, mimetype))
 
             # sort profiles by weight, heaviest first
-            profiles.sort(reverse=True)
+            weighted_mtypes.sort(reverse=True)
 
-            return[x[1] for x in profiles]
+            return[x[1] for x in weighted_mtypes]
         except Exception as e:
             raise ViewsFormatsException(
                 'You have requested a Media Type using an Accept header that is incorrectly formatted.')

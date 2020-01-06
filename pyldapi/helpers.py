@@ -15,7 +15,7 @@ def setup(app, api_home_dir, api_uri):
     .. note:: This must run before Flask's :func:`app.run` like this: :code:`pyldapi.setup(app, '.', conf.URI_BASE)`. See the example below.
 
     :param app: The Flask app containing this pyLDAPI instance.
-    :type app: :class:`flask.request`
+    :type app: :class:`flask.Flask`
     :param api_uri: The URI base of the API.
     :type api_uri: str
     :return: None
