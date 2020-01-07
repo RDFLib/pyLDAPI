@@ -87,7 +87,7 @@ pyLDAPI in action
 
 Parts of the GNAF implementation
 
-.. |gnaf| image:: images/instance-gnaf.png
+.. |gnaf| image:: images/instance-GNAF.png
     :width: 250
     :alt: Block diagram of the GNAF implementation
 
@@ -105,9 +105,9 @@ Parts of the GNAF implementation
 
 Parts of the ASGS implementation
 
-.. |asgs| image:: images/instance-gnaf.png
+.. |asgs| image:: images/instance-ASGS.png
     :width: 250
-    :alt: Block diagram of the GNAF implementation
+    :alt: Block diagram of the ASGS implementation
 
 Documentation
 -------------
