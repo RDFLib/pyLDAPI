@@ -25,6 +25,15 @@ An API using this module will get:
    * a start-up function that auto-generates a Register of Registers is run when the API is launched.
 * a basic, over-writeable template for Registers' HTML & RDF
 
+The main parts of pyLDAPI are as follows:
+
+|blocks|
+
+.. |blocks| image:: images/blocks.png
+    :width: 500
+    :alt: Block diagram of pyLDAPI's main parts
+
+Web requests arrive at a Web Server, such as *Apache* or *nginx*, which then forwards (some of) them on to *Flask*, a Python web framework. Flask calls Python functions for web requests defined in a request/function mapping and may call pyLDAPI elements. Flask need not call pyLDAPI for all requests, just as Apache/nginx need not forward all web request to flask. pyLDAPI may then draw on any Python data source, such as database APIs, and uses the *rdflib* Python module to formulate RDF responses.
 
 
 Definitions
@@ -97,15 +106,16 @@ This is licensed under GNU General Public License (GPL) v3.0. See the `LICENSE d
 Contact
 -------
 
-Nicholas Car (lead)
-~~~~~~~~~~~~~~~~~~~
-| *Senior Experimental Scientist*
-| `CSIRO Land and Water`_
-| `nicholas.car@csiro.au`_
-| `http://orcid.org/0000-0002-8742-7730`_
+Dr Nicholas Car (lead)
+~~~~~~~~~~~~~~~~~~~~~~
+| *Data Systems Architect*
+| `SURROUND Australia Pty Ltd`_
+| `nicholas.car@surroundaustralia.com`_
+| `https://orcid.org/0000-0002-8742-7730`_
 
-.. _nicholas.car@csiro.au: nicholas.car@csiro.au
-.. _http://orcid.org/0000-0002-8742-7730: http://orcid.org/0000-0002-8742-7730
+.. _SURROUND Australia Pty Ltd: https://surroundaustralia.com
+.. _nicholas.car@surroundaustralia.com: nicholas.car@surroundaustralia.com
+.. _https://orcid.org/0000-0002-8742-7730: https://orcid.org/0000-0002-8742-7730
 
 Ashley Sommer (senior developer)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
