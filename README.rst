@@ -30,7 +30,7 @@ The main parts of pyLDAPI are as follows:
 |blocks|
 
 .. |blocks| image:: images/blocks.png
-    :width: 500
+    :width: 250
     :alt: Block diagram of pyLDAPI's main parts
 
 Web requests arrive at a Web Server, such as *Apache* or *nginx*, which then forwards (some of) them on to *Flask*, a Python web framework. Flask calls Python functions for web requests defined in a request/function mapping and may call pyLDAPI elements. Flask need not call pyLDAPI for all requests, just as Apache/nginx need not forward all web request to flask. pyLDAPI may then draw on any Python data source, such as database APIs, and uses the *rdflib* Python module to formulate RDF responses.
@@ -83,7 +83,31 @@ pyLDAPI in action
 
 .. _http://linked.data.gov.au/dataset/gnaf: http://linked.data.gov.au/dataset/gnaf
 
+|gnaf|
 
+Parts of the GNAF implementation
+
+.. |gnaf| image:: images/instance-gnaf.png
+    :width: 250
+    :alt: Block diagram of the GNAF implementation
+
+* Geoscience Australia's Sites, Samples Surveys Linked Data API
+   * `http://pid.geoscience.gov.au/sample/`_
+
+.. _http://pid.geoscience.gov.au/sample/: http://pid.geoscience.gov.au/sample/
+
+* Linked Data version of the Australian Statistical Geography Standard product
+   * `http://linked.data.gov.au/dataset/asgs`_
+
+.. _http://linked.data.gov.au/dataset/asgs: http://linked.data.gov.au/dataset/asgs
+
+|asgs|
+
+Parts of the ASGS implementation
+
+.. |asgs| image:: images/instance-gnaf.png
+    :width: 250
+    :alt: Block diagram of the GNAF implementation
 
 Documentation
 -------------
