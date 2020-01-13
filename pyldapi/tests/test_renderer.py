@@ -31,14 +31,14 @@ def accept_profile_testing_setup():
             'A view of basic properties of main classes in the AU Org Ontology',
             ['text/html'] + Renderer.RDF_MIMETYPES,
             'text/turtle',
-            namespace='http://test.linked.data.gov.au/def/auorg#'
+            profile_uri='http://test.linked.data.gov.au/def/auorg#'
         ),
         'test': View(
             'Test View',
             'A view for testing',
             ['text/xml'],
             'text/xml',
-            namespace='http://test.com'
+            profile_uri='http://test.com'
         )
     }
 
@@ -62,14 +62,14 @@ def accept_profile_testing_setup():
             'A view of basic properties of main classes in the AU Org Ontology',
             ['text/html'] + Renderer.RDF_MIMETYPES,
             'text/turtle',
-            namespace='http://test.linked.data.gov.au/def/auorg#'
+            profile_uri='http://test.linked.data.gov.au/def/auorg#'
         ),
         'test': View(
             'Test View',
             'A view for testing',
             ['text/xml'],
             'text/xml',
-            namespace='http://test.com'
+            profile_uri='http://test.com'
         )
     }
 
@@ -93,14 +93,14 @@ def accept_profile_testing_setup():
             'A view of basic properties of main classes in the AU Org Ontology',
             ['text/html'] + Renderer.RDF_MIMETYPES,
             'text/turtle',
-            namespace='http://test.linked.data.gov.au/def/auorg#'
+            profile_uri='http://test.linked.data.gov.au/def/auorg#'
         ),
         'test': View(
             'Test View',
             'A view for testing',
             ['text/xml'],
             'text/xml',
-            namespace='http://test.com'
+            profile_uri='http://test.com'
         )
     }
 
@@ -123,24 +123,24 @@ def test_get_accept_profiles_in_order():
         'http://test.com',
         'http://test.linked.data.gov.au/def/auorg#'
     ]
-    assert r._get_accept_profiles_in_order() == aexpected_result, \
+    assert r._get_profiles_from_http() == aexpected_result, \
         'Failed test_get_accept_profiles_in_order() test 4'
 
 
 def test_get_available_profile_uris():
     global r
 
-    assert r._get_available_profile_uris() == {
+    assert r._get_available_profiles() == {
         'http://test.linked.data.gov.au/def/auorg#': 'auorg',
         'http://test.com': 'test',
-        'https://promsns.org/def/alt': 'alternates'
+        'https://w3id.org/profile/alt': 'alternates'
     }, 'Failed test_get_available_profile_uris()'
 
 
 def test_get_best_accept_profile():
     global r
 
-    assert r._get_best_accept_profile() == 'test', 'Failed test_get_best_accept_profile()'
+    assert r._get_profile() == 'test', 'Failed test_get_best_accept_profile()'
 
 
 def test_get_requested_view():
@@ -158,21 +158,21 @@ def test_render_alternates_view_rdf():
             'A view of basic properties of main classes in the AU Org Ontology',
             ['text/html'] + Renderer.RDF_MIMETYPES,
             'text/turtle',
-            namespace='http://test.linked.data.gov.au/def/auorg#'
+            profile_uri='http://test.linked.data.gov.au/def/auorg#'
         ),
         'test': View(
             'Test View',
             'A view for testing',
             ['text/xml'],
             'text/xml',
-            namespace='http://test.com'
+            profile_uri='http://test.com'
         ),
         'test2': View(
             'Test2 View',
             'A second view for testing',
             Renderer.RDF_MIMETYPES,
             'application/rdf+xml',
-            namespace='http://test2.com'
+            profile_uri='http://test2.com'
         )
     }
 

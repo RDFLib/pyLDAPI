@@ -22,7 +22,7 @@ class View:
             default_format,
             languages=None,
             default_language='en',
-            namespace=None
+            profile_uri=None
     ):
         """
         Constructor
@@ -39,8 +39,8 @@ class View:
         :type languages: list
         :param default_language: The default language, by default it is 'en' English.
         :type default_language: str
-        :param namespace: The namespace URI for the *profile* view.
-        :type namespace: str
+        :param profile_uri: The namespace URI for the *profile* view.
+        :type profile_uri: str
         """
         self.label = label
         self.comment = comment
@@ -48,4 +48,4 @@ class View:
         self.default_format = default_format
         self.languages = languages if languages is not None else ['en']
         self.default_language = default_language
-        self.namespace = namespace
+        self.namespace = profile_uri

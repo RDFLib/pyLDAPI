@@ -24,6 +24,8 @@ An API using this module will get:
 * a *Register of Registers*
    * a start-up function that auto-generates a Register of Registers is run when the API is launched.
 * a basic, over-writeable template for Registers' HTML & RDF
+* all of the functionality defined by the W3C's specification `Content Negotiation by Profile`_
+   * to allow for requests of content that conform to data specifications and profiles
 
 The main parts of pyLDAPI are as follows:
 
@@ -35,6 +37,7 @@ The main parts of pyLDAPI are as follows:
 
 Web requests arrive at a Web Server, such as *Apache* or *nginx*, which then forwards (some of) them on to *Flask*, a Python web framework. Flask calls Python functions for web requests defined in a request/function mapping and may call pyLDAPI elements. Flask need not call pyLDAPI for all requests, just as Apache/nginx need not forward all web request to flask. pyLDAPI may then draw on any Python data source, such as database APIs, and uses the *rdflib* Python module to formulate RDF responses.
 
+.. _Content Negotiation by Profile: https://www.w3.org/TR/dx-prof-conneg/
 
 Definitions
 -----------
@@ -139,7 +142,7 @@ Dr Nicholas Car (lead)
 
 .. _SURROUND Australia Pty Ltd: https://surroundaustralia.com
 .. _nicholas.car@surroundaustralia.com: nicholas.car@surroundaustralia.com
-.. _https://orcid.org/0000-0002-8742-7730: https://orcid.org/0000-0002-8742-7730
+.. _http://orcid.org/0000-0002-8742-7730: http://orcid.org/0000-0002-8742-7730
 
 Ashley Sommer (senior developer)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -148,7 +151,6 @@ Ashley Sommer (senior developer)
 | `ashley.sommer@csiro.au`_
 
 .. _ashley.sommer@csiro.au: ashley.sommer@csiro.au
-
 .. _CSIRO Land and Water: https://www.csiro.au/en/Research/LWF
 
 
