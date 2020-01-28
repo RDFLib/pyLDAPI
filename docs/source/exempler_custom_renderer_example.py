@@ -1,14 +1,14 @@
 from flask import Response, render_template
 from SPARQLWrapper import SPARQLWrapper, JSON
 from rdflib import Graph, URIRef, Namespace, RDF, RDFS, XSD, OWL, Literal
-from pyldapi import Renderer, View
+from pyldapi import Renderer, Profile
 import _conf as conf
 
 
 class MediaTypeRenderer(Renderer):
     def __init__(self, request, instance_uri):
-        views = {
-            'mt': View(
+        profiles = {
+            'mt': Profile(
                 'Mediatype View',
                 'Basic properties of a Media Type, as recorded by IANA',
                 ['text/html'] + Renderer.RDF_MIMETYPES,
@@ -20,7 +20,7 @@ class MediaTypeRenderer(Renderer):
         super(MediaTypeRenderer, self).__init__(
             request,
             instance_uri,
-            views,
+            profiles,
             'mt'
         )
 
@@ -28,9 +28,9 @@ class MediaTypeRenderer(Renderer):
         if hasattr(self, 'vf_error'):
             return Response(self.vf_error, status=406, mimetype='text/plain')
         else:
-            if self.view == 'alternates':
-                return self._render_alternates_view()
-            elif self.view == 'mt':
+            if self.profile == 'alternates':
+                return self._render_alternates_profile()
+            elif self.profile == 'mt':
                 if self.format in Renderer.RDF_MIMETYPES:
                     rdf = self._get_instance_rdf()
                     if rdf is None:

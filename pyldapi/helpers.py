@@ -48,15 +48,15 @@ def _make_rofr_rdf(app, api_home_dir, api_uri):
     # get the RDF for each Register, extract the bits we need, write them to graph g
     for rule in app.url_map.iter_rules():
         if '<' not in str(rule):  # no registers can have a Flask variable in their path
-            # make the register view URI for each possible register
+            # make the register profile URI for each possible register
             try:
-                endpoint_func = app.view_functions[rule.endpoint]
+                endpoint_func = app.profile_functions[rule.endpoint]
             except (AttributeError, KeyError):
                 continue
             candidate_register_uri = api_uri + str(rule)
             try:
                 dummy_request_uri = "http://localhost:5000" + str(
-                    rule) + '?_view=reg&_format=_internal'
+                    rule) + '?_profile=reg&_format=_internal'
                 test_context = app.test_request_context(dummy_request_uri)
                 with test_context:
                     resp = endpoint_func()
@@ -70,13 +70,13 @@ def _make_rofr_rdf(app, api_home_dir, api_uri):
                 with test_context:
                     try:
                         resp.format = 'text/html'
-                        html_resp = resp._render_reg_view_html()
+                        html_resp = resp._render_reg_profile_html()
                     except TemplateNotFound:  # missing html template
                         pass  # TODO: Fail on this error
                     resp.format = 'application/json'
-                    json_resp = resp._render_reg_view_json()
+                    json_resp = resp._render_reg_profile_json()
                     resp.format = 'text/turtle'
-                    rdf_resp = resp._render_reg_view_rdf()
+                    rdf_resp = resp._render_reg_profile_rdf()
 
                 _filter_register_graph(candidate_register_uri, rdf_resp, g)
 
@@ -138,14 +138,14 @@ def _filter_register_graph(register_uri, r, g):
 #     import requests
 #     from pyldapi.exceptions import ViewsFormatsException
 #     assert isinstance(g, Graph)
-#     logging.debug('assessing register candidate ' + register_uri.replace('?_view=reg&_format=text/turtle', ''))
+#     logging.debug('assessing register candidate ' + register_uri.replace('?_profile=reg&_format=text/turtle', ''))
 #     try:
 #         r = requests.get(register_uri)
 #         print('getting ' + register_uri)
 #     except ViewsFormatsException as e:
-#         return False  # ignore these exceptions as are just a result of requesting a view/format combo of something like a page
+#         return False  # ignore these exceptions as are just a result of requesting a profile/format combo of something like a page
 #     if r.status_code == 200:
-#         return _filter_register_graph(register_uri.replace('?_view=reg&_format=text/turtle', ''), r, g)
+#         return _filter_register_graph(register_uri.replace('?_profile=reg&_format=text/turtle', ''), r, g)
 #     logging.debug('{} returns no HTTP 200'.format(register_uri))
 #     return False  # no valid response from endpoint so not register
 

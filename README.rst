@@ -13,18 +13,18 @@ The Python Linked Data API (pyLDAPI) is:
 What is it?
 -----------
 
-This module contains only a small Python module which is intended to be added (imported) into a `Python Flask`_ installation in order to add a series of extra functions to endpoints to the ones defined by you as a Flask user (URL routes).
+This module contains a small Python module which is intended to be added (imported) into a `Python Flask <http://flask.pocoo.org/>`_ installation to add a small library of ``Renderer`` classes which can be used to handle requests and return responses in a manner consistent with `Linked Data <https://en.wikipedia.org/wiki/Linked_data>`__ principles of operation.
 
-.. _Python Flask: http://flask.pocoo.org/
+The intention is to make it easy to "Linked Data-enable" web APIs.
 
 An API using this module will get:
 
-* an *alternates view* for each *Register* and *Object* that the API delivers
-   * if the API declares the appropriate *model views* for each item
+* an *alt profile* for each endpoint that uses a ``Renderer`` class to return responses that the API delivers
+   * this is a *profile*, or *view* of the resource that lists all other available profiles
 * a *Register of Registers*
    * a start-up function that auto-generates a Register of Registers is run when the API is launched.
 * a basic, over-writeable template for Registers' HTML & RDF
-* all of the functionality defined by the W3C's specification `Content Negotiation by Profile`_
+* all of the functionality defined by the W3C's `Content Negotiation by Profile <https://www.w3.org/TR/dx-prof-conneg/>`_ specification
    * to allow for requests of content that conform to data specifications and profiles
 
 The main parts of pyLDAPI are as follows:
@@ -37,23 +37,16 @@ The main parts of pyLDAPI are as follows:
 
 Web requests arrive at a Web Server, such as *Apache* or *nginx*, which then forwards (some of) them on to *Flask*, a Python web framework. Flask calls Python functions for web requests defined in a request/function mapping and may call pyLDAPI elements. Flask need not call pyLDAPI for all requests, just as Apache/nginx need not forward all web request to flask. pyLDAPI may then draw on any Python data source, such as database APIs, and uses the *rdflib* Python module to formulate RDF responses.
 
-.. _Content Negotiation by Profile: https://www.w3.org/TR/dx-prof-conneg/
-
 Definitions
 -----------
 
-Alternates View
-~~~~~~~~~~~~~~~
-The *model view* that lists all other views. This API uses the definition of *alternates view* presented at `https://promsns.org/def/alt`_.
-
-.. _https://promsns.org/def/alt: https://promsns.org/def/alt
+Alt Profile
+~~~~~~~~~~~
+The *model view* that lists all other views. This API uses the definition of *alternates profile* presented at `https://promsns.org/def/alt <https://promsns.org/def/alt>`_.
 
 Linked Data Principles
 ~~~~~~~~~~~~~~~~~~~~~~
-The principles of making things available over the internet in both human and machine-readable forms. Codified by the World Wide Web Consortium. See `https://www.w3.org/standards/semanticweb/data`_.
-
-.. _https://www.w3.org/standards/semanticweb/data: https://www.w3.org/standards/semanticweb/data
-
+The principles of making things available over the internet in both human and machine-readable forms. Codified by the World Wide Web Consortium. See `https://www.w3.org/standards/semanticweb/data <https://www.w3.org/standards/semanticweb/data>`_.
 
 Model View
 ~~~~~~~~~~
@@ -77,14 +70,10 @@ pyLDAPI in action
 -----------------
 
 * Register of Media Types
-   * `https://w3id.org/mediatype/`_
-
-.. _https://w3id.org/mediatype/: https://w3id.org/mediatype/
+   * `https://w3id.org/mediatype/ <https://w3id.org/mediatype/>`_
 
 * Linked Data version of the Geocoded National Address File
-   * `http://linked.data.gov.au/dataset/gnaf`_
-
-.. _http://linked.data.gov.au/dataset/gnaf: http://linked.data.gov.au/dataset/gnaf
+   * `http://linked.data.gov.au/dataset/gnaf <http://linked.data.gov.au/dataset/gnaf>`_
 
 |gnaf|
 
@@ -95,14 +84,10 @@ Parts of the GNAF implementation
     :alt: Block diagram of the GNAF implementation
 
 * Geoscience Australia's Sites, Samples Surveys Linked Data API
-   * `http://pid.geoscience.gov.au/sample/`_
-
-.. _http://pid.geoscience.gov.au/sample/: http://pid.geoscience.gov.au/sample/
+   * `http://pid.geoscience.gov.au/sample/ <http://pid.geoscience.gov.au/sample/>`_
 
 * Linked Data version of the Australian Statistical Geography Standard product
-   * `http://linked.data.gov.au/dataset/asgs`_
-
-.. _http://linked.data.gov.au/dataset/asgs: http://linked.data.gov.au/dataset/asgs
+   * `http://linked.data.gov.au/dataset/asgs <http://linked.data.gov.au/dataset/asgs>`_
 
 |asgs|
 
@@ -115,19 +100,13 @@ Parts of the ASGS implementation
 Documentation
 -------------
 
-Detailed documentation can be found at `https://pyldapi.readthedocs.io/`_
-
-.. _https://pyldapi.readthedocs.io/: https://pyldapi.readthedocs.io/
-
+Detailed documentation can be found at `https://pyldapi.readthedocs.io/ <https://pyldapi.readthedocs.io/>`_
 
 
 Licence
 -------
 
-This is licensed under GNU General Public License (GPL) v3.0. See the `LICENSE deed`_ for more details.
-
-.. _LICENSE deed: https://raw.githubusercontent.com/RDFLib/pyLDAPI/master/LICENSE
-
+This is licensed under GNU General Public License (GPL) v3.0. See the `LICENSE deed <https://raw.githubusercontent.com/RDFLib/pyLDAPI/master/LICENSE>`_ for more details.
 
 
 Contact
@@ -136,29 +115,31 @@ Contact
 Dr Nicholas Car (lead)
 ~~~~~~~~~~~~~~~~~~~~~~
 | *Data Systems Architect*
-| `SURROUND Australia Pty Ltd`_
-| `nicholas.car@surroundaustralia.com`_
-| `https://orcid.org/0000-0002-8742-7730`_
-
-.. _SURROUND Australia Pty Ltd: https://surroundaustralia.com
-.. _nicholas.car@surroundaustralia.com: nicholas.car@surroundaustralia.com
-.. _http://orcid.org/0000-0002-8742-7730: http://orcid.org/0000-0002-8742-7730
+| `SURROUND Australia Pty Ltd <https://surroundaustralia.com>`_
+| `nicholas.car@surroundaustralia.com <nicholas.car@surroundaustralia.com>`_
+| `https://orcid.org/0000-0002-8742-7730 <https://orcid.org/0000-0002-8742-7730>`_
 
 Ashley Sommer (senior developer)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 | *Informatics Software Engineer*
-| `CSIRO Land and Water`_
-| `ashley.sommer@csiro.au`_
-
-.. _ashley.sommer@csiro.au: ashley.sommer@csiro.au
-.. _CSIRO Land and Water: https://www.csiro.au/en/Research/LWF
+| `CSIRO Land and Water <https://www.csiro.au/en/Research/LWF>`_
+| `ashley.sommer@csiro.au <ashley.sommer@csiro.au>`_
 
 
 Related work
 ------------
 
-`pyLDAPI Client`_
+`pyLDAPI Client <http://pyldapi-client.readthedocs.io/>`_
 
 * *A Simple helper library for consuming registers, indexes, and instances of classes exposed via a pyLDAPI endpoint.*
 
-.. _pyLDAPI Client: http://pyldapi-client.readthedocs.io/
+
+Changelog
+---------
+**3.0**
+
+* Content Negotiation specification by Profile supported
+* replaced all references to "format" with "Media Type" and "view" with "profile"
+* renamed class View to Profile
+* added unit tests for all profile functions
+* added unit tests for main ConnegP functions

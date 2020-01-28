@@ -6,7 +6,7 @@ from rdflib import Graph, Namespace, URIRef, Literal, RDF, RDFS, XSD
 from rdflib.term import Identifier
 import json
 from pyldapi.renderer import Renderer
-from pyldapi.view import View
+from pyldapi.profile import Profile
 from pyldapi.exceptions import ViewsFormatsException, RegOfRegTtlError
 
 
@@ -25,8 +25,8 @@ class RegisterRenderer(Renderer):
                  contained_item_classes,
                  register_total_count,
                  *args,
-                 views=None,
-                 default_view_token=None,
+                 profiles=None,
+                 default_profile_token=None,
                  super_register=None,
                  page_size_max=1000,
                  register_template=None,
@@ -43,35 +43,42 @@ class RegisterRenderer(Renderer):
         :type label: str
         :param comment: A description of the Register.
         :type comment: str
-        :param register_items: The items within this register as a list of URI strings or tuples with string elements like (URI, label). They can also be tuples like (URI, URI, label) if you want to manually specify an item's class.
+        :param register_items: The items within this register as a list of URI strings or tuples with string elements
+        like (URI, label). They can also be tuples like (URI, URI, label) if you want to manually specify an item's
+        class.
         :type register_items: list
-        :param contained_item_classes: The list of URI strings of each distinct class of item contained in this Register.
+        :param contained_item_classes: The list of URI strings of each distinct class of item contained in this
+        Register.
         :type contained_item_classes: list
-        :param register_total_count: The total number of items in this Register (not of a page but the register as a whole).
+        :param register_total_count: The total number of items in this Register (not of a page but the register as a
+        whole).
         :type register_total_count: int
-        :param views: A dictionary of named :class:`.View` objects available for this Register, apart from 'reg' which is auto-created.
-        :type views: dict
-        :param default_view_token: The ID of the default :class:`.View` (key of a view in the list of Views).
-        :type default_view_token: str
+        :param profiles: A dictionary of named :class:`.View` objects available for this Register, apart from 'reg'
+        which is auto-created.
+        :type profiles: dict
+        :param default_profile_token: The ID of the default :class:`.View` (key of a profile in the list of Views).
+        :type default_profile_token: str
         :param super_register: A super-Register URI for this register. Can be within this API or external.
         :type super_register: str
-        :param register_template: The Jinja2 template to use for rendering the HTML view of the register. If None, then it will default to try and use a template called :code:`alternates.html`.
+        :param register_template: The Jinja2 template to use for rendering the HTML profile of the register. If None,
+        then it will default to try and use a template called :code:`alt.html`.
         :type register_template: str or None
-        :param per_page: Number of items to show per page if not specified in request. If None, then it will default to RegisterRenderer.DEFAULT_ITEMS_PER_PAGE.
+        :param per_page: Number of items to show per page if not specified in request. If None, then it will default to
+        RegisterRenderer.DEFAULT_ITEMS_PER_PAGE.
         :type per_page: int or None
         """
-        if views is None:
-            views = {}
-        for k, v in views.items():
+        if profiles is None:
+            profiles = {}
+        for k, v in profiles.items():
             if k == 'reg':
                 raise ViewsFormatsException(
-                    'You must not manually add a view with token \'reg\' as this is auto-created'
+                    'You must not manually add a profile with token \'reg\' as this is auto-created'
                 )
-        views.update(self._add_standard_reg_view())
-        if default_view_token is None:
-            default_view_token = 'reg'
-        super(RegisterRenderer, self).__init__(request, instance_uri, views,
-                                               default_view_token, **kwargs)
+        profiles.update(self._add_standard_reg_profile())
+        if default_profile_token is None:
+            default_profile_token = 'reg'
+        super(RegisterRenderer, self).__init__(request, instance_uri, profiles,
+                                               default_profile_token, **kwargs)
         if self.vf_error is None:
             self.label = label
             self.comment = comment
@@ -81,7 +88,11 @@ class RegisterRenderer(Renderer):
                 self.register_items = []
             self.contained_item_classes = contained_item_classes
             self.register_total_count = register_total_count
-            self.per_page = request.args.get('per_page', type=int, default=(per_page or RegisterRenderer.DEFAULT_ITEMS_PER_PAGE))
+            self.per_page = request.args.get(
+                'per_page',
+                type=int,
+                default=(per_page or RegisterRenderer.DEFAULT_ITEMS_PER_PAGE)
+            )
             self.page = request.args.get('page', type=int, default=1)
             self.super_register = super_register
             self.page_size_max = page_size_max
@@ -145,31 +156,31 @@ class RegisterRenderer(Renderer):
 
     def render(self):
         """
-        Renders the register view.
+        Renders the register profile.
 
         :return: A Flask Response object.
         :rtype: :py:class:`flask.Response`
         """
         response = super(RegisterRenderer, self).render()
-        if response is None and self.view == 'reg':
+        if response is None and self.profile == 'reg':
             if self.paging_error is None:
-                response = self._render_reg_view()
+                response = self._render_reg_profile()
             else:  # there is a paging error (e.g. page > last_page)
                 response = Response(self.paging_error, status=400, mimetype='text/plain')
         return response
 
-    def _render_reg_view(self):
-        # add link headers for all formats of reg view
-        if self.format == '_internal':
+    def _render_reg_profile(self):
+        # add link headers for all formats of reg profile
+        if self.mediatype == '_internal':
             return self
-        elif self.format == 'text/html':
-            return self._render_reg_view_html()
-        elif self.format in Renderer.RDF_MIMETYPES:
-            return self._render_reg_view_rdf()
+        elif self.mediatype == 'text/html':
+            return self._render_reg_profile_html()
+        elif self.mediatype in Renderer.RDF_MIMETYPES:
+            return self._render_reg_profile_rdf()
         else:
-            return self._render_reg_view_json()
+            return self._render_reg_profile_json()
 
-    def _render_reg_view_html(self, template_context=None):
+    def _render_reg_profile_html(self, template_context=None):
         pagination = Pagination(page=self.page, per_page=self.per_page,
                                 total=self.register_total_count,
                                 page_parameter='page', per_page_parameter='per_page')
@@ -201,7 +212,7 @@ class RegisterRenderer(Renderer):
             headers=self.headers
         )
 
-    def _generate_reg_view_rdf(self):
+    def _generate_reg_profile_rdf(self):
         g = Graph()
 
         REG = Namespace('http://purl.org/linked-data/registry#')
@@ -301,18 +312,18 @@ class RegisterRenderer(Renderer):
 
         return g
 
-    def _render_reg_view_rdf(self):
-        g = self._generate_reg_view_rdf()
+    def _render_reg_profile_rdf(self):
+        g = self._generate_reg_profile_rdf()
         return self._make_rdf_response(g)
 
-    def _render_reg_view_json(self):
+    def _render_reg_profile_json(self):
         return Response(
             json.dumps({
                 'uri': self.instance_uri,
                 'label': self.label,
                 'comment': self.comment,
-                'views': list(self.views.keys()),
-                'default_view': self.default_view_token,
+                'profiles': list(self.profiles.keys()),
+                'default_profile': self.default_profile_token,
                 'contained_item_classes': self.contained_item_classes,
                 'register_items': self.register_items
             }),
@@ -320,11 +331,11 @@ class RegisterRenderer(Renderer):
             headers=self.headers
         )
 
-    def _add_standard_reg_view(self):
+    def _add_standard_reg_profile(self):
         return {
-            'reg': View(
+            'reg': Profile(
                 'Registry Ontology',
-                'A simple list-of-items view taken from the Registry Ontology',
+                'A simple list-of-items profile taken from the Registry Ontology',
                 ['text/html', 'application/json'] + self.RDF_MIMETYPES,
                 'text/html',
                 languages=['en'],  # default 'en' only for now
@@ -393,8 +404,8 @@ class RegisterOfRegistersRenderer(RegisterRenderer):
             self.register_items.append((r['uri'], r['label']))
         self.register_total_count = len(self.register_items)
 
-    def _generate_reg_view_rdf(self):
-        g = super(RegisterOfRegistersRenderer, self)._generate_reg_view_rdf()
+    def _generate_reg_profile_rdf(self):
+        g = super(RegisterOfRegistersRenderer, self)._generate_reg_profile_rdf()
         REG = Namespace('http://purl.org/linked-data/registry#')
         for uri_str, cics in self.subregister_cics.items():
             uri = URIRef(uri_str)

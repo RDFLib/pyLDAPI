@@ -31,8 +31,8 @@ Example of a generic register template:
                     {{ pagination.links }}
                 </td>
                 <td style="vertical-align:top;">
-                    <h3>Alternate views</h3>
-                    <p>Different views of this register are listed at its <a href="{{ request.base_url }}?_view=alternates">Alternate views</a> page.</p>
+                    <h3>Alternate profiles</h3>
+                    <p>Different profiles of this register are listed at its <a href="{{ request.base_url }}?_profile=alternates">Alternate profiles</a> page.</p>
                     <h3>Automated Pagination</h3>
                     <p>To page through these items, use the query string arguments 'page' for the page number and 'per_page' for the number of items per page. HTTP <code>Link</code> headers of <code>first</code>, <code>prev</code>, <code>next</code> &amp; <code>last</code> indicate URIs to the first, a previous, a next and the last page.</p>
                     <p>Example:</p>
@@ -73,4 +73,4 @@ Variables used by the register template:
         pagination=pagination                               # pagination object from module flask_paginate
     )
 
-See :class:`.RegisterRenderer` for an example on how to render the register view.
+See :class:`.RegisterRenderer` for an example on how to render the register profile.

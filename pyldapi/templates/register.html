@@ -1,0 +1,85 @@
+{% extends "page.html" %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-lg-12">
+            <h1>Register</h1>
+            <h2>Of <a href="{{ contained_item_classes[0] }}"><em>{{ contained_item_classes[0].split('#')[1] }}s</em></a></h2>
+            <p></p>
+            {% if search_enabled %}
+            <form action="?search=">
+                Search <em>{{ register_item_type_string }}:</em><br>
+                <input type="text" name="search">
+                <input type="submit" value="Submit">
+            </form>
+            {% endif %}
+
+            <h3>Instances</h3>
+            {% if query %}
+            <p><em>with search query "<strong>{{ query }}</strong>"</em></p>
+            <form action="">
+                <input type="submit" value="Go back to all items">
+            </form>
+            <br>
+            {% endif %}
+        </div>
+        <div class="col-md-8">
+            <ul>
+            {%- for item in register_items -%}
+            <li><a href="{{ item[0].replace('http://linked.data.gov.au/dataset/qld-structural-framework', 'http://localhost:5000') }}">{{ item[1] }}</a></li>
+            {%- endfor -%}
+            </ul>
+        </div>
+        <div class="col-md-4">
+            <div class="altview">
+                <h4>Alternates Profiles</h4>
+                <p>Different profile views of this register are here: <a href="{{ request.base_url }}?_profile=all">All Profiles</a>.</p>
+            </div>
+
+            <div class="autopaginationinfo">
+                <div><h4>Automated Pagination&nbsp;<span id="collapsible-toggle" class="collapsible" style="font-size: 14px;">(more)</span></h4></div>
+                <div id="content-pagination" class="collapsible-content">
+                    <p>To page through these items, use query string arguments 'page' and 'per_page'. HTTP <code>Link</code> headers of <code>first</code>, <code>prev</code>, <code>next</code> &amp; <code>last</code> are given in web responses.</p>
+                <p>Example, assuming 500 items, page 7, of 50 per page, is given by:</p>
+                <pre>.../?page=7&amp;per_page=50
+                </pre>
+                <p>Link header with a response assuming 500 items would be:</p>
+                <pre>Link:   &lt;.../?per_page=500&gt; rel="first",
+&lt;.../?per_page=500&amp;page=6&gt; rel="prev",
+&lt;.../?per_page=500&amp;page=8&gt; rel="next",
+&lt;.../?per_page=500&amp;page=10&gt; rel="last"
+                </pre>
+                <p>If you want to page through the whole collection, start at <code>first</code> and follow link headers until you reach <code>last</code> or until no <code>last</code> is given. You shouldn't try to calculate each <code>page</code> query string argument yourself.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- pagination links as per MediaTypes -->
+    {%  if pagination.links %}
+        <h5>Paging</h5>
+    {%  endif %}
+    {{ pagination.links }}
+    <script>
+        var coll = document.getElementById("collapsible-toggle");
+
+        coll.addEventListener("click", function() {
+            var content = document.getElementById("content-pagination");
+            if (content.style.display === "inline") {
+              content.style.display = "none";
+              document.getElementsByClassName("collapsible")[0].innerHTML = "(more)";
+            } else {
+              content.style.display = "inline";
+              document.getElementsByClassName("collapsible")[0].innerHTML = "(less)";
+            }
+        });
+
+        let cards = document.getElementsByClassName("card")
+        let i;
+        for (i = 0; i < cards.length; i++) {
+            if (cards[i].children[1].children[0] === undefined) {
+                cards[i].children[1].innerHTML = "<em>No metadata found.</em>";
+            }
+        }
+    </script>
+{% endblock %}
+

@@ -34,10 +34,10 @@ setup(
     description='A very small module to add Linked Data API functionality to '
                 'a Python Flask installation',
     author='Nicholas Car',
-    author_email='nicholas.car@csiro.au',
-    url='https://github.com/CSIRO-enviro-informatics/pyldapi',
-    download_url='https://github.com/CSIRO-enviro-informatics/'
-                 'pyldapi/archive/v{:s}.tar.gz'.format(version),
+    author_email='nicholas.car@surroundaustralia.com',
+    url='https://github.com/RDFLib/pyLDAPI',
+    download_url='https://github.com/RDFLib/pyLDAPI'
+                 '/archive/v{:s}.tar.gz'.format(version),
     license='LICENSE.txt',
     keywords=['Linked Data', 'Semantic Web', 'Flask', 'Python', 'API', 'RDF'],
     long_description=long_description,
@@ -59,9 +59,8 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     project_urls={
-        'Bug Reports':
-            'https://github.com/CSIRO-enviro-informatics/pyldapi/issues',
-        'Source': 'https://github.com/CSIRO-enviro-informatics/pyldapi/',
+        'Bug Reports': 'https://github.com/RDFLib/pyLDAPI/issues',
+        'Source': 'https://github.com/RDFLib/pyLDAPI/',
     },
     install_requires=install_requires,
 )

@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
-class View:
+class Profile:
     """
     A class containing elements for a Linked Data 'model view',
-    including MIME type 'formats'.
+    including MIME type 'mediatypes'.
 
-    The syntax for formats can be found at iana org: https://www.iana.org/assignments/media-types/media-types.xhtml
+    The syntax for mediatypes can be found at iana org: https://www.iana.org/assignments/media-types/media-types.xhtml
 
-    Example of common media formats and languages as a list:
+    Example of common mediatypes and languages as a list:
 
     .. code-block:: python
 
-        formats = ['text/html', 'text/turtle', 'application/rdf+xml', 'application/rdf+json']
+        mediatypes = ['text/html', 'text/turtle', 'application/rdf+xml', 'application/rdf+json']
         languages = ['en', 'pl'] # 'en' for English and 'pl' for Polish.
 
     """
@@ -18,8 +18,8 @@ class View:
             self,
             label,
             comment,
-            formats,
-            default_format,
+            mediatypes,
+            default_mediatype,
             languages=None,
             default_language='en',
             profile_uri=None
@@ -31,10 +31,10 @@ class View:
         :type label: str
         :param comment: The comment describing the view.
         :type comment: str
-        :param formats: The list of formats according to iana org.
-        :type formats: list
-        :param default_format: The default format according to iana org.
-        :type default_format: str
+        :param mediatypes: The list of mediatypes according to iana org.
+        :type mediatypes: list
+        :param default_mediatype: The default mediatype according to iana org.
+        :type default_mediatype: str
         :param languages: A list of languages as strings.
         :type languages: list
         :param default_language: The default language, by default it is 'en' English.
@@ -44,8 +44,8 @@ class View:
         """
         self.label = label
         self.comment = comment
-        self.formats = formats
-        self.default_format = default_format
+        self.mediatypes = mediatypes
+        self.default_mediatype = default_mediatype
         self.languages = languages if languages is not None else ['en']
         self.default_language = default_language
         self.namespace = profile_uri

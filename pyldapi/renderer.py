@@ -4,15 +4,15 @@ import json
 from flask import Response, render_template
 from rdflib import Graph, Namespace, URIRef, BNode, Literal, RDF, RDFS, XSD
 from rdflib.namespace import DCTERMS
-from pyldapi.view import View
+from pyldapi.profile import Profile
 from pyldapi.exceptions import ViewsFormatsException
 import connegp
 
 
 class Renderer(object, metaclass=ABCMeta):
     """
-    Abstract class as a parent for classes that validate the views & formats for an API-delivered resource (typically
-    either registers or objects) and also creates an 'alternates view' for them, based on all available views & formats.
+    Abstract class as a parent for classes that validate the profiles & mediatypes for an API-delivered resource (typically
+    either registers or objects) and also creates an 'alternates profile' for them, based on all available profiles & mediatypes.
     """
 
     RDF_MIMETYPES = ['text/turtle', 'application/rdf+xml', 'application/ld+json', 'text/n3', 'application/n-triples']
@@ -36,8 +36,8 @@ class Renderer(object, metaclass=ABCMeta):
     def __init__(self,
                  request,
                  instance_uri,
-                 views,
-                 default_view_token,
+                 profiles,
+                 default_profile_token,
                  alternates_template=None,
                  **kwargs
                  ):
@@ -48,16 +48,16 @@ class Renderer(object, metaclass=ABCMeta):
         :type request: :class:`flask.request`
         :param instance_uri: The URI that triggered this API endpoint (can be via redirects but the main URI is needed).
         :type instance_uri: str
-        :param views: A dictionary of views available for this resource.
-        :type views: dict (of :class:`.View` class objects)
-        :param default_view_token: The ID of the default view (key of a view in the dictionary of :class:`.View`
-        objects)
-        :type default_view_token: str (a key in views)
+        :param profiles: A dictionary of profiles available for this resource.
+        :type profiles: dict (of :class:`.View` class objects)
+        :param default_profile_token: The ID of the default profile (key of a profile in the dictionary of :class:
+        `.Profile` objects)
+        :type default_profile_token: str (a key in profiles)
         :param alternates_template: The Jinja2 template to use for rendering the HTML *alternates view*. If None, then
         it will default to try and use a template called :code:`alternates.html`.
         :type alternates_template: str
 
-        .. seealso:: See the :class:`.View` class on how to create a dictionary of views.
+        .. seealso:: See the :class:`.View` class on how to create a dictionary of profiles.
 
         """
         self.vf_error = None
@@ -65,37 +65,29 @@ class Renderer(object, metaclass=ABCMeta):
         self.instance_uri = instance_uri
 
         # ensure alternates token isn't hogged by user
-        for k, v in views.items():
+        for k, v in profiles.items():
             if k == 'alternates':
-                self.vf_error = 'You must not manually add a view with token \'alternates\' as this is auto-created.'
+                self.vf_error = 'You must not manually add a profile with token \'alternates\' as this is auto-created.'
 
-        self.views = views
-        self.view = None
+        self.profiles = profiles
+        self.profile = None
 
-        # ensure that the default view is actually a given view
-        if default_view_token == "alternates":
-            self.vf_error = 'You cannot specify \'alternates\' as the default view.'
+        # ensure that the default profile is actually a given profile
+        if default_profile_token == "alternates":
+            self.vf_error = 'You cannot specify \'alternates\' as the default profile.'
 
-        # ensure the default view is in the list of views
-        if default_view_token not in self.views.keys():
-            self.vf_error = 'The view token you specified for the default view is not in the list of views you supplied'
+        # ensure the default profile is in the list of profiles
+        if default_profile_token not in self.profiles.keys():
+            self.vf_error = 'The profile token you specified for the default profile ' \
+                            'is not in the list of profiles you supplied'
 
-        self.default_view_token = default_view_token
+        self.default_profile_token = default_profile_token
 
         # TODO: supply an alternates.html template
-        self.alternates_template = alternates_template
+        self.alt_template = alternates_template
 
-        # auto-add in an Alternates view
-        self.views['alternates'] = View(
-            'Alternates',
-            'The view that lists all other views',
-            ['text/html', 'application/json', '_internal'] + self.RDF_MIMETYPES,
-            'text/html',
-            languages=['en'],  # default 'en' only for now
-            profile_uri='https://w3id.org/profile/alt'  # the registered URI for the Alternates View Profile
-        )
-
-        self.views['all'] = View(
+        # auto-add in an Alternates profile
+        self.profiles['alt'] = Profile(
             'Alternate Representations',
             'The representation of the resource that lists all other representations (profiles and Media Types)',
             ['text/html', 'application/json'] + self.RDF_MIMETYPES,
@@ -104,16 +96,16 @@ class Renderer(object, metaclass=ABCMeta):
             profile_uri='http://www.w3.org/ns/dx/conneg/altr'  # the ConnegP URI for RRD Functional Profile
         )
 
-        # get view & format for this request, flag any errors but do not except out
-        self.view = self._get_profile()
-        self.format = self._get_mediatype()
+        # get profile & mediatype for this request, flag any errors but do not except out
+        self.profile = self._get_profile()
+        self.mediatype = self._get_mediatype()
         self.language = self._get_language()
 
         # make headers only if there's no error
         if self.vf_error is None:
             self.headers = dict()
-            self.headers['Content-Profile'] = '<' + self.views[self.view].namespace + '>'
-            self.headers['Content-Type'] = self.format
+            self.headers['Content-Profile'] = '<' + self.profiles[self.profile].namespace + '>'
+            self.headers['Content-Type'] = self.mediatype
             self.headers['Content-Language'] = self.language
 
             self.headers['Link'] = self._make_header_link_tokens()
@@ -125,39 +117,14 @@ class Renderer(object, metaclass=ABCMeta):
 
     # TODO: wrap all the input parsing functions in try/except block pushing errors to vf_error
 
-    def _get_accept_profiles_in_order(self):
+    def _get_profiles_from_qsa(self):
         """
-        Reads an Accept-Profile HTTP header and returns an array of Profile URIs in descending weighted order
-
+        Reads either _profile or _view Query String Argument and returns a list of Profile tokens
+        in ascending preference order
+        Ref: https://www.w3.org/TR/dx-prof-conneg/#qsa-getresourcebyprofile
         :return: List of URIs of accept profiles in descending request order
         :rtype: list
         """
-        try:
-            # split the header into individual URIs, with weights still attached
-            profiles = self.request.headers['Accept-Profile'].split(',')
-            # remove <, >, and \s
-            profiles = [x.replace('<', '').replace('>', '').replace(' ', '').strip() for x in profiles]
-
-            # split off any weights and sort by them with default weight = 1
-            weighted_profiles = []
-            for mtype in profiles:
-                mtype_parts = iter(mtype.split(";"))
-                mimetype = next(mtype_parts)
-                try:
-                    qweight = 0.0
-                    while True:
-                        part = next(mtype_parts)
-                        if part.startswith("q="):
-                            qweight = float(part.replace("q=", ""))
-                            break
-                except StopIteration:
-                    qweight = 1.0
-                weighted_profiles.append((qweight, mimetype))
-
-            # sort profiles by weight, heaviest first
-            weighted_profiles.sort(reverse=True)
-
-            return [x[1] for x in weighted_profiles]
         # try QSAa and, if we have any, return them only
         profiles_string = self.request.values.get('_view', self.request.values.get('_profile'))
         if profiles_string is not None:
@@ -167,7 +134,7 @@ class Renderer(object, metaclass=ABCMeta):
                 for profile in pqsa.profiles:
                     if profile['profile'].startswith('<'):
                         # convert this valid URI/URN to a token
-                        for token, view in self.views.items():
+                        for token, view in self.profiles.items():
                             if view.namespace == profile['profile'].strip('<>'):
                                 profiles.append(token)
                     else:
@@ -181,9 +148,7 @@ class Renderer(object, metaclass=ABCMeta):
     def _get_profiles_from_http(self):
         """
         Reads an Accept-Profile HTTP header and returns a list of Profile tokens in descending weighted order
-
         Ref: https://www.w3.org/TR/dx-prof-conneg/#http-getresourcebyprofile
-
         :return: List of URIs of accept profiles in descending request order
         :rtype: list
         """
@@ -194,7 +159,7 @@ class Renderer(object, metaclass=ABCMeta):
                     profiles = []
                     for profile in ap.profiles:
                         # convert this valid URI/URN to a token
-                        for token, view in self.views.items():
+                        for token, view in self.profiles.items():
                             if view.namespace == profile['profile']:
                                 profiles.append(token)
                     if len(profiles) == 0:
@@ -203,7 +168,7 @@ class Renderer(object, metaclass=ABCMeta):
                         return profiles
                 else:
                     return None
-            except Exception as e:
+            except Exception:
                 msg = 'You have requested a profile using an Accept-Profile header that is incorrectly formatted.'
                 raise ViewsFormatsException(msg)
         else:
@@ -211,7 +176,7 @@ class Renderer(object, metaclass=ABCMeta):
 
     def _get_available_profiles(self):
         uris = {}
-        for token, view in self.views.items():
+        for token, view in self.profiles.items():
             uris[view.namespace] = token
 
         return uris
@@ -226,7 +191,7 @@ class Renderer(object, metaclass=ABCMeta):
 
         # if still no profile, return None
         if profiles_requested is None:
-            return self.default_view_token
+            return self.default_profile_token
 
         # if we have a result from QSA or HTTP, got through each in order and see if there's an available
         # view for that token, return first one
@@ -237,63 +202,55 @@ class Renderer(object, metaclass=ABCMeta):
                     return v  # return the profile token
 
         # if no match found, should never o
-        return self.default_view_token
+        return self.default_profile_token
 
     def _get_mediatypes_from_qsa(self):
         """Returns a list of Media Types from QSA
-
         :return: list
         """
         qsa_mediatypes = self.request.values.get('_format', self.request.values.get('_mediatype', None))
         if qsa_mediatypes is not None:
             qsa_mediatypes = str(qsa_mediatypes).replace(' ', '+').split(',')
-            # if the internal format is requested, return the default
+            # if the internal mediatype is requested, return the default
             if qsa_mediatypes[0] == "_internal":
-                return [self.views[self.view].default_format]
+                return [self.profiles[self.profile].default_mediatype]
             else:
                 return qsa_mediatypes
         else:
             return None
 
-    def _get_accept_mediatypes_in_order(self):
-        """
-        Reads an Accept HTTP header and returns an array of Media Type string in descending weighted order
-
+    def _get_mediatypes_from_http(self):
+        """Returns a list of Media Type tokens from an Accept HTTP header in descending weighted order
         :return: List of URIs of accept profiles in descending request order
         :rtype: list
         """
-        try:
-            # split the header into individual URIs, with weights still attached
-            mtypes_list = self.request.headers['Accept'].split(',')
-            # remove \s
-            mtypes_list = [x.replace(' ', '').strip() for x in mtypes_list]
-
-            # split off any weights and sort by them with default weight = 1
-            weighted_mtypes = []
-            for mtype in mtypes_list:
-                mtype_parts = iter(mtype.split(";"))
-                mimetype = next(mtype_parts)
+        if hasattr(self.request, 'headers'):
+            if self.request.headers.get('Accept') is not None:
                 try:
-                    qweight = 0.0
-                    while True:
-                        part = next(mtype_parts)
-                        if part.startswith("q="):
-                            qweight = float(part.replace("q=", ""))
-                            break
-                except StopIteration:
-                    qweight = 1.0
-                weighted_mtypes.append((qweight, mimetype))
+                    # split the header into individual URIs, with weights still attached
+                    mediatypes = self.request.headers['Accept'].split(',')
+                    # remove \s
+                    mediatypes = [x.strip() for x in mediatypes]
 
-            # sort profiles by weight, heaviest first
-            weighted_mtypes.sort(reverse=True)
+                    # split off any weights and sort by them with default weight = 1
+                    mediatypes = [
+                        (float(x.split(';')[1].replace('q=', ''))
+                         if ";q=" in x else 1, x.split(';')[0]) for x in mediatypes
+                    ]
 
-            return [x[1] for x in weighted_mtypes]
-        except Exception as e:
-            raise ViewsFormatsException(
-                'You have requested a Media Type using an Accept header that is incorrectly formatted.')
+                    # sort profiles by weight, heaviest first
+                    mediatypes.sort(reverse=True)
+
+                    # return only the orderd list of mediatypes, not weights
+                    return[x[1] for x in mediatypes]
+                except Exception:
+                    raise ViewsFormatsException(
+                        'You have requested a Media Type using an Accept header that is incorrectly formatted.')
+
+        return None
 
     def _get_available_mediatypes(self):
-        return self.views[self.view].formats
+        return self.profiles[self.profile].mediatypes
 
     def _get_mediatype(self):
         mediatypes_requested = self._get_mediatypes_from_qsa()
@@ -302,7 +259,7 @@ class Renderer(object, metaclass=ABCMeta):
 
         # no Media Types requested so return default
         if mediatypes_requested is None:
-            return self.views[self.view].default_format
+            return self.profiles[self.profile].default_mediatype
 
         # iterate through requested Media Types until a valid one is found
         mediatypes_available = self._get_available_mediatypes()
@@ -311,19 +268,18 @@ class Renderer(object, metaclass=ABCMeta):
                 return mediatype
 
         # no valid Media Type is found so return default
-        return self.views[self.view].default_format
+        return self.profiles[self.profile].default_mediatype
 
     def _get_languages_from_qsa(self):
         """Returns a list of Languages from QSA
-
         :return: list
         """
         languages = self.request.values.get('_lang')
         if languages is not None:
             languages = str(languages).replace(' ', '_').replace('+', '_').split(',')
-            # if the internal format is requested, return the default
+            # if the internal mediatype is requested, return the default
             if languages == "_internal":
-                return self.views[self.view].default_language
+                return self.profiles[self.profile].default_language
             else:
                 return languages
 
@@ -332,7 +288,6 @@ class Renderer(object, metaclass=ABCMeta):
     def _get_languages_from_http(self):
         """
         Reads an Accept HTTP header and returns an array of Media Type string in descending weighted order
-
         :return: List of URIs of accept profiles in descending request order
         :rtype: list
         """
@@ -353,16 +308,16 @@ class Renderer(object, metaclass=ABCMeta):
                     # sort profiles by weight, heaviest first
                     languages.sort(reverse=True)
 
-                    # return only the ordered list of languages, not weights
+                    # return only the orderd list of languages, not weights
                     return[x[1] for x in languages]
-                except Exception as e:
+                except Exception:
                     raise ViewsFormatsException(
                         'You have requested a language using an Accept-Language header that is incorrectly formatted.')
 
         return None
 
     def _get_available_languages(self):
-        return self.views[self.view].languages
+        return self.profiles[self.profile].languages
 
     def _get_language(self):
         languages_requested = self._get_languages_from_qsa()
@@ -371,7 +326,7 @@ class Renderer(object, metaclass=ABCMeta):
 
         # no Media Types requested so return default
         if languages_requested is None:
-            return self.views[self.view].default_language
+            return self.profiles[self.profile].default_language
 
         # iterate through requested Media Types until a valid one is found
         languages_available = self._get_available_mediatypes()
@@ -380,42 +335,41 @@ class Renderer(object, metaclass=ABCMeta):
                 return language
 
         # no valid Media Type is found so return default
-        return self.views[self.view].default_language
+        return self.profiles[self.profile].default_language
 
     # end getting request's preferences
 
     #
     # making response headers
     #
-
     def _make_header_link_tokens(self):
         individual_links = []
         link_header_template = '<http://www.w3.org/ns/dx/prof/Profile>; rel="type"; token="{}"; anchor=<{}>, '
 
-        for token, view in self.views.items():
+        for token, view in self.profiles.items():
             individual_links.append(link_header_template.format(token, view.namespace))
 
         return ''.join(individual_links).rstrip(', ')
 
     def _make_header_link_list_profiles(self):
         individual_links = []
-        for token, view in self.views.items():
+        for token, view in self.profiles.items():
             # create an individual Link statement per Media Type
-            for format_ in view.formats:
-                # set the rel="self" just for this view & format
-                if format_ != '_internal':
-                    if token == self.default_view_token and format_ == self.views[self.view].default_format:
+            for mediatype in view.mediatypes:
+                # set the rel="self" just for this view & mediatype
+                if mediatype != '_internal':
+                    if token == self.default_profile_token and mediatype == self.profiles[self.profile].default_mediatype:
                         rel = 'self'
                     else:
                         rel = 'alternate'
 
                     individual_links.append(
-                        '<{}?_view={}&_format={}>; rel="{}"; type="{}"; profile="{}", '.format(
+                        '<{}?_profile={}&_mediatype={}>; rel="{}"; type="{}"; profile="{}", '.format(
                             self.instance_uri,
                             token,
-                            format_,
+                            mediatype,
                             rel,
-                            format_,
+                            mediatype,
                             view.namespace)
                     )
 
@@ -427,49 +381,7 @@ class Renderer(object, metaclass=ABCMeta):
     #
     # making response content
     #
-
-    def _render_alternates_view(self):
-        """
-        Return a Flask Response object depending on the value assigned to :code:`self.format`.
-
-        :return: A Flask Response object
-        :rtype: :class:`flask.Response`
-        """
-        if self.format == '_internal':
-            return self
-        if self.format == 'text/html':
-            return self._render_alternates_view_html()
-        elif self.format in Renderer.RDF_MIMETYPES:
-            return self._render_alternates_view_rdf()
-        else:  # application/json
-            return self._render_alternates_view_json()
-
-    def _render_alternates_view_html(self, template_context=None):
-        views = {}
-        for token, v in self.views.items():
-            view = {'label': str(v.label), 'comment': str(v.comment),
-                    'formats': tuple(f for f in v.formats if not f.startswith('_')),
-                    'default_format': str(v.default_format),
-                    'languages': v.languages if v.languages is not None else ['en'],
-                    'default_language': str(v.default_language),
-                    'namespace': str(v.namespace)}
-            views[token] = view
-        _template_context = {
-            'uri': self.instance_uri,
-            'default_view_token': self.default_view_token,
-            'views': views
-        }
-        if template_context is not None and isinstance(template_context, dict):
-            _template_context.update(template_context)
-        return Response(
-            render_template(
-                self.alternates_template or 'alternates.html',
-                **_template_context
-            ),
-            headers=self.headers
-        )
-
-    def _generate_alternates_view_rdf(self):
+    def _generate_alt_profiles_rdf(self):
         g = Graph()
         ALT = Namespace('http://w3id.org/profile/alt#')
         g.bind('alt', ALT)
@@ -479,38 +391,38 @@ class Renderer(object, metaclass=ABCMeta):
         PROF = Namespace('http://www.w3.org/ns/prof/')
         g.bind('prof', PROF)
 
-        for token, v in self.views.items():
+        for token, v in self.profiles.items():
             v_node = BNode()
             g.add((v_node, RDF.type, ALT.View))
             g.add((v_node, PROF.token, Literal(token, datatype=XSD.token)))
             g.add((v_node, RDFS.label, Literal(v.label, datatype=XSD.string)))
             g.add((v_node, RDFS.comment, Literal(v.comment, datatype=XSD.string)))
-            for f in v.formats:
-                if str(f).startswith('_'):  # ignore formats like `_internal`
+            for f in v.mediatypes:
+                if str(f).startswith('_'):  # ignore mediatypes like `_internal`
                     continue
                 g.add((v_node, URIRef(DCTERMS + 'format'), URIRef('http://w3id.org/mediatype/' + f)))
-            g.add((v_node, ALT.hasDefaultFormat, Literal(v.default_format, datatype=XSD.string)))
+            g.add((v_node, ALT.hasDefaultFormat, Literal(v.default_mediatype, datatype=XSD.string)))
             if v.namespace is not None:
                 g.add((v_node, DCTERMS.conformsTo, URIRef(v.namespace)))
             g.add((URIRef(self.instance_uri), ALT.view, v_node))
 
-            if self.default_view_token == token:
+            if self.default_profile_token == token:
                 g.add((URIRef(self.instance_uri), ALT.hasDefaultView, v_node))
         return g
 
     def _make_rdf_response(self, graph, mimetype=None, headers=None, delete_graph=True):
         if headers is None:
             headers = self.headers
-        serial_format = self.RDF_SERIALIZER_MAP.get(self.format, None)
-        if serial_format is None:
-            serial_format = "turtle"
+        serial_mediatype = self.RDF_SERIALIZER_MAP.get(self.mediatype, None)
+        if serial_mediatype is None:
+            serial_mediatype = "turtle"
             response_mimetype = "text/turtle"
         else:
-            response_mimetype = self.format
+            response_mimetype = self.mediatype
         if mimetype is not None:
             # override mimetype?
             response_mimetype = mimetype
-        response_text = graph.serialize(format=serial_format)
+        response_text = graph.serialize(format=serial_mediatype)
         if delete_graph:
             # destroy the triples in the triplestore, then delete the triplestore
             # this helps to prevent a memory leak in rdflib
@@ -520,94 +432,65 @@ class Renderer(object, metaclass=ABCMeta):
         return Response(response_text,
                         mimetype=response_mimetype, headers=headers)
 
-    def _render_alternates_view_rdf(self):
-        g = self._generate_alternates_view_rdf()
-        return self._make_rdf_response(g)
-
-    def _render_alternates_view_json(self):
-        return Response(
-            json.dumps({
-                'uri': self.instance_uri,
-                'views': list(self.views.keys()),
-                'default_view': self.default_view_token
-            }),
-            mimetype='application/json',
-            headers=self.headers
-        )
-
-    def _render_rdd_view_html(self, template_context=None):
+    def _render_alt_profile_html(self, template_context=None):
         views = {}
-        for token, v in self.views.items():
+        for token, v in self.profiles.items():
             view = {'label': str(v.label), 'comment': str(v.comment),
-                    'formats': tuple(f for f in v.formats if not f.startswith('_')),
-                    'default_format': str(v.default_format),
+                    'mediatypes': tuple(f for f in v.mediatypes if not f.startswith('_')),
+                    'default_mediatype': str(v.default_mediatype),
                     'languages': v.languages if v.languages is not None else ['en'],
                     'default_language': str(v.default_language),
                     'namespace': str(v.namespace)}
             views[token] = view
         _template_context = {
             'uri': self.instance_uri,
-            'default_view_token': self.default_view_token,
+            'default_profile_token': self.default_profile_token,
             'views': views
         }
         if template_context is not None and isinstance(template_context, dict):
             _template_context.update(template_context)
         return Response(
             render_template(
-                self.alternates_template or 'alternates.html',
+                self.alt_template or 'alt.html',
                 **_template_context
             ),
             headers=self.headers
         )
 
-    # TODO: languages not included
-    def _render_rdd_view_rdf(self):
-        g = Graph()
-        ALTR = Namespace('http://www.w3.org/ns/dx/conneg/altr#')
-        g.bind('altr', ALTR)
-
-        g.bind('dct', DCTERMS)
-
-        PROF = Namespace('http://www.w3.org/ns/prof/')
-        g.bind('prof', PROF)
-
-        res = URIRef(self.instance_uri)
-        g.add((res, RDF.type, RDFS.Resource))
-
-        for token, v in self.views.items():
-            for f in v.formats:
-                if str(f).startswith('_'):  # ignore formats like `_internal`
-                    continue
-                v_node = BNode()
-                g.add((v_node, RDF.type, ALTR.Representation))
-                g.add((v_node, PROF.token, Literal(token, datatype=XSD.token)))
-                g.add((v_node, RDFS.label, Literal(v.label, datatype=XSD.string)))
-                g.add((v_node, RDFS.comment, Literal(v.comment, datatype=XSD.string)))
-
-                g.add((v_node, DCTERMS.conformsTo, URIRef(v.namespace)))
-
-                if self.default_view_token == token:
-                    g.add((URIRef(self.instance_uri), ALTR.hasDefaultRepresentation, v_node))
-                else:
-                    g.add((URIRef(self.instance_uri), ALTR.hasRepresentation, v_node))
-
-                g.add((v_node, URIRef(DCTERMS + 'format'), URIRef('http://w3id.org/mediatype/' + f)))
-                if f == v.default_format:
-                    g.add((v_node, ALTR.isProfilesDefault, Literal(True, datatype=XSD.boolean)))
-
+    def _render_alt_profile_rdf(self):
+        g = self._generate_alt_profiles_rdf()
         return self._make_rdf_response(g)
 
-    def _render_rdd_view(self):
-        if self.format == '_internal':
+    def _render_alt_profile_json(self):
+        return Response(
+            json.dumps({
+                'uri': self.instance_uri,
+                'views': list(self.profiles.keys()),
+                'default_profile': self.default_profile_token
+            }),
+            mimetype='application/json',
+            headers=self.headers
+        )
+
+    def _render_alt_profile(self):
+        """
+        Return a Flask Response object depending on the value assigned to :code:`self.mediatype`.
+
+        :return: A Flask Response object
+        :rtype: :class:`flask.Response`
+        """
+        if self.mediatype == '_internal':
             return self
-        if self.format == 'text/html':
-            return self._render_rdd_view_html()
-        else:  # self.format in Renderer.RDF_MIMETYPES:
-            return self._render_rdd_view_rdf()
+        if self.mediatype == 'text/html':
+            return self._render_alt_profile_html()
+        elif self.mediatype in Renderer.RDF_MIMETYPES:
+            return self._render_alt_profile_rdf()
+        else:  # application/json
+            return self._render_alt_profile_json()
 
     def render(self):
         """
-        Use the received view and format to create a response back to the client.
+        Use the received view and mediatype to create a response back to the client.
 
         TODO: Ashley, are you able to update this description with your new changes please?
         What is the method for rendering other views now? - Edmond
@@ -622,10 +505,8 @@ class Renderer(object, metaclass=ABCMeta):
         if self.vf_error is not None:
             print(self.vf_error)
             return Response(self.vf_error, status_code=400, mimtype='text/plain')
-        elif self.view == 'alternates':
-            return self._render_alternates_view()
-        elif self.view == 'all':
-            return self._render_rdd_view()
+        elif self.profile == 'alt' or self.profile == 'alternates':
+            return self._render_alt_profile()
         return None
 
     # end making response content

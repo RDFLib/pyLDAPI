@@ -31,3 +31,4 @@ rofr.ttl
 # the config
 _config/__init__.py
 
+.pytest_cache/
