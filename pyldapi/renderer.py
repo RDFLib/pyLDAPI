@@ -433,19 +433,20 @@ class Renderer(object, metaclass=ABCMeta):
                         mimetype=response_mimetype, headers=headers)
 
     def _render_alt_profile_html(self, template_context=None):
-        views = {}
+        profiles = {}
         for token, v in self.profiles.items():
-            view = {'label': str(v.label), 'comment': str(v.comment),
-                    'mediatypes': tuple(f for f in v.mediatypes if not f.startswith('_')),
-                    'default_mediatype': str(v.default_mediatype),
-                    'languages': v.languages if v.languages is not None else ['en'],
-                    'default_language': str(v.default_language),
-                    'namespace': str(v.namespace)}
-            views[token] = view
+            profiles[token] = {
+                'label': str(v.label), 'comment': str(v.comment),
+                'mediatypes': tuple(f for f in v.mediatypes if not f.startswith('_')),
+                'default_mediatype': str(v.default_mediatype),
+                'languages': v.languages if v.languages is not None else ['en'],
+                'default_language': str(v.default_language),
+                'namespace': str(v.namespace)
+            }
         _template_context = {
             'uri': self.instance_uri,
             'default_profile_token': self.default_profile_token,
-            'views': views
+            'profiles': profiles
         }
         if template_context is not None and isinstance(template_context, dict):
             _template_context.update(template_context)

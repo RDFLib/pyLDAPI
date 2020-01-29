@@ -1,9 +1,9 @@
 {% extends "page.html" %}
 
     {% block content %}
-        <h1>Alternates View</h1>
-        <h2>Instance <a href="{{ uri }}">{{ name }}</a></h2>
-        <h4>Default view: <a href="{{ request.base_url }}?_profile={{ default_profile_token }}">{{ request.base_url }}?_profile={{ default_profile_token }}</a></h4>
+        <h1>Alternate Profiles</h1>
+        <h3>Instance: <a href="{{ uri }}">{{ uri }}</a></h3>
+        <h4>Default Profile: <a href="{{ request.base_url }}?_profile={{ default_profile_token }}">{{ default_profile_token }}</a></h4>
         <div class="overflow">
             <table class="layout">
                 <tr>
@@ -14,13 +14,13 @@
                     <th style="font-weight: bold;">Description</th>
                     <th style="font-weight: bold;">Namespace</th>
                 </tr>
-            {% for token, vals in views.items() %}
+            {% for token, vals in profiles.items() %}
                 <tr style="border-bottom: 1px solid black; border-top: 1px solid black;">
-                    <td style="padding-right: 30px;"><a href="{{ request.base_url }}?_profile={{ token }}&_mediatype={{ vals['default_format'] }}">{{ token }}</a></td>
+                    <td style="padding-right: 30px;"><a href="{{ request.base_url }}?_profile={{ token }}&_mediatype={{ vals['default_mediatype'] }}">{{ token }}</a></td>
                     <td>{{ vals['label'] }}</td>
                     <td>
-                    {% for f in vals['formats'] %}
-                        <a href="{{ request.base_url }}?_profile={{ token }}&_format={{ f }}">{{ f }}</a><br />
+                    {% for f in vals['mediatypes'] %}
+                        <a href="{{ request.base_url }}?_profile={{ token }}&_mediatype={{ f }}">{{ f }}</a><br />
                     {% endfor %}
                     </td>
                     <td style="text-align: center;">
