@@ -6,7 +6,7 @@ from pyldapi.register_renderer import RegisterRenderer, RegisterOfRegistersRende
 from pyldapi.profile import Profile
 from pyldapi.helpers import setup
 
-__version__ = '3.1'
+__version__ = '3.2'
 
 __all__ = [
     'Renderer',

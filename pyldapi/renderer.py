@@ -398,9 +398,8 @@ class Renderer(object, metaclass=ABCMeta):
             g.add((v_node, RDFS.label, Literal(v.label, datatype=XSD.string)))
             g.add((v_node, RDFS.comment, Literal(v.comment, datatype=XSD.string)))
             for f in v.mediatypes:
-                if str(f).startswith('_'):  # ignore mediatypes like `_internal`
-                    continue
-                g.add((v_node, URIRef(DCTERMS + 'format'), URIRef('http://w3id.org/mediatype/' + f)))
+                if not str(f).startswith('_'):  # ignore mediatypes like `_internal`
+                    g.add((v_node, URIRef(DCTERMS + 'format'), Literal(f)))
             g.add((v_node, ALT.hasDefaultFormat, Literal(v.default_mediatype, datatype=XSD.string)))
             if v.namespace is not None:
                 g.add((v_node, DCTERMS.conformsTo, URIRef(v.namespace)))
