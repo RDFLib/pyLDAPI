@@ -135,13 +135,13 @@ def dogs_reg():
 
 @app.route('/')
 def index():
-    rofr = RegisterOfRegistersRenderer(request,
+    cofc = RegisterOfRegistersRenderer(request,
                                        API_BASE,
                                        'Register of Registers',
                                        'A register of all of my registers.',
-                                       './rofr.ttl'
+                                       './cofc.ttl'
                                        )
-    return rofr.render()
+    return cofc.render()
 
 
 if __name__ == '__main__':

@@ -1,125 +1,133 @@
 # -*- coding: utf-8 -*-
 import os
 import logging
-
-from jinja2 import TemplateNotFound
 from rdflib import Graph
-
-from pyldapi.exceptions import RegOfRegTtlError
+from pyldapi.exceptions import CofCTtlError
 
 
 def setup(app, api_home_dir, api_uri):
     """
-    This is used to set up the :class:`.RegisterOfRegistersRenderer` for this pyLDAPI instance.
+    This is used to set up the :class:`.RegisteC of CegistersRenderer` for this pyLDAPI instance.
 
     .. note:: This must run before Flask's :func:`app.run` like this: :code:`pyldapi.setup(app, '.', conf.URI_BASE)`. See the example below.
 
     :param app: The Flask app containing this pyLDAPI instance.
     :type app: :class:`flask.Flask`
+    :param api_home_dir: The path of the API's hom directory.
+    :type api_home_dir: str
     :param api_uri: The URI base of the API.
     :type api_uri: str
     :return: None
     :rtype: None
     """
-    return _make_rofr_rdf(app, api_home_dir, api_uri)
+    return _make_cofc_rdf(app, api_home_dir, api_uri)
 
 
-def _make_rofr_rdf(app, api_home_dir, api_uri):
+def _make_cofc_rdf(app, api_home_dir, api_uri):
     """
     The setup function that creates the Register of Registers.
 
     Do not call from outside setup
     :param app: the Flask app containing this LDAPI
     :type app: Flask app
+    :param api_home_dir: The path of the API's hom directory.
+    :type api_home_dir: str
     :param api_uri: URI base of the API
     :type api_uri: string
     :return: none
     :rtype: None
     """
     from time import sleep
-    from pyldapi import RegisterRenderer, RegisterOfRegistersRenderer
+    cofc_file_path = os.path.join(api_home_dir, 'cofc.ttl')
     try:
-        os.remove(os.path.join(api_home_dir, 'rofr.ttl'))
+        os.remove(cofc_file_path)
     except FileNotFoundError:
         pass
     sleep(1)  # to ensure that this occurs after the Flask boot
-    print('making RofR')
+    print('making C of C')
     g = Graph()
     # get the RDF for each Register, extract the bits we need, write them to graph g
     for rule in app.url_map.iter_rules():
-        if '<' not in str(rule):  # no registers can have a Flask variable in their path
-            # make the register profile URI for each possible register
+        # no containers can have a Flask variable in their path and they must end in /
+        if '<' in str(rule) or not str(rule).endswith('/') or str(rule) == '/':
+            pass
+        else:
+            # make the container profile URI for each possible container
             try:
-                endpoint_func = app.profile_functions[rule.endpoint]
+                endpoint_func = app.view_functions[rule.endpoint]
             except (AttributeError, KeyError):
                 continue
-            candidate_register_uri = api_uri + str(rule)
+
             try:
-                dummy_request_uri = "http://localhost:5000" + str(
-                    rule) + '?_profile=reg&_format=_internal'
+                dummy_request_uri = 'http://localhost:5000' + str(rule) + \
+                                    '?_profile=mem&_format=text/turtle&page=1&per_page=1'
                 test_context = app.test_request_context(dummy_request_uri)
                 with test_context:
                     resp = endpoint_func()
-            except RegOfRegTtlError:  # usually an RofR renderer cannot find its rofr.ttl.
+                    g = g + Graph().parse(data=resp.response[0].decode('utf-8'), format='turtle')
+            except CofCTtlError:  # usually an C of C renderer cannot find its cofc.ttl.
                 continue
             except Exception as e:
                 raise e
-            if isinstance(resp, RegisterOfRegistersRenderer):
-                continue  # forbid adding a register of registers to a register of registers.
-            if isinstance(resp, RegisterRenderer):
-                with test_context:
-                    try:
-                        resp.format = 'text/html'
-                        html_resp = resp._render_reg_profile_html()
-                    except TemplateNotFound:  # missing html template
-                        pass  # TODO: Fail on this error
-                    resp.format = 'application/json'
-                    json_resp = resp._render_reg_profile_json()
-                    resp.format = 'text/turtle'
-                    rdf_resp = resp._render_reg_profile_rdf()
 
-                _filter_register_graph(candidate_register_uri, rdf_resp, g)
+    # get all the child Container from the in-memory graph
+    # which is the set of all the Container end point's first pages of Container profile content
+    q = '''
+        CONSTRUCT {{
+            ?uri a rdf:Bag ;
+                 rdfs:label ?label .  
+            ?parent a rdf:Bag ;
+                    rdfs:label ?parent_label ; 
+                    rdfs:member ?uri .
+        }}
+        WHERE {{
+            ?uri a rdf:Bag ;
+                 rdfs:label ?label .
+            OPTIONAL {{
+                ?parent rdfs:label ?parent_label ; 
+                        rdfs:member ?uri .                        
+            }}
+        }}
+        ORDER BY ?label
+        '''.format(api_uri)
+    gg = Graph()
+    for r in g.query(q):
+        gg.add(r)
 
-    # serialise g
-    with open(os.path.join(api_home_dir, 'rofr.ttl'), 'w') as f:
-        f.write(g.serialize(format='text/turtle').decode('utf-8'))
+    # serialise gg
+    with open(cofc_file_path, 'w') as f:
+        f.write(gg.serialize(format='text/turtle').decode('utf-8'))
 
-    print('finished making RofR')
+    print('finished making C of C - {}'.format(cofc_file_path))
 
 
-def _filter_register_graph(register_uri, r, g):
+def _filter_members_graph(container_uri, r, g):
     if 'text/turtle' in r.headers.get('Content-Type'):
-        logging.debug('{} is a register '.format(register_uri))
+        logging.debug('{} is a register '.format(container_uri))
         # it is a valid endpoint returning RDF (turtle) so...
         # import all its content into the in-memory graph
         g2 = Graph().parse(data=r.data.decode('utf-8'), format='text/turtle')
         # extract out only the Register details
         # make a query to get all the vars we need
         q = '''
-            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            PREFIX reg: <http://purl.org/linked-data/registry#>
             CONSTRUCT {{
-                <{0}> a reg:Register ;
+                <{0}> a rdf:Bag ;
                       rdfs:label ?label ;
                       rdfs:comment ?comment ;
-                      reg:containedItemClass ?cic ;
                       reg:subregister ?subregister .
-                ?superregister reg:subregister <{0}> .
             }}
             WHERE {{
-                <{0}> a reg:Register ;
+                <{0}> a rdf:Bag ;
                       rdfs:label ?label ;
                       rdfs:comment ?comment ;
-                      reg:containedItemClass ?cic .
-                OPTIONAL {{ <{0}> reg:subregister ?subregister . }}
             }}
-        '''.format(register_uri)
+        '''.format(container_uri)
 
         g += g2.query(q)
         return True
     else:
         logging.debug(
-            '{} returns no RDF'.format(register_uri))
+            '{} returns no RDF'.format(container_uri))
         return False  # no RDF (turtle) response from endpoint so not register
 
 
@@ -149,3 +157,7 @@ def _filter_register_graph(register_uri, r, g):
 #     logging.debug('{} returns no HTTP 200'.format(register_uri))
 #     return False  # no valid response from endpoint so not register
 
+
+
+# resp.format in Renderer.RDF_MIMETYPES:
+# from pyldapi.rendered import Rendered.RDF_MIMETYPES

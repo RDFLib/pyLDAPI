@@ -11,7 +11,7 @@ class MediaTypeRenderer(Renderer):
             'mt': Profile(
                 'Mediatype View',
                 'Basic properties of a Media Type, as recorded by IANA',
-                ['text/html'] + Renderer.RDF_MIMETYPES,
+                ['text/html'] + Renderer.RDF_MEDIA_TYPES,
                 'text/turtle',
                 languages=['en', 'pl'],
                 profile_uri='http://test.linked.data.gov.au/def/mt#'
@@ -31,7 +31,7 @@ class MediaTypeRenderer(Renderer):
             if self.profile == 'alternates':
                 return self._render_alternates_profile()
             elif self.profile == 'mt':
-                if self.format in Renderer.RDF_MIMETYPES:
+                if self.format in Renderer.RDF_MEDIA_TYPES:
                     rdf = self._get_instance_rdf()
                     if rdf is None:
                         return Response('No triples contain that URI as subject', status=404, mimetype='text/plain')

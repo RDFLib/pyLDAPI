@@ -19,7 +19,7 @@ def setup():
         'agor': Profile(
             'AGOR Profile',
             'A profile of organisations according to the Australian Government Organisations Register',
-            ['text/html'] + Renderer.RDF_MIMETYPES,
+            ['text/html'] + Renderer.RDF_MEDIA_TYPES,
             'text/turtle',
             profile_uri='http://linked.data.gov.au/def/agor'
         ),

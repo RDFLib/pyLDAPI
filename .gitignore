@@ -25,8 +25,8 @@ dist/
 # Virtualenv
 /venv/
 
-# generated rofr.ttl
-rofr.ttl
+# generated cofc.ttl
+cofc.ttl
 
 # the config
 _config/__init__.py

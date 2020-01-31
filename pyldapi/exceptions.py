@@ -8,7 +8,7 @@ class ViewsFormatsException(ValueError):
     pass
 
 
-class RegOfRegTtlError(RuntimeError):
+class CofCTtlError(RuntimeError):
     """
     TODO: Ashley add docstring for documentation
     """

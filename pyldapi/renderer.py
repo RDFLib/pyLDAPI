@@ -15,8 +15,8 @@ class Renderer(object, metaclass=ABCMeta):
     either registers or objects) and also creates an 'alternates profile' for them, based on all available profiles & mediatypes.
     """
 
-    RDF_MIMETYPES = ['text/turtle', 'application/rdf+xml', 'application/ld+json', 'text/n3', 'application/n-triples']
-    RDF_SERIALIZER_MAP = {
+    RDF_MEDIA_TYPES = ['text/turtle', 'application/rdf+xml', 'application/ld+json', 'text/n3', 'application/n-triples']
+    RDF_SERIALIZER_TYPES_MAP = {
         "text/turtle": "turtle",
         "text/n3": "n3",
         "application/n-triples": "nt",
@@ -70,6 +70,15 @@ class Renderer(object, metaclass=ABCMeta):
                 self.vf_error = 'You must not manually add a profile with token \'alternates\' as this is auto-created.'
 
         self.profiles = profiles
+        # auto-add in an Alternates profile
+        self.profiles['alt'] = Profile(
+            'Alternate Representations',
+            'The representation of the resource that lists all other representations (profiles and Media Types)',
+            ['text/html', 'application/json'] + self.RDF_MEDIA_TYPES,
+            'text/html',
+            languages=['en'],  # default 'en' only for now
+            profile_uri='http://www.w3.org/ns/dx/conneg/altr'  # the ConnegP URI for RRD Functional Profile
+        )
         self.profile = None
 
         # ensure that the default profile is actually a given profile
@@ -78,23 +87,14 @@ class Renderer(object, metaclass=ABCMeta):
 
         # ensure the default profile is in the list of profiles
         if default_profile_token not in self.profiles.keys():
-            self.vf_error = 'The profile token you specified for the default profile ' \
-                            'is not in the list of profiles you supplied'
+            self.vf_error = 'The profile token you specified ({}) for the default profile ' \
+                            'is not in the list of profiles you supplied ({})'\
+                .format(default_profile_token, ', '.join(self.profiles.keys()))
 
         self.default_profile_token = default_profile_token
 
         # TODO: supply an alternates.html template
         self.alt_template = alternates_template
-
-        # auto-add in an Alternates profile
-        self.profiles['alt'] = Profile(
-            'Alternate Representations',
-            'The representation of the resource that lists all other representations (profiles and Media Types)',
-            ['text/html', 'application/json'] + self.RDF_MIMETYPES,
-            'text/html',
-            languages=['en'],  # default 'en' only for now
-            profile_uri='http://www.w3.org/ns/dx/conneg/altr'  # the ConnegP URI for RRD Functional Profile
-        )
 
         # get profile & mediatype for this request, flag any errors but do not except out
         self.profile = self._get_profile()
@@ -412,24 +412,34 @@ class Renderer(object, metaclass=ABCMeta):
     def _make_rdf_response(self, graph, mimetype=None, headers=None, delete_graph=True):
         if headers is None:
             headers = self.headers
-        serial_mediatype = self.RDF_SERIALIZER_MAP.get(self.mediatype, None)
-        if serial_mediatype is None:
+
+        if mimetype is not None:
+            response_mimetype = mimetype
+            serial_mediatype = self.RDF_SERIALIZER_TYPES_MAP.get(mimetype)
+        elif self.mediatype is not None:
+            response_mimetype = self.mediatype
+            if self.mediatype in ['application/rdf+json', 'application/json']:
+                serial_mediatype = 'json-ld'
+            else:
+                serial_mediatype = self.RDF_SERIALIZER_TYPES_MAP.get(self.mediatype)
+        else:
             serial_mediatype = "turtle"
             response_mimetype = "text/turtle"
-        else:
-            response_mimetype = self.mediatype
-        if mimetype is not None:
-            # override mimetype?
-            response_mimetype = mimetype
-        response_text = graph.serialize(format=serial_mediatype)
+
+        response_text = graph.serialize(format=serial_mediatype, encoding='utf-8')
+
         if delete_graph:
             # destroy the triples in the triplestore, then delete the triplestore
             # this helps to prevent a memory leak in rdflib
             graph.store.remove((None, None, None))
             graph.destroy({})
             del graph
-        return Response(response_text,
-                        mimetype=response_mimetype, headers=headers)
+
+        return Response(
+            response_text,
+            mimetype=response_mimetype,
+            headers=headers
+        )
 
     def _render_alt_profile_html(self, template_context=None):
         profiles = {}
@@ -483,7 +493,7 @@ class Renderer(object, metaclass=ABCMeta):
             return self
         if self.mediatype == 'text/html':
             return self._render_alt_profile_html()
-        elif self.mediatype in Renderer.RDF_MIMETYPES:
+        elif self.mediatype in Renderer.RDF_MEDIA_TYPES:
             return self._render_alt_profile_rdf()
         else:  # application/json
             return self._render_alt_profile_json()
@@ -504,7 +514,7 @@ class Renderer(object, metaclass=ABCMeta):
         # if there's been an error with the request, return that
         if self.vf_error is not None:
             print(self.vf_error)
-            return Response(self.vf_error, status_code=400, mimtype='text/plain')
+            return Response(self.vf_error, status=400, mimetype='text/plain')
         elif self.profile == 'alt' or self.profile == 'alternates':
             return self._render_alt_profile()
         return None
