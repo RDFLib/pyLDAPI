@@ -112,6 +112,10 @@ class Renderer(object, metaclass=ABCMeta):
             self.headers['Link'] = self._make_header_link_tokens()
             self.headers['Link'] = self.headers['Link'] + ', ' + self._make_header_link_list_profiles()
 
+            # Issue 18 - https://github.com/RDFLib/pyLDAPI/issues/18
+            # Enable CORS for browser client consumption
+            self.headers['Access-Control-Allow-Origin'] = '*'
+
     #
     # getting request's preferences
     #
