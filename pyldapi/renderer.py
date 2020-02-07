@@ -6,6 +6,7 @@ from rdflib import Graph, Namespace, URIRef, BNode, Literal, RDF, RDFS, XSD
 from rdflib.namespace import DCTERMS
 from pyldapi.profile import Profile
 from pyldapi.exceptions import ViewsFormatsException
+import re
 import connegp
 
 
@@ -227,8 +228,13 @@ class Renderer(object, metaclass=ABCMeta):
         if hasattr(self.request, 'headers'):
             if self.request.headers.get('Accept') is not None:
                 try:
+                    # Chrome breaking Accept header variable by adding v=b3
+                    # Issue https://github.com/RDFLib/pyLDAPI/issues/21
+                    mediatypes_string = re.sub('v=(.*);', '', self.request.headers['Accept'])
+
                     # split the header into individual URIs, with weights still attached
-                    mediatypes = self.request.headers['Accept'].split(',')
+                    mediatypes = mediatypes_string.split(',')
+
                     # remove \s
                     mediatypes = [x.strip() for x in mediatypes]
 
