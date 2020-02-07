@@ -1,4 +1,4 @@
-Register template
+Members template
 =================
 
 Example of a generic register template:

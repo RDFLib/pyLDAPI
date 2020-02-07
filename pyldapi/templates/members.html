@@ -3,37 +3,36 @@
 {% block content %}
     <div class="row">
         <div class="col-lg-12">
-            <h1>Register</h1>
-            <h2>Of <a href="{{ contained_item_classes[0] }}"><em>{{ contained_item_classes[0].split('#')[1] }}s</em></a></h2>
-            <p></p>
-            {% if search_enabled %}
-            <form action="?search=">
-                Search <em>{{ register_item_type_string }}:</em><br>
-                <input type="text" name="search">
-                <input type="submit" value="Submit">
-            </form>
-            {% endif %}
-
-            <h3>Instances</h3>
-            {% if query %}
-            <p><em>with search query "<strong>{{ query }}</strong>"</em></p>
-            <form action="">
-                <input type="submit" value="Go back to all items">
-            </form>
-            <br>
-            {% endif %}
+            <h1>{{ label }}</h1>
+            <dl>
+              <dt>IRI</dt>
+              <dd><strong><a href="{{ uri }}">{{ uri }}</a></strong></dd>
+              {% if comment is not none %}
+              <dt>Description</dt>
+              <dd>{{ comment|safe }}</dd>
+              {% endif %}
+              {% if parent_container_uri is not none %}
+              <dt>Parent Container</dt>
+              {% if parent_container_label is not none %}
+              <dd><a href="{{ parent_container_uri }}">{{ parent_container_uri }}</a></dd>
+              {% else %}
+              <dd><a href="{{ parent_container_uri }}">{{ parent_container_label }}</a></dd>
+              {% endif %}
+              {% endif %}
+            </dl>
         </div>
         <div class="col-md-8">
+            <h3>Members</h3>
             <ul>
-            {%- for item in register_items -%}
-            <li><a href="{{ item[0].replace('http://linked.data.gov.au/dataset/qld-structural-framework', 'http://localhost:5000') }}">{{ item[1] }}</a></li>
+            {%- for member in members -%}
+            <li><a href="{{ member[0].replace('http://linked.data.gov.au/dataset/qld-structural-framework', 'http://localhost:5000') }}">{{ member[1] }}</a></li>
             {%- endfor -%}
             </ul>
         </div>
         <div class="col-md-4">
             <div class="altview">
                 <h4>Alternates Profiles</h4>
-                <p>Different profile views of this register are here: <a href="{{ request.base_url }}?_profile=all">All Profiles</a>.</p>
+                <p>Different profile views of this register are here: <a href="{{ request.base_url }}?_profile=alt">All Profiles</a>.</p>
             </div>
 
             <div class="autopaginationinfo">

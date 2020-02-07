@@ -12,7 +12,7 @@ Jinja2 Templates
 Register
 ~~~~~~~~
 
-A :code:`register.html` template is required to deliver a register of items.
+A :code:`members.html` template is required to deliver a register of items.
 
 
 Alternates

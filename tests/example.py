@@ -127,7 +127,7 @@ def dogs_reg():
                          ['http://example.com/Dog'],
                          len(dog_items),
                          super_register=API_BASE + '/',
-                         register_template='register.html',
+                         register_template='members.html',
                          alternates_template='alternates.html'
                          )
     return r.render()
