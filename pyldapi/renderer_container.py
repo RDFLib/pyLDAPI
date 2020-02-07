@@ -7,7 +7,7 @@ from rdflib.term import Identifier
 import json
 from pyldapi.renderer import Renderer
 from pyldapi.profile import Profile
-from pyldapi.exceptions import ViewsFormatsException, CofCTtlError
+from pyldapi.exceptions import ProfilesMediatypesException, CofCTtlError
 
 
 class ContainerRenderer(Renderer):
@@ -71,16 +71,16 @@ class ContainerRenderer(Renderer):
             profiles = {}
         for k, v in profiles.items():
             if k == 'mem':
-                raise ViewsFormatsException(
+                raise ProfilesMediatypesException(
                     'You must not manually add a profile with token \'mem\' as this is auto-created'
                 )
         profiles.update({
             'mem': Profile(
+                'https://w3id.org/profile/mem',
                 'Members Profile',
                 'A very basic RDF data model-only profile that lists the sub-items (members) of collections (rdf:Bag)',
                 ['text/html'] + Renderer.RDF_MEDIA_TYPES,
-                'text/html',
-                profile_uri='https://w3id.org/profile/mem'
+                'text/html'
             )
         })
         if default_profile_token is None:

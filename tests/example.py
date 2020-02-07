@@ -44,7 +44,7 @@ MyPetView = Profile(
     'A profile of my pet.',
     ['text/html', 'application/json'],
     'text/html',
-    profile_uri='http://example.org/def/mypetprofile')
+    uri='http://example.org/def/mypetprofile')
 
 app = Flask(__name__)
 

@@ -21,21 +21,21 @@ def setup():
             'A profile of organisations according to the Australian Government Organisations Register',
             ['text/html'] + Renderer.RDF_MEDIA_TYPES,
             'text/turtle',
-            profile_uri='http://linked.data.gov.au/def/agor'
+            uri='http://linked.data.gov.au/def/agor'
         ),
         'fake': Profile(
             'Fake Profile',
             'A fake Profile for testing',
             ['text/xml'],
             'text/xml',
-            profile_uri='http://fake.com'
+            uri='http://fake.com'
         ),
         'other': Profile(
             'Another Testing Profile',
             'Another profile for testing',
             ['text/html', 'text/xml'],
             'text/html',
-            profile_uri='http://other.com'
+            uri='http://other.com'
         )
         # 'alt'  # included by default
     }

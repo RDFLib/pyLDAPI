@@ -16,13 +16,13 @@ class Profile:
     """
     def __init__(
             self,
+            uri,
             label,
             comment,
             mediatypes,
             default_mediatype,
             languages=None,
             default_language='en',
-            profile_uri=None
     ):
         """
         Constructor
@@ -39,8 +39,8 @@ class Profile:
         :type languages: list
         :param default_language: The default language, by default it is 'en' English.
         :type default_language: str
-        :param profile_uri: The namespace URI for the *profile* view.
-        :type profile_uri: str
+        :param uri: The namespace URI for the *profile* view.
+        :type uri: str
         """
         self.label = label
         self.comment = comment
@@ -48,4 +48,4 @@ class Profile:
         self.default_mediatype = default_mediatype
         self.languages = languages if languages is not None else ['en']
         self.default_language = default_language
-        self.namespace = profile_uri
+        self.uri = uri

@@ -5,7 +5,7 @@ from flask import Response, render_template
 from rdflib import Graph, Namespace, URIRef, BNode, Literal, RDF, RDFS, XSD
 from rdflib.namespace import DCTERMS
 from pyldapi.profile import Profile
-from pyldapi.exceptions import ViewsFormatsException
+from pyldapi.exceptions import ProfilesMediatypesException
 import re
 import connegp
 
@@ -73,12 +73,12 @@ class Renderer(object, metaclass=ABCMeta):
         self.profiles = profiles
         # auto-add in an Alternates profile
         self.profiles['alt'] = Profile(
+            'http://www.w3.org/ns/dx/conneg/altr',  # the ConnegP URI for Alt Rep Data Model
             'Alternate Representations',
             'The representation of the resource that lists all other representations (profiles and Media Types)',
             ['text/html', 'application/json'] + self.RDF_MEDIA_TYPES,
             'text/html',
             languages=['en'],  # default 'en' only for now
-            profile_uri='http://www.w3.org/ns/dx/conneg/altr'  # the ConnegP URI for RRD Functional Profile
         )
         self.profile = None
 
@@ -105,7 +105,7 @@ class Renderer(object, metaclass=ABCMeta):
         # make headers only if there's no error
         if self.vf_error is None:
             self.headers = dict()
-            self.headers['Content-Profile'] = '<' + self.profiles[self.profile].namespace + '>'
+            self.headers['Content-Profile'] = '<' + self.profiles[self.profile].uri + '>'
             self.headers['Content-Type'] = self.mediatype
             self.headers['Content-Language'] = self.language
 
@@ -139,8 +139,8 @@ class Renderer(object, metaclass=ABCMeta):
                 for profile in pqsa.profiles:
                     if profile['profile'].startswith('<'):
                         # convert this valid URI/URN to a token
-                        for token, view in self.profiles.items():
-                            if view.namespace == profile['profile'].strip('<>'):
+                        for token, profile in self.profiles.items():
+                            if profile.uri == profile['profile'].strip('<>'):
                                 profiles.append(token)
                     else:
                         # it's already a token so just add it
@@ -164,8 +164,8 @@ class Renderer(object, metaclass=ABCMeta):
                     profiles = []
                     for profile in ap.profiles:
                         # convert this valid URI/URN to a token
-                        for token, view in self.profiles.items():
-                            if view.namespace == profile['profile']:
+                        for token, profile in self.profiles.items():
+                            if profile.uri == profile['profile']:
                                 profiles.append(token)
                     if len(profiles) == 0:
                         return None
@@ -175,14 +175,14 @@ class Renderer(object, metaclass=ABCMeta):
                     return None
             except Exception:
                 msg = 'You have requested a profile using an Accept-Profile header that is incorrectly formatted.'
-                raise ViewsFormatsException(msg)
+                raise ProfilesMediatypesException(msg)
         else:
             return None
 
     def _get_available_profiles(self):
         uris = {}
-        for token, view in self.profiles.items():
-            uris[view.namespace] = token
+        for token, profile in self.profiles.items():
+            uris[profile.uri] = token
 
         return uris
 
@@ -199,7 +199,7 @@ class Renderer(object, metaclass=ABCMeta):
             return self.default_profile_token
 
         # if we have a result from QSA or HTTP, got through each in order and see if there's an available
-        # view for that token, return first one
+        # profile for that token, return first one
         profiles_available = self._get_available_profiles()
         for profile in profiles_requested:
             for k, v in profiles_available.items():
@@ -254,7 +254,7 @@ class Renderer(object, metaclass=ABCMeta):
                     # return only the orderd list of mediatypes, not weights
                     return[x[1] for x in mediatypes]
                 except Exception:
-                    raise ViewsFormatsException(
+                    raise ProfilesMediatypesException(
                         'You have requested a Media Type using an Accept header that is incorrectly formatted.')
 
         return None
@@ -321,7 +321,7 @@ class Renderer(object, metaclass=ABCMeta):
                     # return only the orderd list of languages, not weights
                     return[x[1] for x in languages]
                 except Exception:
-                    raise ViewsFormatsException(
+                    raise ProfilesMediatypesException(
                         'You have requested a language using an Accept-Language header that is incorrectly formatted.')
 
         return None
@@ -356,17 +356,17 @@ class Renderer(object, metaclass=ABCMeta):
         individual_links = []
         link_header_template = '<http://www.w3.org/ns/dx/prof/Profile>; rel="type"; token="{}"; anchor=<{}>, '
 
-        for token, view in self.profiles.items():
-            individual_links.append(link_header_template.format(token, view.namespace))
+        for token, profile in self.profiles.items():
+            individual_links.append(link_header_template.format(token, profile.uri))
 
         return ''.join(individual_links).rstrip(', ')
 
     def _make_header_link_list_profiles(self):
         individual_links = []
-        for token, view in self.profiles.items():
+        for token, profile in self.profiles.items():
             # create an individual Link statement per Media Type
-            for mediatype in view.mediatypes:
-                # set the rel="self" just for this view & mediatype
+            for mediatype in profile.mediatypes:
+                # set the rel="self" just for this profile & mediatype
                 if mediatype != '_internal':
                     if token == self.default_profile_token and mediatype == self.profiles[self.profile].default_mediatype:
                         rel = 'self'
@@ -380,7 +380,7 @@ class Renderer(object, metaclass=ABCMeta):
                             mediatype,
                             rel,
                             mediatype,
-                            view.namespace)
+                            profile.uri)
                     )
 
         # append to, or create, Link header
@@ -392,31 +392,46 @@ class Renderer(object, metaclass=ABCMeta):
     # making response content
     #
     def _generate_alt_profiles_rdf(self):
+        # Alt R Data Model as per https://www.w3.org/TR/dx-prof-conneg/#altr
         g = Graph()
-        ALT = Namespace('http://w3id.org/profile/alt#')
-        g.bind('alt', ALT)
+        ALTR = Namespace('http://www.w3.org/ns/dx/conneg/altr#')
+        g.bind('altr', ALTR)
 
         g.bind('dct', DCTERMS)
 
         PROF = Namespace('http://www.w3.org/ns/prof/')
         g.bind('prof', PROF)
 
-        for token, v in self.profiles.items():
-            v_node = BNode()
-            g.add((v_node, RDF.type, ALT.View))
-            g.add((v_node, PROF.token, Literal(token, datatype=XSD.token)))
-            g.add((v_node, RDFS.label, Literal(v.label, datatype=XSD.string)))
-            g.add((v_node, RDFS.comment, Literal(v.comment, datatype=XSD.string)))
-            for f in v.mediatypes:
-                if not str(f).startswith('_'):  # ignore mediatypes like `_internal`
-                    g.add((v_node, URIRef(DCTERMS + 'format'), Literal(f)))
-            g.add((v_node, ALT.hasDefaultFormat, Literal(v.default_mediatype, datatype=XSD.string)))
-            if v.namespace is not None:
-                g.add((v_node, DCTERMS.conformsTo, URIRef(v.namespace)))
-            g.add((URIRef(self.instance_uri), ALT.view, v_node))
+        instance_uri = URIRef(self.instance_uri)
 
-            if self.default_profile_token == token:
-                g.add((URIRef(self.instance_uri), ALT.hasDefaultView, v_node))
+        # for each Profile, lis it via its URI and give annotations
+        for token, p in self.profiles.items():
+            profile_uri = URIRef(p.uri)
+            g.add((profile_uri, RDF.type, PROF.Profile))
+            g.add((profile_uri, PROF.token, Literal(token, datatype=XSD.token)))
+            g.add((profile_uri, RDFS.label, Literal(p.label, datatype=XSD.string)))
+            g.add((profile_uri, RDFS.comment, Literal(p.comment, datatype=XSD.string)))
+
+        # for each Profile and Media Type, create a Representation
+        for token, p in self.profiles.items():
+            for mt in p.mediatypes:
+                if not str(mt).startswith('_'):  # ignore Media Types like `_internal`
+                    rep = BNode()
+                    g.add((rep, RDF.type, ALTR.Representation))
+                    g.add((rep, DCTERMS.conformsTo, URIRef(p.uri)))
+                    g.add((rep, URIRef(DCTERMS + 'format'), Literal(mt)))
+
+                    # if this is the default format for the Profile, say so
+                    if mt == p.default_mediatype:
+                        g.add((rep, ALTR.isProfilesDefault, Literal(True, datatype=XSD.boolean)))
+
+                    # link this representation to the instances
+                    g.add((instance_uri, ALTR.hasRepresentation, rep))
+
+                    # if this is the default Profile and the default Media Type, set it as the instance's default Rep
+                    if token == self.default_profile_token and mt == p.default_mediatype:
+                        g.add((instance_uri, ALTR.hasDefaultRepresentation, rep))
+
         return g
 
     def _make_rdf_response(self, graph, mimetype=None, headers=None, delete_graph=True):
@@ -453,14 +468,14 @@ class Renderer(object, metaclass=ABCMeta):
 
     def _render_alt_profile_html(self, template_context=None):
         profiles = {}
-        for token, v in self.profiles.items():
+        for token, profile in self.profiles.items():
             profiles[token] = {
-                'label': str(v.label), 'comment': str(v.comment),
-                'mediatypes': tuple(f for f in v.mediatypes if not f.startswith('_')),
-                'default_mediatype': str(v.default_mediatype),
-                'languages': v.languages if v.languages is not None else ['en'],
-                'default_language': str(v.default_language),
-                'namespace': str(v.namespace)
+                'label': str(profile.label), 'comment': str(profile.comment),
+                'mediatypes': tuple(f for f in profile.mediatypes if not f.startswith('_')),
+                'default_mediatype': str(profile.default_mediatype),
+                'languages': profile.languages if profile.languages is not None else ['en'],
+                'default_language': str(profile.default_language),
+                'uri': str(profile.uri)
             }
         _template_context = {
             'uri': self.instance_uri,
@@ -485,7 +500,7 @@ class Renderer(object, metaclass=ABCMeta):
         return Response(
             json.dumps({
                 'uri': self.instance_uri,
-                'views': list(self.profiles.keys()),
+                'profiles': list(self.profiles.keys()),
                 'default_profile': self.default_profile_token
             }),
             mimetype='application/json',
@@ -510,10 +525,10 @@ class Renderer(object, metaclass=ABCMeta):
 
     def render(self):
         """
-        Use the received view and mediatype to create a response back to the client.
+        Use the received profile and mediatype to create a response back to the client.
 
         TODO: Ashley, are you able to update this description with your new changes please?
-        What is the method for rendering other views now? - Edmond
+        What is the method for rendering other profiles now? - Edmond
 
         This is an abstract method.
 

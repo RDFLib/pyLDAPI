@@ -14,7 +14,7 @@ class MediaTypeRenderer(Renderer):
                 ['text/html'] + Renderer.RDF_MEDIA_TYPES,
                 'text/turtle',
                 languages=['en', 'pl'],
-                profile_uri='http://test.linked.data.gov.au/def/mt#'
+                uri='http://test.linked.data.gov.au/def/mt#'
             )
         }
         super(MediaTypeRenderer, self).__init__(
