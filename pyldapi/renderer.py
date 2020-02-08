@@ -126,14 +126,16 @@ class Renderer(object, metaclass=ABCMeta):
             for mtype in profiles:
                 mtype_parts = iter(mtype.split(";"))
                 mimetype = next(mtype_parts)
+                qweight = None
                 try:
-                    qweight = 0.0
                     while True:
                         part = next(mtype_parts)
                         if part.startswith("q="):
                             qweight = float(part.replace("q=", ""))
                             break
                 except StopIteration:
+                    pass
+                if qweight is None:
                     qweight = 1.0
                 weighted_profiles.append((qweight, mimetype))
 
@@ -180,15 +182,18 @@ class Renderer(object, metaclass=ABCMeta):
             for mtype in mtypes_list:
                 mtype_parts = iter(mtype.split(";"))
                 mimetype = next(mtype_parts)
+                qweight = None
                 try:
-                    qweight = 0.0
                     while True:
                         part = next(mtype_parts)
                         if part.startswith("q="):
                             qweight = float(part.replace("q=",""))
                             break
                 except StopIteration:
+                    pass
+                if qweight is None:
                     qweight = 1.0
+
                 weighted_mtypes.append((qweight, mimetype))
 
             # sort profiles by weight, heaviest first

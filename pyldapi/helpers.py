@@ -98,13 +98,12 @@ def _filter_register_graph(register_uri, r, g):
         q = '''
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX reg: <http://purl.org/linked-data/registry#>
-            PREFIX ereg: <https://promsns.org/def/eregistry#>
             CONSTRUCT {{
                 <{0}> a reg:Register ;
                       rdfs:label ?label ;
                       rdfs:comment ?comment ;
                       reg:containedItemClass ?cic ;
-                      ereg:superregister ?superregister ;
+                      reg:register ?superregister ;
                       reg:subregister ?subregister .
                 ?superregister reg:subregister <{0}> .
             }}
@@ -113,7 +112,7 @@ def _filter_register_graph(register_uri, r, g):
                       rdfs:label ?label ;
                       rdfs:comment ?comment ;
                       reg:containedItemClass ?cic .
-                OPTIONAL {{ <{0}> ereg:superregister ?superregister . }}
+                OPTIONAL {{ <{0}> reg:register ?superregister . }}
                 OPTIONAL {{ <{0}> reg:subregister ?subregister . }}
             }}
         '''.format(register_uri)
