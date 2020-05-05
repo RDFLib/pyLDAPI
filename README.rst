@@ -1,3 +1,5 @@
+.. image:: pyLDAPI-250.png
+
 Welcome to pyLDAPI
 ==================
 
