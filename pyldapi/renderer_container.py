@@ -242,7 +242,7 @@ class ContainerRenderer(Renderer):
                 g.add((u, RDFS.member, member_uri))
                 g.add((member_uri, RDFS.label, Literal(member[1])))
             else:
-                g.add((u, RDF.member, URIRef(member)))
+                g.add((u, RDFS.member, URIRef(member)))
 
         page_uri_str = self.instance_uri + '?per_page=' + str(self.per_page) + '&page=' + str(self.page)
         page_uri_str_nonum = self.instance_uri + '?per_page=' + str(self.per_page) + '&page='
