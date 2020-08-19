@@ -6,7 +6,7 @@ from pyldapi.renderer_container import ContainerRenderer, ContainerOfContainersR
 from pyldapi.profile import Profile
 from pyldapi.helpers import setup
 
-__version__ = '3.7'
+__version__ = '3.8'
 
 __all__ = [
     'Renderer',

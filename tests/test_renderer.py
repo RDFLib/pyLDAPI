@@ -17,25 +17,25 @@ def setup():
     global profiles
     profiles = {
         'agor': Profile(
+            'http://linked.data.gov.au/def/agor',
             'AGOR Profile',
             'A profile of organisations according to the Australian Government Organisations Register',
             ['text/html'] + Renderer.RDF_MEDIA_TYPES,
-            'text/turtle',
-            uri='http://linked.data.gov.au/def/agor'
+            'text/turtle'
         ),
         'fake': Profile(
+            'http://fake.com',
             'Fake Profile',
             'A fake Profile for testing',
             ['text/xml'],
-            'text/xml',
-            uri='http://fake.com'
+            'text/xml'
         ),
         'other': Profile(
+            'http://other.com',
             'Another Testing Profile',
             'Another profile for testing',
             ['text/html', 'text/xml'],
-            'text/html',
-            uri='http://other.com'
+            'text/html'
         )
         # 'alt'  # included by default
     }

@@ -105,12 +105,12 @@ class Renderer(object, metaclass=ABCMeta):
         # make headers only if there's no error
         if self.vf_error is None:
             self.headers = dict()
-            self.headers['Content-Profile'] = '<' + self.profiles[self.profile].uri + '>'
+            self.headers['Link'] = '<' + self.profiles[self.profile].uri + '>; rel="profile"'
             self.headers['Content-Type'] = self.mediatype
             self.headers['Content-Language'] = self.language
 
-            self.headers['Link'] = self._make_header_link_tokens()
-            self.headers['Link'] = self.headers['Link'] + ', ' + self._make_header_link_list_profiles()
+            self.headers['Link'] += ', ' + self._make_header_link_tokens()
+            self.headers['Link'] += ', ' + self._make_header_link_list_profiles()
 
             # Issue 18 - https://github.com/RDFLib/pyLDAPI/issues/18
             # Enable CORS for browser client consumption
@@ -162,10 +162,10 @@ class Renderer(object, metaclass=ABCMeta):
                 ap = connegp.AcceptProfileHeaderParser(self.request.headers.get('Accept-Profile'))
                 if ap.valid:
                     profiles = []
-                    for profile in ap.profiles:
+                    for p in ap.profiles:
                         # convert this valid URI/URN to a token
                         for token, profile in self.profiles.items():
-                            if profile.uri == profile['profile']:
+                            if profile.uri == p['profile']:
                                 profiles.append(token)
                     if len(profiles) == 0:
                         return None

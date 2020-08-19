@@ -17,25 +17,25 @@ def setup():
     global profiles
     profiles = {
         'agor': Profile(
+            'http://linked.data.gov.au/def/agor',
             'AGOR Profile',
             'A profile of organisations according to the Australian Government Organisations Register',
             ['text/html'] + Renderer.RDF_MEDIA_TYPES,
             'text/turtle',
-            uri='http://linked.data.gov.au/def/agor'
         ),
         'fake': Profile(
+            'http://fake.com',
             'Fake Profile',
             'A fake Profile for testing',
             ['text/xml'],
             'text/xml',
-            uri='http://fake.com'
         ),
         'other': Profile(
+            'http://other.com',
             'Another Testing Profile',
             'Another profile for testing',
             ['text/html', 'text/xml'],
             'text/html',
-            uri='http://other.com'
         )
         # 'alternates'  # included by default
         # 'all'         # included by default
@@ -78,10 +78,10 @@ def setup():
 
 
 def test_content_profile():
-    expected = '<http://fake.com>'
-    actual = r.headers.get('Content-Profile')
-    assert actual == expected, \
-        'test_list_profiles() test 1: Content-Profile expected to be {}, was {}'.format(
+    expected = '<http://fake.com>; rel="profile"'
+    actual = r.headers.get('Link')
+    assert actual.startswith(expected), \
+        'test_list_profiles() test 1: Link (current profile) expected to be {}, was {}'.format(
             expected,
             actual
         )
@@ -89,6 +89,7 @@ def test_content_profile():
 
 def test_list_profiles():
     expected = \
+        '<http://fake.com>; rel="profile", ' \
         '<http://www.w3.org/ns/dx/prof/Profile>; rel="type"; token="agor"; anchor=<http://linked.data.gov.au/def/agor>, ' \
         '<http://www.w3.org/ns/dx/prof/Profile>; rel="type"; token="fake"; anchor=<http://fake.com>, ' \
         '<http://www.w3.org/ns/dx/prof/Profile>; rel="type"; token="other"; anchor=<http://other.com>, ' \
@@ -112,7 +113,7 @@ def test_list_profiles():
         '<http://whocares.com?_profile=alt&_mediatype=application/n-triples>; rel="alternate"; type="application/n-triples"; profile="http://www.w3.org/ns/dx/conneg/altr"'
     actual = r.headers.get('Link')
     assert actual == expected, \
-        'test_list_profiles() test 1:\nContent-Profile expected to be\n{},\nwas\n{}'.format(
+        'test_list_profiles() test 1:\nLink (current profile) expected to be\n{},\nwas\n{}'.format(
             expected,
             actual
         )
@@ -120,7 +121,7 @@ def test_list_profiles():
 
 if __name__ == '__main__':
     setup()
-    # test_content_profile()
+    test_content_profile()
     test_list_profiles()
 
     print('Passed all tests')

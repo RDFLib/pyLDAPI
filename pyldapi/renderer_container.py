@@ -67,6 +67,7 @@ class ContainerRenderer(Renderer):
         RegisterRenderer.DEFAULT_ITEMS_PER_PAGE.
         :type per_page: int or None
         """
+        self.instance_uri = instance_uri
         if profiles is None:
             profiles = {}
         for k, v in profiles.items():
@@ -190,10 +191,12 @@ class ContainerRenderer(Renderer):
 
     def _render_mem_profile_html(self, template_context=None):
         pagination = Pagination(
+            members_uri=self.instance_uri,
             page=self.page,
             per_page=self.per_page,
             total=self.members_total_count,
-            page_parameter='page', per_page_parameter='per_page'
+            page_parameter='page',
+            per_page_parameter='per_page'
         )
         _template_context = {
             'uri': self.instance_uri,
@@ -237,7 +240,11 @@ class ContainerRenderer(Renderer):
         g.add((u, RDFS.label, Literal(self.label)))
         g.add((u, RDFS.comment, Literal(self.comment, lang='en')))
         for member in self.members:
-            if isinstance(member, tuple):
+            if "uri" in member:
+                member_uri = URIRef(member["uri"])
+                g.add((u, RDFS.member, member_uri))
+                g.add((member_uri, RDFS.label, Literal(member["title"])))
+            elif isinstance(member, tuple):
                 member_uri = URIRef(member[0])
                 g.add((u, RDFS.member, member_uri))
                 g.add((member_uri, RDFS.label, Literal(member[1])))
