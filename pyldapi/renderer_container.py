@@ -134,10 +134,22 @@ class ContainerRenderer(Renderer):
         # signalling that this is, in fact, a Resource described in pages
         links.append('<http://www.w3.org/ns/ldp#Page>; rel="type"')
 
+        # other Query String Arguments
+        other_qsas = [x + "=" + self.request.values[x] for x in self.request.values if x not in ["page", "per_page"]]
+        if len(other_qsas) > 0:
+            other_qsas_str = "&".join(other_qsas) + "&"
+        else:
+            other_qsas_str = ''
+
         # always add a link to first
         self.first_page = 1
-        links.append('<{}?per_page={}&page={}>; rel="first"'
-                     .format(self.instance_uri, self.per_page, self.first_page))
+        links.append(
+            '<{}?{}per_page={}&page=1>; rel="first"'.format(
+                self.instance_uri,
+                other_qsas_str,
+                self.per_page
+            )
+        )
 
         # if this isn't the first page, add a link to "prev"
         if self.page > 1:
@@ -153,17 +165,25 @@ class ContainerRenderer(Renderer):
         # if this isn't the last page, add a link to next
         if self.page < self.last_page:
             self.next_page = self.page + 1
-            links.append('<{}?per_page={}&page={}>; rel="next"'.format(
-                self.instance_uri,
-                self.per_page,
-                self.next_page
-            ))
+            links.append(
+                '<{}?{}per_page={}&page={}>; rel="next"'.format(
+                    self.instance_uri,
+                    other_qsas_str,
+                    self.per_page,
+                    self.next_page
+                )
+            )
         else:
             self.next_page = None
 
         # always add a link to last
-        links.append('<{}?per_page={}&page={}>; rel="last"'
-                     .format(self.instance_uri, self.per_page, self.last_page))
+        links.append(
+            '<{}?{}per_page={}&page={}>; rel="last"'.format(
+                self.instance_uri,
+                other_qsas_str,
+                self.per_page, self.last_page
+            )
+        )
 
         self.headers['Link'] += ', ' + ', '.join(links)
 
@@ -251,8 +271,15 @@ class ContainerRenderer(Renderer):
             else:
                 g.add((u, RDFS.member, URIRef(member)))
 
-        page_uri_str = self.instance_uri + '?per_page=' + str(self.per_page) + '&page=' + str(self.page)
-        page_uri_str_nonum = self.instance_uri + '?per_page=' + str(self.per_page) + '&page='
+        # other Query String Arguments
+        other_qsas = [x + "=" + self.request.values[x] for x in self.request.values if x not in ["page", "per_page"]]
+        if len(other_qsas) > 0:
+            other_qsas_str = "&".join(other_qsas) + "&"
+        else:
+            other_qsas_str = ''
+
+        page_uri_str = "{}?{}per_page={}&page={}".format(self.instance_uri, other_qsas_str, self.per_page, self.page)
+        page_uri_str_nonum = "{}?{}per_page={}&page=".format(self.instance_uri, other_qsas_str, self.per_page)
         page_uri = URIRef(page_uri_str)
 
         # pagination
