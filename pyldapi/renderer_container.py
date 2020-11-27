@@ -103,12 +103,12 @@ class ContainerRenderer(Renderer):
             else:
                 self.members = []
             self.members_total_count = members_total_count
-            self.per_page = request.args.get(
+            self.per_page = kwargs.pop("per_page", request.args.get(
                 'per_page',
                 type=int,
                 default=ContainerRenderer.DEFAULT_ITEMS_PER_PAGE
-            )
-            self.page = request.args.get('page', type=int, default=1)
+            ))
+            self.page = kwargs.pop("page", request.args.get('page', type=int, default=1))
             self.super_register = super_register
             self.page_size_max = page_size_max
             self.members_template = register_template
