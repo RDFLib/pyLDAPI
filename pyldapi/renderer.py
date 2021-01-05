@@ -2,7 +2,8 @@
 from abc import ABCMeta
 import json
 from flask import Response, render_template
-from rdflib import Graph, Namespace, URIRef, BNode, Literal, RDF, RDFS, XSD
+from rdflib import Graph, Namespace, URIRef, BNode, Literal
+from rdflib.namespace import PROF, RDF, RDFS, XSD
 from rdflib.namespace import DCTERMS
 from pyldapi.profile import Profile
 from pyldapi.exceptions import ProfilesMediatypesException
@@ -399,7 +400,6 @@ class Renderer(object, metaclass=ABCMeta):
 
         g.bind('dct', DCTERMS)
 
-        PROF = Namespace('http://www.w3.org/ns/prof/')
         g.bind('prof', PROF)
 
         instance_uri = URIRef(self.instance_uri)
@@ -408,7 +408,6 @@ class Renderer(object, metaclass=ABCMeta):
         for token, p in self.profiles.items():
             profile_uri = URIRef(p.uri)
             g.add((profile_uri, RDF.type, PROF.Profile))
-            g.add((profile_uri, PROF.token, Literal(token, datatype=XSD.token)))
             g.add((profile_uri, RDFS.label, Literal(p.label, datatype=XSD.string)))
             g.add((profile_uri, RDFS.comment, Literal(p.comment, datatype=XSD.string)))
 
@@ -420,6 +419,7 @@ class Renderer(object, metaclass=ABCMeta):
                     g.add((rep, RDF.type, ALTR.Representation))
                     g.add((rep, DCTERMS.conformsTo, URIRef(p.uri)))
                     g.add((rep, URIRef(DCTERMS + 'format'), Literal(mt)))
+                    g.add((rep, PROF.token, Literal(token, datatype=XSD.token)))
 
                     # if this is the default format for the Profile, say so
                     if mt == p.default_mediatype:
