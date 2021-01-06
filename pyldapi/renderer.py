@@ -419,7 +419,7 @@ class Renderer(object, metaclass=ABCMeta):
                     g.add((rep, RDF.type, ALTR.Representation))
                     g.add((rep, DCTERMS.conformsTo, URIRef(p.uri)))
                     g.add((rep, URIRef(DCTERMS + 'format'), Literal(mt)))
-                    g.add((rep, PROF.token, Literal(token, datatype=XSD.token)))
+                    g.add((rep, PROF.hasToken, Literal(token, datatype=XSD.token)))
 
                     # if this is the default format for the Profile, say so
                     if mt == p.default_mediatype:

@@ -44,7 +44,7 @@ Definitions
 
 Alt Profile
 ~~~~~~~~~~~
-The *model view* that lists all other views. This API uses the definition of *alternates profile* presented at `https://promsns.org/def/alt <https://promsns.org/def/alt>`_.
+The *model view* that lists all other views. This API uses the definition of *Alternate Profiles Data Model as an OWL ontology* presented at `https://www.w3.org/TR/dx-prof-conneg/#altr-owl <https://www.w3.org/TR/dx-prof-conneg/#altr-owl>`_.
 
 Linked Data Principles
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -138,6 +138,10 @@ Related work
 
 Changelog
 ---------
+**3.11**
+
+* tokens applied to Representations in Alternate View profile, not Profiles
+
 **3.0**
 
 * Content Negotiation specification by Profile supported
