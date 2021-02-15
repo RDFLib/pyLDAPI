@@ -44,7 +44,6 @@ def _make_cofc_rdf(app, api_home_dir, api_uri):
     except FileNotFoundError:
         pass
     sleep(1)  # to ensure that this occurs after the Flask boot
-    print('making C of C')
     g = Graph()
     # get the RDF for each Register, extract the bits we need, write them to graph g
     for rule in app.url_map.iter_rules():
@@ -98,8 +97,6 @@ def _make_cofc_rdf(app, api_home_dir, api_uri):
     with open(cofc_file_path, 'w') as f:
         f.write(gg.serialize(format='text/turtle').decode('utf-8'))
 
-    print('finished making C of C - {}'.format(cofc_file_path))
-
 
 def _filter_members_graph(container_uri, r, g):
     if 'text/turtle' in r.headers.get('Content-Type'):
@@ -149,14 +146,12 @@ def _filter_members_graph(container_uri, r, g):
 #     logging.debug('assessing register candidate ' + register_uri.replace('?_profile=reg&_format=text/turtle', ''))
 #     try:
 #         r = requests.get(register_uri)
-#         print('getting ' + register_uri)
 #     except ViewsFormatsException as e:
 #         return False  # ignore these exceptions as are just a result of requesting a profile/format combo of something like a page
 #     if r.status_code == 200:
 #         return _filter_register_graph(register_uri.replace('?_profile=reg&_format=text/turtle', ''), r, g)
 #     logging.debug('{} returns no HTTP 200'.format(register_uri))
 #     return False  # no valid response from endpoint so not register
-
 
 
 # resp.format in Renderer.RDF_MIMETYPES:

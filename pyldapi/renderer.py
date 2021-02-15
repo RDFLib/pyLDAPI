@@ -538,7 +538,6 @@ class Renderer(object, metaclass=ABCMeta):
 
         # if there's been an error with the request, return that
         if self.vf_error is not None:
-            print(self.vf_error)
             return Response(self.vf_error, status=400, mimetype='text/plain')
         elif self.profile == 'alt' or self.profile == 'alternates':
             return self._render_alt_profile()
