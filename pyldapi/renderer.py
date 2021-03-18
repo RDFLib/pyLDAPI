@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 from abc import ABCMeta
 import json
-from flask import Response, render_template
+# from flask import Response, render_template
+
+from fastapi import Response
+from fastapi.templating import Jinja2Templates
+
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
 from rdflib.namespace import PROF, RDF, RDFS, XSD
 from rdflib.namespace import DCTERMS
@@ -65,7 +69,9 @@ class Renderer(object, metaclass=ABCMeta):
         self.vf_error = None
         self.request = request
         self.instance_uri = instance_uri
+        self.templates = Jinja2Templates(directory="templates")
 
+        print("r", self.request)
         # ensure alternates token isn't hogged by user
         for k, v in profiles.items():
             if k == 'alternates':
@@ -132,7 +138,9 @@ class Renderer(object, metaclass=ABCMeta):
         :rtype: list
         """
         # try QSAa and, if we have any, return them only
-        profiles_string = self.request.values.get('_view', self.request.values.get('_profile'))
+        # profiles_string = self.request.get('_view', self.request.values.get('_profile'))
+        # profiles_string = self.request.body('_view', self.request.body('_profile'))
+        profiles_string = None  # TODO: Change request from Flask to FastAPI
         if profiles_string is not None:
             pqsa = connegp.ProfileQsaParser(profiles_string)
             if pqsa.valid:
@@ -462,7 +470,7 @@ class Renderer(object, metaclass=ABCMeta):
 
         return Response(
             response_text,
-            mimetype=response_mimetype,
+            media_type=response_mimetype,
             headers=headers
         )
 
@@ -484,8 +492,15 @@ class Renderer(object, metaclass=ABCMeta):
         }
         if template_context is not None and isinstance(template_context, dict):
             _template_context.update(template_context)
+        # return Response(
+        #     render_template(
+        #         self.alt_template or 'alt.html',
+        #         **_template_context
+        #     ),
+        #     headers=self.headers
+        # )
         return Response(
-            render_template(
+            self.templates.TemplateResponse(
                 self.alt_template or 'alt.html',
                 **_template_context
             ),
@@ -497,13 +512,22 @@ class Renderer(object, metaclass=ABCMeta):
         return self._make_rdf_response(g)
 
     def _render_alt_profile_json(self):
+        # return Response(
+        #     json.dumps({
+        #         'uri': self.instance_uri,
+        #         'profiles': list(self.profiles.keys()),
+        #         'default_profile': self.default_profile_token
+        #     }),
+        #     mimetype='application/json',
+        #     headers=self.headers
+        # )
         return Response(
-            json.dumps({
+            content={
                 'uri': self.instance_uri,
                 'profiles': list(self.profiles.keys()),
                 'default_profile': self.default_profile_token
-            }),
-            mimetype='application/json',
+            },
+            media_type='application/json',
             headers=self.headers
         )
 
@@ -538,7 +562,7 @@ class Renderer(object, metaclass=ABCMeta):
 
         # if there's been an error with the request, return that
         if self.vf_error is not None:
-            return Response(self.vf_error, status=400, mimetype='text/plain')
+            return Response(self.vf_error, status=400, media_type='text/plain')
         elif self.profile == 'alt' or self.profile == 'alternates':
             return self._render_alt_profile()
         return None

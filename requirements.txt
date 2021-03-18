@@ -1,5 +1,4 @@
-flask
-flask_paginate
+fastapi
 rdflib
 rdflib-jsonld
 connegp

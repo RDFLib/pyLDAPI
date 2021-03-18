@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 from collections import defaultdict
-from flask import Response, render_template
-from flask_paginate import Pagination
+# from flask import Response, render_template
+# from flask_paginate import Pagination
+
+from fastapi import Response
+from fastapi.templating import Jinja2Templates
+
 from rdflib import Graph, Namespace, URIRef, Literal, RDF, RDFS, XSD
 from rdflib.term import Identifier
 import json
@@ -68,6 +72,7 @@ class ContainerRenderer(Renderer):
         :type per_page: int or None
         """
         self.instance_uri = instance_uri
+        self.templates = Jinja2Templates(directory="templates")
         if profiles is None:
             profiles = {}
         for k, v in profiles.items():
@@ -206,7 +211,7 @@ class ContainerRenderer(Renderer):
                 else:
                     return self._render_mem_profile_json()
             else:  # there is a paging error (e.g. page > last_page)
-                return Response(self.paging_error, status=400, mimetype='text/plain')
+                return Response(self.paging_error, status=400, media_type='text/plain')
         return response
 
     def _render_mem_profile_html(self, template_context=None):
@@ -238,8 +243,15 @@ class ContainerRenderer(Renderer):
         if template_context is not None and isinstance(template_context, dict):
             _template_context.update(template_context)
 
+        # return Response(
+        #     render_template(
+        #         self.members_template or 'members.html',
+        #         **_template_context
+        #     ),
+        #     headers=self.headers
+        # )
         return Response(
-            render_template(
+            self.templates.TemplateResponse(
                 self.members_template or 'members.html',
                 **_template_context
             ),
@@ -310,15 +322,15 @@ class ContainerRenderer(Renderer):
 
     def _render_mem_profile_json(self):
         return Response(
-            json.dumps({
+            content={
                 'uri': self.instance_uri,
                 'label': self.label,
                 'comment': self.comment,
                 'profiles': list(self.profiles.keys()),
                 'default_profile': self.default_profile_token,
                 'register_items': self.members
-            }),
-            mimetype='application/json',
+            },
+            media_type='application/json',
             headers=self.headers
         )
 
