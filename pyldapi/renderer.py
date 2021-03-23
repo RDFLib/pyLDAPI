@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from abc import ABCMeta
-import json
+
 # from flask import Response, render_template
 
 from fastapi import Response
@@ -13,6 +13,8 @@ from pyldapi.profile import Profile
 from pyldapi.exceptions import ProfilesMediatypesException
 import re
 import connegp
+
+templates = Jinja2Templates(directory="templates")
 
 
 class Renderer(object, metaclass=ABCMeta):
@@ -69,9 +71,10 @@ class Renderer(object, metaclass=ABCMeta):
         self.vf_error = None
         self.request = request
         self.instance_uri = instance_uri
-        self.templates = Jinja2Templates(directory="templates")
 
         print("r", self.request)
+        self.mediatype_names = kwargs.get('MEDIATYPE_NAMES')
+
         # ensure alternates token isn't hogged by user
         for k, v in profiles.items():
             if k == 'alternates':
@@ -138,9 +141,8 @@ class Renderer(object, metaclass=ABCMeta):
         :rtype: list
         """
         # try QSAa and, if we have any, return them only
-        # profiles_string = self.request.get('_view', self.request.values.get('_profile'))
-        # profiles_string = self.request.body('_view', self.request.body('_profile'))
-        profiles_string = None  # TODO: Change request from Flask to FastAPI
+        profiles_string = self.request.query_params.get('_view', self.request.query_params.get('_profile'))
+        # profiles_string = None  # TODO: Change request from Flask to FastAPI
         if profiles_string is not None:
             pqsa = connegp.ProfileQsaParser(profiles_string)
             if pqsa.valid:
@@ -222,7 +224,8 @@ class Renderer(object, metaclass=ABCMeta):
         """Returns a list of Media Types from QSA
         :return: list
         """
-        qsa_mediatypes = self.request.values.get('_format', self.request.values.get('_mediatype', None))
+        qsa_mediatypes = self.request.query_params.get('_format', self.request.query_params.get('_mediatype', None))
+        # qsa_mediatypes = None
         if qsa_mediatypes is not None:
             qsa_mediatypes = str(qsa_mediatypes).replace(' ', '+').split(',')
             # if the internal mediatype is requested, return the default
@@ -293,7 +296,8 @@ class Renderer(object, metaclass=ABCMeta):
         """Returns a list of Languages from QSA
         :return: list
         """
-        languages = self.request.values.get('_lang')
+        # languages = self.request.values.get('_lang')
+        languages = None
         if languages is not None:
             languages = str(languages).replace(' ', '_').replace('+', '_').split(',')
             # if the internal mediatype is requested, return the default
@@ -488,39 +492,22 @@ class Renderer(object, metaclass=ABCMeta):
         _template_context = {
             'uri': self.instance_uri,
             'default_profile_token': self.default_profile_token,
-            'profiles': profiles
+            'profiles': profiles,
+            'MEDIATYPE_NAMES': self.mediatype_names,
+            'request': self.request
         }
         if template_context is not None and isinstance(template_context, dict):
             _template_context.update(template_context)
-        # return Response(
-        #     render_template(
-        #         self.alt_template or 'alt.html',
-        #         **_template_context
-        #     ),
-        #     headers=self.headers
-        # )
-        return Response(
-            self.templates.TemplateResponse(
-                self.alt_template or 'alt.html',
-                **_template_context
-            ),
-            headers=self.headers
-        )
+
+        return templates.TemplateResponse(self.alt_template or 'alt.html',
+                                          context=_template_context,
+                                          headers=self.headers)
 
     def _render_alt_profile_rdf(self):
         g = self._generate_alt_profiles_rdf()
         return self._make_rdf_response(g)
 
     def _render_alt_profile_json(self):
-        # return Response(
-        #     json.dumps({
-        #         'uri': self.instance_uri,
-        #         'profiles': list(self.profiles.keys()),
-        #         'default_profile': self.default_profile_token
-        #     }),
-        #     mimetype='application/json',
-        #     headers=self.headers
-        # )
         return Response(
             content={
                 'uri': self.instance_uri,
