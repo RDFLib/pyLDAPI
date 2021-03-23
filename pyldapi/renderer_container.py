@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
 from collections import defaultdict
-# from flask import Response, render_template
-# from flask_paginate import Pagination
-
 from fastapi import Response
 from fastapi.templating import Jinja2Templates
 
 from rdflib import Graph, Namespace, URIRef, Literal, RDF, RDFS, XSD
 from rdflib.term import Identifier
-import json
 from pyldapi.renderer import Renderer
 from pyldapi.profile import Profile
 from pyldapi.exceptions import ProfilesMediatypesException, CofCTtlError
+
+templates = Jinja2Templates(directory="templates")
 
 
 class ContainerRenderer(Renderer):
@@ -72,7 +70,7 @@ class ContainerRenderer(Renderer):
         :type per_page: int or None
         """
         self.instance_uri = instance_uri
-        self.templates = Jinja2Templates(directory="templates")
+
         if profiles is None:
             profiles = {}
         for k, v in profiles.items():
@@ -108,12 +106,16 @@ class ContainerRenderer(Renderer):
             else:
                 self.members = []
             self.members_total_count = members_total_count
-            self.per_page = kwargs.pop("per_page", request.args.get(
-                'per_page',
-                type=int,
-                default=ContainerRenderer.DEFAULT_ITEMS_PER_PAGE
-            ))
-            self.page = kwargs.pop("page", request.args.get('page', type=int, default=1))
+
+            if request.query_params.get("per_page"):
+                self.per_page = int(request.query_params.get("per_page"))
+            else:
+                self.per_page = ContainerRenderer.DEFAULT_ITEMS_PER_PAGE
+            if request.query_params.get("page"):
+                self.page = int(request.query_params.get("page"))
+            else:
+                self.page = 1
+
             self.super_register = super_register
             self.page_size_max = page_size_max
             self.members_template = register_template
@@ -140,7 +142,7 @@ class ContainerRenderer(Renderer):
         links.append('<http://www.w3.org/ns/ldp#Page>; rel="type"')
 
         # other Query String Arguments
-        other_qsas = [x + "=" + self.request.values[x] for x in self.request.values if x not in ["page", "per_page"]]
+        other_qsas = [x + "=" + self.request.query_params[x] for x in self.request.query_params if x not in ["page", "per_page"]]
         if len(other_qsas) > 0:
             other_qsas_str = "&".join(other_qsas) + "&"
         else:
@@ -211,18 +213,18 @@ class ContainerRenderer(Renderer):
                 else:
                     return self._render_mem_profile_json()
             else:  # there is a paging error (e.g. page > last_page)
-                return Response(self.paging_error, status=400, media_type='text/plain')
+                return Response(self.paging_error, status_code=400, media_type='text/plain')
         return response
 
     def _render_mem_profile_html(self, template_context=None):
-        pagination = Pagination(
-            members_uri=self.instance_uri,
-            page=self.page,
-            per_page=self.per_page,
-            total=self.members_total_count,
-            page_parameter='page',
-            per_page_parameter='per_page'
-        )
+        # pagination = Pagination(
+        #     members_uri=self.instance_uri,
+        #     page=self.page,
+        #     per_page=self.per_page,
+        #     total=self.members_total_count,
+        #     page_parameter='page',
+        #     per_page_parameter='per_page'
+        # )
         _template_context = {
             'uri': self.instance_uri,
             'label': self.label,
@@ -236,27 +238,18 @@ class ContainerRenderer(Renderer):
             'prev_page': self.prev_page,
             'next_page': self.next_page,
             'last_page': self.last_page,
-            'pagination': pagination
+            # 'pagination': pagination,
+            'request': self.request
         }
         if self.template_extras is not None:
             _template_context.update(self.template_extras)
         if template_context is not None and isinstance(template_context, dict):
             _template_context.update(template_context)
 
-        # return Response(
-        #     render_template(
-        #         self.members_template or 'members.html',
-        #         **_template_context
-        #     ),
-        #     headers=self.headers
-        # )
-        return Response(
-            self.templates.TemplateResponse(
-                self.members_template or 'members.html',
-                **_template_context
-            ),
-            headers=self.headers
-        )
+        return templates.TemplateResponse(
+                name=self.members_template or 'members.html',
+                context=_template_context,
+                headers=self.headers)
 
     def _generate_mem_profile_rdf(self):
         g = Graph()
@@ -284,7 +277,7 @@ class ContainerRenderer(Renderer):
                 g.add((u, RDFS.member, URIRef(member)))
 
         # other Query String Arguments
-        other_qsas = [x + "=" + self.request.values[x] for x in self.request.values if x not in ["page", "per_page"]]
+        other_qsas = [x + "=" + self.request.query_params[x] for x in self.request.query_params if x not in ["page", "per_page"]]
         if len(other_qsas) > 0:
             other_qsas_str = "&".join(other_qsas) + "&"
         else:
