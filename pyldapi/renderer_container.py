@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-from collections import defaultdict
 from fastapi import Response
+from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 
-from rdflib import Graph, Namespace, URIRef, Literal, RDF, RDFS, XSD
-from rdflib.term import Identifier
+from rdflib import Graph, Namespace, URIRef, Literal, RDF, RDFS
 from pyldapi.renderer import Renderer
 from pyldapi.profile import Profile
 from pyldapi.exceptions import ProfilesMediatypesException, CofCTtlError
@@ -70,6 +69,7 @@ class ContainerRenderer(Renderer):
         :type per_page: int or None
         """
         self.instance_uri = instance_uri
+        self.mediatype_names = kwargs.get('MEDIATYPE_NAMES')
 
         if profiles is None:
             profiles = {}
@@ -207,10 +207,13 @@ class ContainerRenderer(Renderer):
         if response is None and self.profile == 'mem':
             if self.paging_error is None:
                 if self.mediatype == 'text/html':
+                    print("Meditatype_container_text_html")
                     return self._render_mem_profile_html()
                 elif self.mediatype in Renderer.RDF_MEDIA_TYPES:
+                    print("Meditatype_container_rdf")
                     return self._render_mem_profile_rdf()
                 else:
+                    print("Meditatype_container_json")
                     return self._render_mem_profile_json()
             else:  # there is a paging error (e.g. page > last_page)
                 return Response(self.paging_error, status_code=400, media_type='text/plain')
@@ -238,6 +241,7 @@ class ContainerRenderer(Renderer):
             'prev_page': self.prev_page,
             'next_page': self.next_page,
             'last_page': self.last_page,
+            'MEDIATYPE_NAMES': self.mediatype_names,
             # 'pagination': pagination,
             'request': self.request
         }
@@ -246,6 +250,7 @@ class ContainerRenderer(Renderer):
         if template_context is not None and isinstance(template_context, dict):
             _template_context.update(template_context)
 
+        print("template_context", _template_context)
         return templates.TemplateResponse(
                 name=self.members_template or 'members.html',
                 context=_template_context,
@@ -314,7 +319,7 @@ class ContainerRenderer(Renderer):
         return self._make_rdf_response(g)
 
     def _render_mem_profile_json(self):
-        return Response(
+        return JSONResponse(
             content={
                 'uri': self.instance_uri,
                 'label': self.label,
