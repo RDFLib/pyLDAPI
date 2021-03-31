@@ -9,6 +9,7 @@ from pyldapi.profile import Profile
 from pyldapi.exceptions import ProfilesMediatypesException, CofCTtlError
 
 templates = Jinja2Templates(directory="templates")
+MEDIATYPE_NAMES = None
 
 
 class ContainerRenderer(Renderer):
@@ -16,7 +17,8 @@ class ContainerRenderer(Renderer):
     Specific implementation of the abstract Renderer for displaying Register information
     """
     DEFAULT_ITEMS_PER_PAGE = 20
-    
+    global MEDIATYPE_NAMES
+
     def __init__(self,
                  request,
                  instance_uri,
@@ -69,7 +71,6 @@ class ContainerRenderer(Renderer):
         :type per_page: int or None
         """
         self.instance_uri = instance_uri
-        self.mediatype_names = kwargs.get('MEDIATYPE_NAMES')
 
         if profiles is None:
             profiles = {}
@@ -89,6 +90,7 @@ class ContainerRenderer(Renderer):
         })
         if default_profile_token is None:
             default_profile_token = 'mem'
+
         super(ContainerRenderer, self).__init__(
             request,
             instance_uri,
@@ -207,13 +209,10 @@ class ContainerRenderer(Renderer):
         if response is None and self.profile == 'mem':
             if self.paging_error is None:
                 if self.mediatype == 'text/html':
-                    print("Meditatype_container_text_html")
                     return self._render_mem_profile_html()
                 elif self.mediatype in Renderer.RDF_MEDIA_TYPES:
-                    print("Meditatype_container_rdf")
                     return self._render_mem_profile_rdf()
                 else:
-                    print("Meditatype_container_json")
                     return self._render_mem_profile_json()
             else:  # there is a paging error (e.g. page > last_page)
                 return Response(self.paging_error, status_code=400, media_type='text/plain')
@@ -241,7 +240,7 @@ class ContainerRenderer(Renderer):
             'prev_page': self.prev_page,
             'next_page': self.next_page,
             'last_page': self.last_page,
-            'MEDIATYPE_NAMES': self.mediatype_names,
+            'MEDIATYPE_NAMES': MEDIATYPE_NAMES,
             # 'pagination': pagination,
             'request': self.request
         }
@@ -250,7 +249,6 @@ class ContainerRenderer(Renderer):
         if template_context is not None and isinstance(template_context, dict):
             _template_context.update(template_context)
 
-        print("template_context", _template_context)
         return templates.TemplateResponse(
                 name=self.members_template or 'members.html',
                 context=_template_context,
@@ -339,6 +337,8 @@ class ContainerOfContainersRenderer(ContainerRenderer):
 
     This sub-class auto-fills many of the :class:`.RegisterRenderer` options.
     """
+    global MEDIATYPE_NAMES
+
     def __init__(self, request, instance_uri, label, comment, profiles, cofc_file_path, default_profile_token='mem', *args, **kwargs):
         """
         Constructor
@@ -364,7 +364,7 @@ class ContainerOfContainersRenderer(ContainerRenderer):
             [],  # will be replaced further down
             0,    # will be replaced further down
             profiles=profiles,
-            default_profile_token=default_profile_token
+            default_profile_token=default_profile_token,
         )
         self.members = []
 
@@ -389,4 +389,5 @@ class ContainerOfContainersRenderer(ContainerRenderer):
             '''.format(**{'register_uri': instance_uri})
         for r in g.query(q):
             self.members.append((r['uri'], r['label']))
+
         self.register_total_count = len(self.members)

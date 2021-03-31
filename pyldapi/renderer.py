@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from abc import ABCMeta
 
-# from flask import Response, render_template
-
 from fastapi import Response
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
@@ -16,6 +14,7 @@ import re
 import connegp
 
 templates = Jinja2Templates(directory="templates")
+MEDIATYPE_NAMES = None
 
 
 class Renderer(object, metaclass=ABCMeta):
@@ -23,6 +22,7 @@ class Renderer(object, metaclass=ABCMeta):
     Abstract class as a parent for classes that validate the profiles & mediatypes for an API-delivered resource (typically
     either registers or objects) and also creates an 'alternates profile' for them, based on all available profiles & mediatypes.
     """
+    global MEDIATYPE_NAMES
 
     RDF_MEDIA_TYPES = ['text/turtle', 'application/rdf+xml', 'application/ld+json', 'text/n3', 'application/n-triples']
     RDF_SERIALIZER_TYPES_MAP = {
@@ -73,8 +73,7 @@ class Renderer(object, metaclass=ABCMeta):
         self.request = request
         self.instance_uri = instance_uri
 
-        print("r", self.request)
-        self.mediatype_names = kwargs.get('MEDIATYPE_NAMES')
+        # self.mediatype_names = kwargs.get('MEDIATYPE_NAMES')
         self.local_uris = kwargs.get('LOCAL_URIS')
 
         # ensure alternates token isn't hogged by user
@@ -142,7 +141,6 @@ class Renderer(object, metaclass=ABCMeta):
         :return: List of URIs of accept profiles in descending request order
         :rtype: list
         """
-        print("get_profiles_from_qsa")
         # try QSAa and, if we have any, return them only
         profiles_string = self.request.query_params.get('_view', self.request.query_params.get('_profile'))
         # profiles_string = None  # TODO: Change request from Flask to FastAPI
@@ -171,7 +169,6 @@ class Renderer(object, metaclass=ABCMeta):
         :return: List of URIs of accept profiles in descending request order
         :rtype: list
         """
-        print("get_profiles_http")
         if self.request.headers.get('Accept-Profile') is not None:
             try:
                 ap = connegp.AcceptProfileHeaderParser(self.request.headers.get('Accept-Profile'))
@@ -195,7 +192,6 @@ class Renderer(object, metaclass=ABCMeta):
             return None
 
     def _get_available_profiles(self):
-        print("get_available_profiles")
         uris = {}
         for token, profile in self.profiles.items():
             uris[profile.uri] = token
@@ -203,7 +199,6 @@ class Renderer(object, metaclass=ABCMeta):
         return uris
 
     def _get_profile(self):
-        print("get_profile")
         # if we get a profile from QSA, use that
         profiles_requested = self._get_profiles_from_qsa()
 
@@ -230,7 +225,6 @@ class Renderer(object, metaclass=ABCMeta):
         """Returns a list of Media Types from QSA
         :return: list
         """
-        print("get_mediatype_from_qsa")
         qsa_mediatypes = self.request.query_params.get('_format', self.request.query_params.get('_mediatype', None))
         # qsa_mediatypes = None
         if qsa_mediatypes is not None:
@@ -248,7 +242,6 @@ class Renderer(object, metaclass=ABCMeta):
         :return: List of URIs of accept profiles in descending request order
         :rtype: list
         """
-        print("get_mediatype_from_http")
         if hasattr(self.request, 'headers'):
             if self.request.headers.get('Accept') is not None:
                 try:
@@ -280,11 +273,9 @@ class Renderer(object, metaclass=ABCMeta):
         return None
 
     def _get_available_mediatypes(self):
-        print("get_avai_mediatypes")
         return self.profiles[self.profile].mediatypes
 
     def _get_mediatype(self):
-        print("get_mediatype")
         mediatypes_requested = self._get_mediatypes_from_qsa()
         if mediatypes_requested is None:
             mediatypes_requested = self._get_mediatypes_from_http()
@@ -306,7 +297,6 @@ class Renderer(object, metaclass=ABCMeta):
         """Returns a list of Languages from QSA
         :return: list
         """
-        print("language_from_qsa")
         # languages = self.request.values.get('_lang')
         languages = None
         if languages is not None:
@@ -325,7 +315,6 @@ class Renderer(object, metaclass=ABCMeta):
         :return: List of URIs of accept profiles in descending request order
         :rtype: list
         """
-        print("get_language_http")
         if hasattr(self.request, 'headers'):
             if self.request.headers.get('Accept-Language') is not None:
                 try:
@@ -352,11 +341,9 @@ class Renderer(object, metaclass=ABCMeta):
         return None
 
     def _get_available_languages(self):
-        print("get_Available_language")
         return self.profiles[self.profile].languages
 
     def _get_language(self):
-        print("get_language")
         languages_requested = self._get_languages_from_qsa()
         if languages_requested is None:
             languages_requested = self._get_languages_from_http()
@@ -380,7 +367,6 @@ class Renderer(object, metaclass=ABCMeta):
     # making response headers
     #
     def _make_header_link_tokens(self):
-        print("make_header_link_tokens")
         individual_links = []
         link_header_template = '<http://www.w3.org/ns/dx/prof/Profile>; rel="type"; token="{}"; anchor=<{}>, '
 
@@ -390,7 +376,6 @@ class Renderer(object, metaclass=ABCMeta):
         return ''.join(individual_links).rstrip(', ')
 
     def _make_header_link_list_profiles(self):
-        print("header_link_list_profiles")
         individual_links = []
         for token, profile in self.profiles.items():
             # create an individual Link statement per Media Type
@@ -421,7 +406,6 @@ class Renderer(object, metaclass=ABCMeta):
     # making response content
     #
     def _generate_alt_profiles_rdf(self):
-        print("generate_alt_profile_alt")
         # Alt R Data Model as per https://www.w3.org/TR/dx-prof-conneg/#altr
         g = Graph()
         ALTR = Namespace('http://www.w3.org/ns/dx/conneg/altr#')
@@ -464,7 +448,6 @@ class Renderer(object, metaclass=ABCMeta):
         return g
 
     def _make_rdf_response(self, graph, mimetype=None, headers=None, delete_graph=True):
-        print("make_rdf_response")
         if headers is None:
             headers = self.headers
 
@@ -497,7 +480,6 @@ class Renderer(object, metaclass=ABCMeta):
         )
 
     def _render_alt_profile_html(self, template_context=None):
-        print("alt_profile_html")
         profiles = {}
         for token, profile in self.profiles.items():
             profiles[token] = {
@@ -508,33 +490,26 @@ class Renderer(object, metaclass=ABCMeta):
                 'default_language': str(profile.default_language),
                 'uri': str(profile.uri)
             }
-        print("Insta", self.instance_uri)
+
         _template_context = {
             'uri': self.instance_uri,
             'default_profile_token': self.default_profile_token,
             'profiles': profiles,
-            'MEDIATYPE_NAMES': self.mediatype_names,
+            'MEDIATYPE_NAMES': MEDIATYPE_NAMES,
             'request': self.request
         }
         if template_context is not None and isinstance(template_context, dict):
             _template_context.update(template_context)
 
-        print("url", self.request.url)
-        print("url_path", self.request.url.path)
-        print("TEMPLATE_CONTEXT", _template_context)
-        print("self.instnace_uri", self.instance_uri)
-        print("default.self.default_profile_token", self.default_profile_token)
         return templates.TemplateResponse(self.alt_template or 'alt.html',
                                           context=_template_context,
                                           headers=self.headers)
 
     def _render_alt_profile_rdf(self):
-        print("alt_profile_rdf")
         g = self._generate_alt_profiles_rdf()
         return self._make_rdf_response(g)
 
     def _render_alt_profile_json(self):
-        print("alt_profile_json")
         return JSONResponse(
             content={
                 'uri': self.instance_uri,
@@ -552,7 +527,6 @@ class Renderer(object, metaclass=ABCMeta):
         :return: A Flask Response object
         :rtype: :class:`flask.Response`
         """
-        print("alt_profile")
         if self.mediatype == '_internal':
             return self
         if self.mediatype == 'text/html':
