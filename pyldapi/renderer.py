@@ -530,10 +530,13 @@ class Renderer(object, metaclass=ABCMeta):
         if self.mediatype == '_internal':
             return self
         if self.mediatype == 'text/html':
+            print("geo1")
             return self._render_alt_profile_html()
         elif self.mediatype in Renderer.RDF_MEDIA_TYPES:
+            print("geo2")
             return self._render_alt_profile_rdf()
         else:  # application/json
+            print("geo?")
             return self._render_alt_profile_json()
 
     def render(self):
