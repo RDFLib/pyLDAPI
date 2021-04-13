@@ -1,0 +1,99 @@
+{% extends "page.html" %}
+
+{% block content %}
+    <div style="display:grid; grid-template-rows: 50px auto auto auto; grid-template-columns: 70% auto;">
+        <div style="grid-column: 1; grid-row: 1;">
+            <h1>{{ label }}</h1>
+        </div>
+        <div style="grid-column: 2; grid-row: 1;">
+            <div id="altprofiles">
+              <h4>Alternates Profiles</h4>
+              <p>Different views of and formats:</p>
+              <p>
+                <a href="{{ instance_uri }}?_profile=alt">Alternate Profiles</a>
+                <span class="tooltip" style="font-weight:bold;">?<span class="tooltiptext">Different Media Types (HTML, text, RDF, JSON etc.) and different information model views, <em>profiles</em>, are available for this resource.</span></span>
+              </p>
+            </div>
+        </div>
+        <div style="grid-column: 1; grid-row: 2;">
+            <dl>
+              <dt>URI</dt>
+              <dd><strong><a href="{{ uri }}">{{ uri }}</a></strong></dd>
+              {% if comment is not none %}
+              <dt>Description</dt>
+              <dd>{{ comment|safe }}</dd>
+              {% endif %}
+              {% if parent_container_uri is not none %}
+              <dt>Parent Container</dt>
+              {% if parent_container_label is not none %}
+              <dd><a href="{{ parent_container_uri }}">{{ parent_container_uri }}</a></dd>
+              {% else %}
+              <dd><a href="{{ parent_container_uri }}">{{ parent_container_label }}</a></dd>
+              {% endif %}
+              {% endif %}
+            </dl>
+        </div>
+        <div style="grid-column: 1; grid-row: 3;">
+            <h3>Members</h3>
+            <ul>
+            {%- for member in members -%}
+            <li><a href="{{ member[0] }}">{{ member[1] }}</a></li>
+            {%- endfor -%}
+            </ul>
+        </div>
+        <div style="grid-column: 2; grid-row: 3;">
+          <div id="filter">
+            <h4>Filter</h4>
+            <form method="get" action="{{ instance_uri }}">
+              <input type="text" name="filter" value="{{ request.values.get('filter') if request.values.get('filter') }}" />
+              <button>Filter</button>
+              <span class="tooltip" style="font-weight:bold;">?<span class="tooltiptext">A simple text matching filter of the list content to the left</span></span>
+            </form>
+            <form method="get" action="{{ instance_uri }}">
+              <button>Clear</button>
+            </form>
+          </div>
+        </div>
+        <div style="grid-column: 1; grid-row: 4;">
+          {{ pagination.links }}
+          <div class="autopaginationinfo">
+          <div><h4>Automated Pagination&nbsp;<span id="collapsible-toggle" class="collapsible" style="font-size: 14px;">(more)</span></h4></div>
+          <div id="content-pagination" class="collapsible-content">
+            <p>To page through these items, use query string arguments 'page' and 'per_page'.</p>
+            <p>HTTP <code>Link</code> headers of <code>first</code>, <code>prev</code>, <code>next</code> &amp; <code>last</code> are given in web responses.</p>
+                <p>Example: assuming 500 items, page 7, of 50 per page, is given by:</p>
+                <pre>{{ request.url }}?page=7&amp;per_page=50</pre>
+                <p>Link header with a response assuming 500 items would be:</p>
+                <pre>Link:   &lt;{{ request.url }}?per_page=500&gt; rel="first",
+&lt;{{ request.url }}?per_page=500&amp;page=6&gt; rel="prev",
+&lt;{{ request.url }}?per_page=500&amp;page=8&gt; rel="next",
+&lt;{{ request.url }}?per_page=500&amp;page=10&gt; rel="last"
+                </pre>
+                <p>If you want to page through the whole collection, start at <code>first</code> and follow link headers until you reach <code>last</code> or until no <code>last</code> is given. You shouldn't try to calculate each <code>page</code> query string argument yourself.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        var coll = document.getElementById("collapsible-toggle");
+
+        coll.addEventListener("click", function() {
+            var content = document.getElementById("content-pagination");
+            if (content.style.display === "inline") {
+              content.style.display = "none";
+              document.getElementsByClassName("collapsible")[0].innerHTML = "(more)";
+            } else {
+              content.style.display = "inline";
+              document.getElementsByClassName("collapsible")[0].innerHTML = "(less)";
+            }
+        });
+
+        let cards = document.getElementsByClassName("card")
+        let i;
+        for (i = 0; i < cards.length; i++) {
+            if (cards[i].children[1].children[0] === undefined) {
+                cards[i].children[1].innerHTML = "<em>No metadata found.</em>";
+            }
+        }
+    </script>
+{% endblock %}

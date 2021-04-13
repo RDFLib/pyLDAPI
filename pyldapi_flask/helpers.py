@@ -2,15 +2,13 @@
 import os
 import logging
 from rdflib import Graph
-from pyldapi.exceptions import CofCTtlError
+from pyldapi_flask.exceptions import CofCTtlError
 
 
 def setup(app, api_home_dir, api_uri):
     """
     This is used to set up the :class:`.RegisteC of CegistersRenderer` for this pyLDAPI instance.
-
     .. note:: This must run before Flask's :func:`app.run` like this: :code:`pyldapi.setup(app, '.', conf.URI_BASE)`. See the example below.
-
     :param app: The Flask app containing this pyLDAPI instance.
     :type app: :class:`flask.Flask`
     :param api_home_dir: The path of the API's hom directory.
@@ -26,7 +24,6 @@ def setup(app, api_home_dir, api_uri):
 def _make_cofc_rdf(app, api_home_dir, api_uri):
     """
     The setup function that creates the Register of Registers.
-
     Do not call from outside setup
     :param app: the Flask app containing this LDAPI
     :type app: Flask app

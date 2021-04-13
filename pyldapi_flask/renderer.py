@@ -1,20 +1,14 @@
 # -*- coding: utf-8 -*-
 from abc import ABCMeta
-
-from fastapi import Response
-from fastapi.responses import JSONResponse
-from fastapi.templating import Jinja2Templates
-
+import json
+from flask import Response, render_template
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
 from rdflib.namespace import PROF, RDF, RDFS, XSD
 from rdflib.namespace import DCTERMS
-from pyldapi.profile import Profile
-from pyldapi.exceptions import ProfilesMediatypesException
+from pyldapi_flask.profile import Profile
+from pyldapi_flask.exceptions import ProfilesMediatypesException
 import re
 import connegp
-
-templates = Jinja2Templates(directory="templates")
-MEDIATYPE_NAMES = None
 
 
 class Renderer(object, metaclass=ABCMeta):
@@ -22,7 +16,6 @@ class Renderer(object, metaclass=ABCMeta):
     Abstract class as a parent for classes that validate the profiles & mediatypes for an API-delivered resource (typically
     either registers or objects) and also creates an 'alternates profile' for them, based on all available profiles & mediatypes.
     """
-    global MEDIATYPE_NAMES
 
     RDF_MEDIA_TYPES = ['text/turtle', 'application/rdf+xml', 'application/ld+json', 'text/n3', 'application/n-triples']
     RDF_SERIALIZER_TYPES_MAP = {
@@ -52,7 +45,6 @@ class Renderer(object, metaclass=ABCMeta):
                  ):
         """
         Constructor
-
         :param request: Flask request object that triggered this class object's creation.
         :type request: :class:`flask.request`
         :param instance_uri: The URI that triggered this API endpoint (can be via redirects but the main URI is needed).
@@ -65,16 +57,11 @@ class Renderer(object, metaclass=ABCMeta):
         :param alternates_template: The Jinja2 template to use for rendering the HTML *alternates view*. If None, then
         it will default to try and use a template called :code:`alternates.html`.
         :type alternates_template: str
-
         .. seealso:: See the :class:`.View` class on how to create a dictionary of profiles.
-
         """
         self.vf_error = None
         self.request = request
         self.instance_uri = instance_uri
-
-        # self.mediatype_names = kwargs.get('MEDIATYPE_NAMES')
-        self.local_uris = kwargs.get('LOCAL_URIS')
 
         # ensure alternates token isn't hogged by user
         for k, v in profiles.items():
@@ -142,8 +129,7 @@ class Renderer(object, metaclass=ABCMeta):
         :rtype: list
         """
         # try QSAa and, if we have any, return them only
-        profiles_string = self.request.query_params.get('_view', self.request.query_params.get('_profile'))
-        # profiles_string = None  # TODO: Change request from Flask to FastAPI
+        profiles_string = self.request.values.get('_view', self.request.values.get('_profile'))
         if profiles_string is not None:
             pqsa = connegp.ProfileQsaParser(profiles_string)
             if pqsa.valid:
@@ -225,8 +211,7 @@ class Renderer(object, metaclass=ABCMeta):
         """Returns a list of Media Types from QSA
         :return: list
         """
-        qsa_mediatypes = self.request.query_params.get('_format', self.request.query_params.get('_mediatype', None))
-        # qsa_mediatypes = None
+        qsa_mediatypes = self.request.values.get('_format', self.request.values.get('_mediatype', None))
         if qsa_mediatypes is not None:
             qsa_mediatypes = str(qsa_mediatypes).replace(' ', '+').split(',')
             # if the internal mediatype is requested, return the default
@@ -297,8 +282,7 @@ class Renderer(object, metaclass=ABCMeta):
         """Returns a list of Languages from QSA
         :return: list
         """
-        # languages = self.request.values.get('_lang')
-        languages = None
+        languages = self.request.values.get('_lang')
         if languages is not None:
             languages = str(languages).replace(' ', '_').replace('+', '_').split(',')
             # if the internal mediatype is requested, return the default
@@ -475,7 +459,7 @@ class Renderer(object, metaclass=ABCMeta):
 
         return Response(
             response_text,
-            media_type=response_mimetype,
+            mimetype=response_mimetype,
             headers=headers
         )
 
@@ -490,40 +474,39 @@ class Renderer(object, metaclass=ABCMeta):
                 'default_language': str(profile.default_language),
                 'uri': str(profile.uri)
             }
-
         _template_context = {
             'uri': self.instance_uri,
             'default_profile_token': self.default_profile_token,
-            'profiles': profiles,
-            'MEDIATYPE_NAMES': MEDIATYPE_NAMES,
-            'request': self.request
+            'profiles': profiles
         }
         if template_context is not None and isinstance(template_context, dict):
             _template_context.update(template_context)
-
-        return templates.TemplateResponse(self.alt_template or 'alt.html',
-                                          context=_template_context,
-                                          headers=self.headers)
+        return Response(
+            render_template(
+                self.alt_template or 'alt.html',
+                **_template_context
+            ),
+            headers=self.headers
+        )
 
     def _render_alt_profile_rdf(self):
         g = self._generate_alt_profiles_rdf()
         return self._make_rdf_response(g)
 
     def _render_alt_profile_json(self):
-        return JSONResponse(
-            content={
+        return Response(
+            json.dumps({
                 'uri': self.instance_uri,
                 'profiles': list(self.profiles.keys()),
                 'default_profile': self.default_profile_token
-            },
-            media_type='application/json',
+            }),
+            mimetype='application/json',
             headers=self.headers
         )
 
     def _render_alt_profile(self):
         """
         Return a Flask Response object depending on the value assigned to :code:`self.mediatype`.
-
         :return: A Flask Response object
         :rtype: :class:`flask.Response`
         """
@@ -539,19 +522,16 @@ class Renderer(object, metaclass=ABCMeta):
     def render(self):
         """
         Use the received profile and mediatype to create a response back to the client.
-
         TODO: Ashley, are you able to update this description with your new changes please?
         What is the method for rendering other profiles now? - Edmond
-
         This is an abstract method.
-
         .. note:: The :class:`pyldapi.Renderer.render` requires you to implement your own business logic to render
         custom responses back to the client using :func:`flask.render_template` or :class:`flask.Response` object.
         """
 
         # if there's been an error with the request, return that
         if self.vf_error is not None:
-            return Response(self.vf_error, status=400, media_type='text/plain')
+            return Response(self.vf_error, status=400, mimetype='text/plain')
         elif self.profile == 'alt' or self.profile == 'alternates':
             return self._render_alt_profile()
         return None
