@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
-from fastapi import Response
-from fastapi.responses import JSONResponse
-from fastapi.templating import Jinja2Templates
-
-from rdflib import Graph, Namespace, URIRef, Literal, RDF, RDFS
-from pyldapi_fastapi.renderer import Renderer
-from pyldapi_fastapi.profile import Profile
-from pyldapi_fastapi.exceptions import ProfilesMediatypesException, CofCTtlError
-
-templates = Jinja2Templates(directory="templates")
-MEDIATYPE_NAMES = None
+from collections import defaultdict
+from flask import Response, render_template
+from flask_paginate import Pagination
+from rdflib import Graph, Namespace, URIRef, Literal, RDF, RDFS, XSD
+from rdflib.term import Identifier
+import json
+from flask_framework.renderer import Renderer
+from flask_framework.profile import Profile
+from flask_framework.exceptions import ProfilesMediatypesException, CofCTtlError
 
 
 class ContainerRenderer(Renderer):
@@ -17,7 +15,6 @@ class ContainerRenderer(Renderer):
     Specific implementation of the abstract Renderer for displaying Register information
     """
     DEFAULT_ITEMS_PER_PAGE = 20
-    global MEDIATYPE_NAMES
 
     def __init__(self,
                  request,
@@ -37,7 +34,6 @@ class ContainerRenderer(Renderer):
                  **kwargs):
         """
         Constructor
-
         :param request: The Flask request object triggering this class object's creation.
         :type request: :class:`.flask.request`
         :param instance_uri: The URI requested.
@@ -71,7 +67,6 @@ class ContainerRenderer(Renderer):
         :type per_page: int or None
         """
         self.instance_uri = instance_uri
-
         if profiles is None:
             profiles = {}
         for k, v in profiles.items():
@@ -90,14 +85,13 @@ class ContainerRenderer(Renderer):
         })
         if default_profile_token is None:
             default_profile_token = 'mem'
-
         super(ContainerRenderer, self).__init__(
             request,
             instance_uri,
             profiles,
             default_profile_token,
             **kwargs
-         )
+        )
         if self.vf_error is None:
             self.label = label
             self.comment = comment
@@ -108,16 +102,12 @@ class ContainerRenderer(Renderer):
             else:
                 self.members = []
             self.members_total_count = members_total_count
-
-            if request.query_params.get("per_page"):
-                self.per_page = int(request.query_params.get("per_page"))
-            else:
-                self.per_page = ContainerRenderer.DEFAULT_ITEMS_PER_PAGE
-            if request.query_params.get("page"):
-                self.page = int(request.query_params.get("page"))
-            else:
-                self.page = 1
-
+            self.per_page = kwargs.pop("per_page", request.args.get(
+                'per_page',
+                type=int,
+                default=ContainerRenderer.DEFAULT_ITEMS_PER_PAGE
+            ))
+            self.page = kwargs.pop("page", request.args.get('page', type=int, default=1))
             self.super_register = super_register
             self.page_size_max = page_size_max
             self.members_template = register_template
@@ -130,7 +120,7 @@ class ContainerRenderer(Renderer):
 
         # if we've gotten the last page value successfully, we can choke if someone enters a larger value
         if self.page > self.last_page:
-            return 'You must enter either no value for page or an integer <= {} which is the last page number.'\
+            return 'You must enter either no value for page or an integer <= {} which is the last page number.' \
                 .format(self.last_page)
 
         if self.per_page > self.page_size_max:
@@ -144,7 +134,7 @@ class ContainerRenderer(Renderer):
         links.append('<http://www.w3.org/ns/ldp#Page>; rel="type"')
 
         # other Query String Arguments
-        other_qsas = [x + "=" + self.request.query_params[x] for x in self.request.query_params if x not in ["page", "per_page"]]
+        other_qsas = [x + "=" + self.request.values[x] for x in self.request.values if x not in ["page", "per_page"]]
         if len(other_qsas) > 0:
             other_qsas_str = "&".join(other_qsas) + "&"
         else:
@@ -201,7 +191,6 @@ class ContainerRenderer(Renderer):
     def render(self):
         """
         Renders the register profile.
-
         :return: A Flask Response object.
         :rtype: :py:class:`flask.Response`
         """
@@ -215,18 +204,18 @@ class ContainerRenderer(Renderer):
                 else:
                     return self._render_mem_profile_json()
             else:  # there is a paging error (e.g. page > last_page)
-                return Response(self.paging_error, status_code=400, media_type='text/plain')
+                return Response(self.paging_error, status=400, mimetype='text/plain')
         return response
 
     def _render_mem_profile_html(self, template_context=None):
-        # pagination = Pagination(
-        #     members_uri=self.instance_uri,
-        #     page=self.page,
-        #     per_page=self.per_page,
-        #     total=self.members_total_count,
-        #     page_parameter='page',
-        #     per_page_parameter='per_page'
-        # )
+        pagination = Pagination(
+            members_uri=self.instance_uri,
+            page=self.page,
+            per_page=self.per_page,
+            total=self.members_total_count,
+            page_parameter='page',
+            per_page_parameter='per_page'
+        )
         _template_context = {
             'uri': self.instance_uri,
             'label': self.label,
@@ -240,19 +229,20 @@ class ContainerRenderer(Renderer):
             'prev_page': self.prev_page,
             'next_page': self.next_page,
             'last_page': self.last_page,
-            'MEDIATYPE_NAMES': MEDIATYPE_NAMES,
-            # 'pagination': pagination,
-            'request': self.request
+            'pagination': pagination
         }
         if self.template_extras is not None:
             _template_context.update(self.template_extras)
         if template_context is not None and isinstance(template_context, dict):
             _template_context.update(template_context)
 
-        return templates.TemplateResponse(
-                name=self.members_template or 'members.html',
-                context=_template_context,
-                headers=self.headers)
+        return Response(
+            render_template(
+                self.members_template or 'members.html',
+                **_template_context
+            ),
+            headers=self.headers
+        )
 
     def _generate_mem_profile_rdf(self):
         g = Graph()
@@ -280,7 +270,7 @@ class ContainerRenderer(Renderer):
                 g.add((u, RDFS.member, URIRef(member)))
 
         # other Query String Arguments
-        other_qsas = [x + "=" + self.request.query_params[x] for x in self.request.query_params if x not in ["page", "per_page"]]
+        other_qsas = [x + "=" + self.request.values[x] for x in self.request.values if x not in ["page", "per_page"]]
         if len(other_qsas) > 0:
             other_qsas_str = "&".join(other_qsas) + "&"
         else:
@@ -317,16 +307,16 @@ class ContainerRenderer(Renderer):
         return self._make_rdf_response(g)
 
     def _render_mem_profile_json(self):
-        return JSONResponse(
-            content={
+        return Response(
+            json.dumps({
                 'uri': self.instance_uri,
                 'label': self.label,
                 'comment': self.comment,
                 'profiles': list(self.profiles.keys()),
                 'default_profile': self.default_profile_token,
                 'register_items': self.members
-            },
-            media_type='application/json',
+            }),
+            mimetype='application/json',
             headers=self.headers
         )
 
@@ -334,15 +324,13 @@ class ContainerRenderer(Renderer):
 class ContainerOfContainersRenderer(ContainerRenderer):
     """
     Specialised implementation of the :class:`.RegisterRenderer` for displaying Register of Registers information.
-
     This sub-class auto-fills many of the :class:`.RegisterRenderer` options.
     """
-    global MEDIATYPE_NAMES
 
-    def __init__(self, request, instance_uri, label, comment, profiles, cofc_file_path, default_profile_token='mem', *args, **kwargs):
+    def __init__(self, request, instance_uri, label, comment, profiles, cofc_file_path, default_profile_token='mem',
+                 *args, **kwargs):
         """
         Constructor
-
         :param request: The Flask request object triggering this class object's creation.
         :type request: :class:`flask.request`
         :param instance_uri: The URI requested.
@@ -362,9 +350,9 @@ class ContainerOfContainersRenderer(ContainerRenderer):
             None,
             None,
             [],  # will be replaced further down
-            0,    # will be replaced further down
+            0,  # will be replaced further down
             profiles=profiles,
-            default_profile_token=default_profile_token,
+            default_profile_token=default_profile_token
         )
         self.members = []
 
@@ -389,5 +377,4 @@ class ContainerOfContainersRenderer(ContainerRenderer):
             '''.format(**{'register_uri': instance_uri})
         for r in g.query(q):
             self.members.append((r['uri'], r['label']))
-
         self.register_total_count = len(self.members)

@@ -3,3 +3,5 @@ rdflib
 rdflib-jsonld
 connegp
 jinja2
+flask
+flask_paginate

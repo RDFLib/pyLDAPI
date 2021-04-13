@@ -2,7 +2,7 @@
 import os
 import logging
 from rdflib import Graph
-from pyldapi_flask.exceptions import CofCTtlError
+from pyldapi.exceptions import CofCTtlError
 
 
 def setup(app, api_home_dir, api_uri):
