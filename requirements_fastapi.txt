@@ -1,5 +1,0 @@
-fastapi
-rdflib
-rdflib-jsonld
-connegp
-jinja2

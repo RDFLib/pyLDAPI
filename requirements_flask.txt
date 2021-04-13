@@ -1,5 +1,0 @@
-flask
-flask_paginate
-rdflib
-rdflib-jsonld
-connegp
