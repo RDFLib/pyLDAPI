@@ -4,9 +4,9 @@ from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 
 from rdflib import Graph, Namespace, URIRef, Literal, RDF, RDFS
-from pyldapi.fastapi_framework.renderer import Renderer
-from pyldapi.profile import Profile
-from pyldapi.exceptions import ProfilesMediatypesException, CofCTtlError
+from .renderer import Renderer
+from ..profile import Profile
+from ..exceptions import ProfilesMediatypesException, CofCTtlError
 
 templates = Jinja2Templates(directory="templates")
 MEDIATYPE_NAMES = None

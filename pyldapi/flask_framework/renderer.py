@@ -5,8 +5,8 @@ from flask import Response, render_template
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
 from rdflib.namespace import PROF, RDF, RDFS, XSD
 from rdflib.namespace import DCTERMS
-from pyldapi.profile import Profile
-from pyldapi.exceptions import ProfilesMediatypesException
+from ..profile import Profile
+from ..exceptions import ProfilesMediatypesException
 import re
 import connegp
 

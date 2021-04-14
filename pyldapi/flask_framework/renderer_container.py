@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-from collections import defaultdict
+
 from flask import Response, render_template
 from flask_paginate import Pagination
 from rdflib import Graph, Namespace, URIRef, Literal, RDF, RDFS, XSD
-from rdflib.term import Identifier
+
 import json
-from flask_framework.renderer import Renderer
-from flask_framework.profile import Profile
-from flask_framework.exceptions import ProfilesMediatypesException, CofCTtlError
+from .renderer import Renderer
+from ..profile import Profile
+from ..exceptions import ProfilesMediatypesException, CofCTtlError
 
 
 class ContainerRenderer(Renderer):

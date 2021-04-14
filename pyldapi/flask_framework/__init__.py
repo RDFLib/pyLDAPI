@@ -1,11 +1,11 @@
 # -*- coding: latin-1 -*-
 
-from pyldapi.exceptions import ProfilesMediatypesException, PagingError
-from pyldapi.flask_framework.renderer import Renderer
-from pyldapi.flask_framework.renderer_container import ContainerRenderer, ContainerOfContainersRenderer
-from pyldapi.profile import Profile
-from pyldapi.helpers import setup
-from pyldapi.config import __version__
+from ..exceptions import ProfilesMediatypesException, PagingError
+from .renderer import Renderer
+from .renderer_container import ContainerRenderer, ContainerOfContainersRenderer
+from ..profile import Profile
+from ..helpers import setup
+from ..config import __version__
 
 __all__ = [
     'Renderer',
