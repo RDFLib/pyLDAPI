@@ -23,9 +23,10 @@ with open('requirements.txt') as f:
 
 setup(
     name='pyldapi',
-    packages=['pyldapi'],
+    packages=['pyldapi',
+              'pyldapi.fastapi_framework',
+              'pyldapi.flask_framework'],
     version=__version__,
-    # cmdclass={'install': InstallCommand},
     description='A very small module to add Linked Data API functionality to '
                 'a Python Flask installation',
     author='Nicholas Car',
