@@ -194,8 +194,6 @@ class ContainerRenderer(Renderer):
             )
         )
 
-        self.page_links = links
-
         self.headers['Link'] += ', ' + ', '.join(links)
 
         return None
