@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 from fastapi import Response
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
@@ -8,7 +9,13 @@ from .renderer import Renderer
 from ..profile import Profile
 from ..exceptions import ProfilesMediatypesException, CofCTtlError
 
+
+def env_override(value, key):
+    return os.getenv(key, value)
+
+
 templates = Jinja2Templates(directory="templates")
+templates.env.filters['env_override'] = env_override
 MEDIATYPE_NAMES = None
 
 

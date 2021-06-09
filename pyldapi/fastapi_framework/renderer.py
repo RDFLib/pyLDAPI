@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 from abc import ABCMeta
 
 from fastapi import Response
@@ -13,7 +14,13 @@ from ..exceptions import ProfilesMediatypesException
 import re
 import connegp
 
+
+def env_override(value, key):
+    return os.getenv(key, value)
+
+
 templates = Jinja2Templates(directory="templates")
+templates.env.filters['env_override'] = env_override
 MEDIATYPE_NAMES = None
 
 
