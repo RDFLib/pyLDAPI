@@ -48,6 +48,7 @@ class Renderer(object, metaclass=ABCMeta):
                  profiles,
                  default_profile_token,
                  alternates_template=None,
+                 redirect_uri=None,
                  **kwargs
                  ):
         """
@@ -72,6 +73,7 @@ class Renderer(object, metaclass=ABCMeta):
         self.vf_error = None
         self.request = request
         self.instance_uri = instance_uri
+        self.redirect_uri = redirect_uri
 
         # self.mediatype_names = kwargs.get('MEDIATYPE_NAMES')
         self.local_uris = kwargs.get('LOCAL_URIS')
@@ -100,7 +102,7 @@ class Renderer(object, metaclass=ABCMeta):
         # ensure the default profile is in the list of profiles
         if default_profile_token not in self.profiles.keys():
             self.vf_error = 'The profile token you specified ({}) for the default profile ' \
-                            'is not in the list of profiles you supplied ({})'\
+                            'is not in the list of profiles you supplied ({})' \
                 .format(default_profile_token, ', '.join(self.profiles.keys()))
 
         self.default_profile_token = default_profile_token
@@ -265,7 +267,7 @@ class Renderer(object, metaclass=ABCMeta):
                     mediatypes.sort(reverse=True)
 
                     # return only the orderd list of mediatypes, not weights
-                    return[x[1] for x in mediatypes]
+                    return [x[1] for x in mediatypes]
                 except Exception:
                     raise ProfilesMediatypesException(
                         'You have requested a Media Type using an Accept header that is incorrectly formatted.')
@@ -333,7 +335,7 @@ class Renderer(object, metaclass=ABCMeta):
                     languages.sort(reverse=True)
 
                     # return only the orderd list of languages, not weights
-                    return[x[1] for x in languages]
+                    return [x[1] for x in languages]
                 except Exception:
                     raise ProfilesMediatypesException(
                         'You have requested a language using an Accept-Language header that is incorrectly formatted.')
@@ -382,7 +384,8 @@ class Renderer(object, metaclass=ABCMeta):
             for mediatype in profile.mediatypes:
                 # set the rel="self" just for this profile & mediatype
                 if mediatype != '_internal':
-                    if token == self.default_profile_token and mediatype == self.profiles[self.profile].default_mediatype:
+                    if token == self.default_profile_token and mediatype == self.profiles[
+                        self.profile].default_mediatype:
                         rel = 'self'
                     else:
                         rel = 'alternate'
@@ -491,8 +494,11 @@ class Renderer(object, metaclass=ABCMeta):
                 'uri': str(profile.uri)
             }
 
+        print("Profiles", profiles)
+        print("self", self.instance_uri)
         _template_context = {
             'uri': self.instance_uri,
+            'redirect_uri': self.redirect_uri,
             'default_profile_token': self.default_profile_token,
             'profiles': profiles,
             'MEDIATYPE_NAMES': MEDIATYPE_NAMES,

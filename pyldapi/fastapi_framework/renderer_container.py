@@ -34,6 +34,7 @@ class ContainerRenderer(Renderer):
                  super_register=None,
                  page_size_max=1000,
                  register_template=None,
+                 redirect_uri=None,
                  **kwargs):
         """
         Constructor
@@ -71,7 +72,8 @@ class ContainerRenderer(Renderer):
         :type per_page: int or None
         """
         self.instance_uri = instance_uri
-
+        self.redirect_uri = redirect_uri
+        print("self.instance", self.instance_uri)
         if profiles is None:
             profiles = {}
         for k, v in profiles.items():
@@ -96,6 +98,7 @@ class ContainerRenderer(Renderer):
             instance_uri,
             profiles,
             default_profile_token,
+            redirect_uri=self.redirect_uri
             **kwargs
          )
         if self.vf_error is None:
@@ -108,7 +111,7 @@ class ContainerRenderer(Renderer):
             else:
                 self.members = []
             self.members_total_count = members_total_count
-
+            print("members pylo", self.members)
             if request.query_params.get("per_page"):
                 self.per_page = int(request.query_params.get("per_page"))
             else:
