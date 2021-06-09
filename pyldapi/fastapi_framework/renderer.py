@@ -55,7 +55,6 @@ class Renderer(object, metaclass=ABCMeta):
                  profiles,
                  default_profile_token,
                  alternates_template=None,
-                 redirect_uri=None,
                  **kwargs
                  ):
         """
@@ -80,7 +79,6 @@ class Renderer(object, metaclass=ABCMeta):
         self.vf_error = None
         self.request = request
         self.instance_uri = instance_uri
-        self.redirect_uri = redirect_uri
 
         # self.mediatype_names = kwargs.get('MEDIATYPE_NAMES')
         self.local_uris = kwargs.get('LOCAL_URIS')
@@ -505,7 +503,6 @@ class Renderer(object, metaclass=ABCMeta):
         print("self", self.instance_uri)
         _template_context = {
             'uri': self.instance_uri,
-            'redirect_uri': self.redirect_uri,
             'default_profile_token': self.default_profile_token,
             'profiles': profiles,
             'MEDIATYPE_NAMES': MEDIATYPE_NAMES,
