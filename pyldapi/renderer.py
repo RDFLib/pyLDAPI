@@ -369,7 +369,7 @@ class Renderer(object, metaclass=ABCMeta):
             for mediatype in profile.mediatypes:
                 # set the rel="self" just for this profile & mediatype
                 if mediatype != '_internal':
-                    if token == self.default_profile_token and mediatype == self.profiles[self.profile].default_mediatype:
+                    if token == self.profile and mediatype == self.profiles[self.profile].default_mediatype:
                         rel = 'self'
                     else:
                         rel = 'alternate'
