@@ -127,7 +127,7 @@ class ContainerRenderer(Renderer):
 
     def _paging(self):
         # calculate last page
-        self.last_page = int(round(self.members_total_count / self.per_page, 0)) + 1  # same as math.ceil()
+        self.last_page = self.members_total_count // self.per_page + bool(self.members_total_count % self.per_page)  # same as math.ceil()
 
         # if we've gotten the last page value successfully, we can choke if someone enters a larger value
         if self.page > self.last_page:
