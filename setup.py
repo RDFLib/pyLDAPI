@@ -32,14 +32,14 @@ setup(
     packages=['pyldapi'],
     version=version,
     description='A very small module to add Linked Data API functionality to '
-                'a Python Flask installation',
+                'a Python FastAPI or Flask (v3.x) installation',
     author='Nicholas Car',
     author_email='nicholas.car@surroundaustralia.com',
     url='https://github.com/RDFLib/pyLDAPI',
     download_url='https://github.com/RDFLib/pyLDAPI'
                  '/archive/v{:s}.tar.gz'.format(version),
     license='LICENSE.txt',
-    keywords=['Linked Data', 'Semantic Web', 'Flask', 'Python', 'API', 'RDF'],
+    keywords=['Linked Data', 'Semantic Web', 'FastAPI', 'Python', 'API', 'RDF'],
     long_description=long_description,
     classifiers=[
         'Development Status :: 4 - Beta',

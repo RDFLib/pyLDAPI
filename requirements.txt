@@ -1,4 +1,3 @@
 fastapi
-rdflib
-rdflib-jsonld
+rdflib>=6.0.0
 connegp
