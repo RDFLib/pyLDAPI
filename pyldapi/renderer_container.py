@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from pathlib import Path
+
 from fastapi import Response
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
@@ -7,17 +9,17 @@ from rdflib import Graph, Namespace, URIRef, Literal, RDF, RDFS
 from pyldapi.renderer import Renderer
 from pyldapi.profile import Profile
 from pyldapi.exceptions import ProfilesMediatypesException, CofCTtlError
+from .data import RDF_MEDIATYPES, MEDIATYPE_NAMES
 
-templates = Jinja2Templates(directory="templates")
-MEDIATYPE_NAMES = None
+templates_dir = Path(__file__).parent.parent / "pyldapi" / "templates"
+templates = Jinja2Templates(directory=str(templates_dir))
 
 
 class ContainerRenderer(Renderer):
     """
     Specific implementation of the abstract Renderer for displaying Register information
     """
-    DEFAULT_ITEMS_PER_PAGE = 20
-    global MEDIATYPE_NAMES
+    DEFAULT_ITEMS_PER_PAGE = 100
 
     def __init__(self,
                  request,
@@ -32,9 +34,7 @@ class ContainerRenderer(Renderer):
                  profiles=None,
                  default_profile_token=None,
                  super_register=None,
-                 page_size_max=1000,
-                 register_template=None,
-                 **kwargs):
+                 page_size_max=1000):
         """
         Constructor
 
@@ -63,9 +63,9 @@ class ContainerRenderer(Renderer):
         :type default_profile_token: str
         :param super_register: A super-Register URI for this register. Can be within this API or external.
         :type super_register: str
-        :param register_template: The Jinja2 template to use for rendering the HTML profile of the register. If None,
+        :param members_template: The Jinja2 template to use for rendering the HTML profile of the register. If None,
         then it will default to try and use a template called :code:`alt.html`.
-        :type register_template: str or None
+        :type members_template: str or None
         :param per_page: Number of items to show per page if not specified in request. If None, then it will default to
         RegisterRenderer.DEFAULT_ITEMS_PER_PAGE.
         :type per_page: int or None
@@ -84,7 +84,7 @@ class ContainerRenderer(Renderer):
                 'https://w3id.org/profile/mem',
                 'Members Profile',
                 'A very basic RDF data model-only profile that lists the sub-items (members) of collections (rdf:Bag)',
-                ['text/html'] + Renderer.RDF_MEDIA_TYPES,
+                ['text/html'] + RDF_MEDIATYPES,
                 'text/html'
             )
         })
@@ -95,8 +95,7 @@ class ContainerRenderer(Renderer):
             request,
             instance_uri,
             profiles,
-            default_profile_token,
-            **kwargs
+            default_profile_token
          )
         if self.vf_error is None:
             self.label = label
@@ -120,9 +119,7 @@ class ContainerRenderer(Renderer):
 
             self.super_register = super_register
             self.page_size_max = page_size_max
-            self.members_template = register_template
             self.paging_error = self._paging()
-            self.template_extras = kwargs
 
     def _paging(self):
         # calculate last page
@@ -218,15 +215,12 @@ class ContainerRenderer(Renderer):
                 return Response(self.paging_error, status_code=400, media_type='text/plain')
         return response
 
-    def _render_mem_profile_html(self, template_context=None):
-        # pagination = Pagination(
-        #     members_uri=self.instance_uri,
-        #     page=self.page,
-        #     per_page=self.per_page,
-        #     total=self.members_total_count,
-        #     page_parameter='page',
-        #     per_page_parameter='per_page'
-        # )
+    def _render_mem_profile_html(
+            self,
+            mem_template: str = "mem.html",
+            additional_mem_template_context=None,
+            mem_template_context_replace=False
+    ):
         _template_context = {
             'uri': self.instance_uri,
             'label': self.label,
@@ -240,19 +234,18 @@ class ContainerRenderer(Renderer):
             'prev_page': self.prev_page,
             'next_page': self.next_page,
             'last_page': self.last_page,
-            'MEDIATYPE_NAMES': MEDIATYPE_NAMES,
-            # 'pagination': pagination,
+            'mediatype_names': MEDIATYPE_NAMES,
             'request': self.request
         }
-        if self.template_extras is not None:
-            _template_context.update(self.template_extras)
-        if template_context is not None and isinstance(template_context, dict):
-            _template_context.update(template_context)
+        if additional_mem_template_context is not None and isinstance(additional_mem_template_context, dict):
+            if mem_template_context_replace:
+                _template_context = additional_mem_template_context
+            else:
+                _template_context.update(additional_mem_template_context)
 
-        return templates.TemplateResponse(
-                name=self.members_template or 'members.html',
-                context=_template_context,
-                headers=self.headers)
+        return templates.TemplateResponse(mem_template,
+                                          context=_template_context,
+                                          headers=self.headers)
 
     def _generate_mem_profile_rdf(self):
         g = Graph()
@@ -337,9 +330,8 @@ class ContainerOfContainersRenderer(ContainerRenderer):
 
     This sub-class auto-fills many of the :class:`.RegisterRenderer` options.
     """
-    global MEDIATYPE_NAMES
 
-    def __init__(self, request, instance_uri, label, comment, profiles, cofc_file_path, default_profile_token='mem', *args, **kwargs):
+    def __init__(self, request, instance_uri, label, comment, profiles, cofc_file_path, default_profile_token='mem'):
         """
         Constructor
 

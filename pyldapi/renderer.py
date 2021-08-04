@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from abc import ABCMeta
 
+from pathlib import Path
+
 from fastapi import Response
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
@@ -12,9 +14,10 @@ from pyldapi.profile import Profile
 from pyldapi.exceptions import ProfilesMediatypesException
 import re
 import connegp
+from .data import MEDIATYPE_NAMES, RDF_MEDIATYPES
 
-templates = Jinja2Templates(directory="templates")
-MEDIATYPE_NAMES = None
+templates_dir = Path(__file__).parent.parent / "pyldapi" / "templates"
+templates = Jinja2Templates(directory=str(templates_dir))
 
 
 class Renderer(object, metaclass=ABCMeta):
@@ -22,33 +25,12 @@ class Renderer(object, metaclass=ABCMeta):
     Abstract class as a parent for classes that validate the profiles & mediatypes for an API-delivered resource (typically
     either registers or objects) and also creates an 'alternates profile' for them, based on all available profiles & mediatypes.
     """
-    global MEDIATYPE_NAMES
-
-    RDF_MEDIA_TYPES = ['text/turtle', 'application/rdf+xml', 'application/ld+json', 'text/n3', 'application/n-triples']
-    RDF_SERIALIZER_TYPES_MAP = {
-        "text/turtle": "turtle",
-        "text/n3": "n3",
-        "application/n-triples": "nt",
-        "application/ld+json": "json-ld",
-        "application/rdf+xml": "xml",
-        # Some common but incorrect mimetypes
-        "application/rdf": "xml",
-        "application/rdf xml": "xml",
-        "application/json": "json-ld",
-        "application/ld json": "json-ld",
-        "text/ttl": "turtle",
-        "text/ntriples": "nt",
-        "text/n-triples": "nt",
-        "text/plain": "nt",  # text/plain is the old/deprecated mimetype for n-triples
-    }
 
     def __init__(self,
                  request,
                  instance_uri,
                  profiles,
                  default_profile_token,
-                 alternates_template=None,
-                 **kwargs
                  ):
         """
         Constructor
@@ -73,9 +55,6 @@ class Renderer(object, metaclass=ABCMeta):
         self.request = request
         self.instance_uri = instance_uri
 
-        # self.mediatype_names = kwargs.get('MEDIATYPE_NAMES')
-        self.local_uris = kwargs.get('LOCAL_URIS')
-
         # ensure alternates token isn't hogged by user
         for k, v in profiles.items():
             if k == 'alternates':
@@ -87,7 +66,7 @@ class Renderer(object, metaclass=ABCMeta):
             'http://www.w3.org/ns/dx/conneg/altr',  # the ConnegP URI for Alt Rep Data Model
             'Alternate Representations',
             'The representation of the resource that lists all other representations (profiles and Media Types)',
-            ['text/html', 'application/json'] + self.RDF_MEDIA_TYPES,
+            ['text/html', 'application/json'] + RDF_MEDIATYPES,
             'text/html',
             languages=['en'],  # default 'en' only for now
         )
@@ -104,9 +83,6 @@ class Renderer(object, metaclass=ABCMeta):
                 .format(default_profile_token, ', '.join(self.profiles.keys()))
 
         self.default_profile_token = default_profile_token
-
-        # TODO: supply an alternates.html template
-        self.alt_template = alternates_template
 
         # get profile & mediatype for this request, flag any errors but do not except out
         self.profile = self._get_profile()
@@ -451,20 +427,7 @@ class Renderer(object, metaclass=ABCMeta):
         if headers is None:
             headers = self.headers
 
-        if mimetype is not None:
-            response_mimetype = mimetype
-            serial_mediatype = self.RDF_SERIALIZER_TYPES_MAP.get(mimetype)
-        elif self.mediatype is not None:
-            response_mimetype = self.mediatype
-            if self.mediatype in ['application/rdf+json', 'application/json']:
-                serial_mediatype = 'json-ld'
-            else:
-                serial_mediatype = self.RDF_SERIALIZER_TYPES_MAP.get(self.mediatype)
-        else:
-            serial_mediatype = "turtle"
-            response_mimetype = "text/turtle"
-
-        response_text = graph.serialize(format=serial_mediatype, encoding='utf-8')
+        response_text = graph.serialize(format=mimetype or "text/turtle")
 
         if delete_graph:
             # destroy the triples in the triplestore, then delete the triplestore
@@ -475,11 +438,34 @@ class Renderer(object, metaclass=ABCMeta):
 
         return Response(
             response_text,
-            media_type=response_mimetype,
+            media_type=mimetype,
             headers=headers
         )
 
-    def _render_alt_profile_html(self, template_context=None):
+    def _render_alt_profile_html(
+            self,
+            alt_template: str = "alt.html",
+            additional_alt_template_context=None,
+            alt_template_context_replace=False
+    ):
+        """Renders the Alternates Profile in HTML
+
+        If an alt_template value (str, file name) is given, a template of that name will be looked for in the app's
+        template directory, else alt.html will be used.
+
+        If a dictionary is given for additional_alt_template_context, this will either replace the standard template
+        context, if alt_template_context_replace is True, or just be added to it, if alt_template_context_replace is
+        False
+
+        :param alt_template: the name of the template to use
+        :type alt_template: str (file name, within the application's templates directory)
+        :param additional_alt_template_context: Additional or complete context for the template
+        :type additional_alt_template_context: dict
+        :param alt_template_context_replace: To replace (True) or add to (False) the standard template context
+        :type alt_template_context_replace: bool
+        :return: a rendered template (HTML)
+        :rtype: TemplateResponse
+        """
         profiles = {}
         for token, profile in self.profiles.items():
             profiles[token] = {
@@ -495,13 +481,16 @@ class Renderer(object, metaclass=ABCMeta):
             'uri': self.instance_uri,
             'default_profile_token': self.default_profile_token,
             'profiles': profiles,
-            'MEDIATYPE_NAMES': MEDIATYPE_NAMES,
+            'mediatype_names': MEDIATYPE_NAMES,
             'request': self.request
         }
-        if template_context is not None and isinstance(template_context, dict):
-            _template_context.update(template_context)
+        if additional_alt_template_context is not None and isinstance(additional_alt_template_context, dict):
+            if alt_template_context_replace:
+                _template_context = additional_alt_template_context
+            else:
+                _template_context.update(additional_alt_template_context)
 
-        return templates.TemplateResponse(self.alt_template or 'alt.html',
+        return templates.TemplateResponse(alt_template,
                                           context=_template_context,
                                           headers=self.headers)
 
@@ -531,7 +520,7 @@ class Renderer(object, metaclass=ABCMeta):
             return self
         if self.mediatype == 'text/html':
             return self._render_alt_profile_html()
-        elif self.mediatype in Renderer.RDF_MEDIA_TYPES:
+        elif self.mediatype in RDF_MEDIATYPES:
             return self._render_alt_profile_rdf()
         else:  # application/json
             return self._render_alt_profile_json()

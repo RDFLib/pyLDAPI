@@ -36,16 +36,16 @@
         <div style="grid-column: 1; grid-row: 3;">
             <h3>Members</h3>
             <ul>
-            {%- for member in members -%}
-            <li><a href="{{ member[0] }}">{{ member[1] }}</a></li>
-            {%- endfor -%}
+            {%- for member in members %}
+              <li><a href="{{ member[0] }}">{{ member[1] }}</a></li>
+            {%- endfor %}
             </ul>
         </div>
         <div style="grid-column: 2; grid-row: 3;">
           <div id="filter">
             <h4>Filter</h4>
             <form method="get" action="{{ instance_uri }}">
-              <input type="text" name="filter" value="{{ request.values.get('filter') if request.values.get('filter') }}" />
+              <input type="text" name="filter" value="{% if filter is defined %}{{ filter }}{% endif %}" />
               <button>Filter</button>
               <span class="tooltip" style="font-weight:bold;">?<span class="tooltiptext">A simple text matching filter of the list content to the left</span></span>
             </form>
@@ -55,23 +55,6 @@
           </div>
         </div>
         <div style="grid-column: 1; grid-row: 4;">
-          {{ pagination.links }}
-          <div class="autopaginationinfo">
-          <div><h4>Automated Pagination&nbsp;<span id="collapsible-toggle" class="collapsible" style="font-size: 14px;">(more)</span></h4></div>
-          <div id="content-pagination" class="collapsible-content">
-            <p>To page through these items, use query string arguments 'page' and 'per_page'.</p>
-            <p>HTTP <code>Link</code> headers of <code>first</code>, <code>prev</code>, <code>next</code> &amp; <code>last</code> are given in web responses.</p>
-                <p>Example: assuming 500 items, page 7, of 50 per page, is given by:</p>
-                <pre>{{ request.url }}?page=7&amp;per_page=50</pre>
-                <p>Link header with a response assuming 500 items would be:</p>
-                <pre>Link:   &lt;{{ request.url }}?per_page=500&gt; rel="first",
-&lt;{{ request.url }}?per_page=500&amp;page=6&gt; rel="prev",
-&lt;{{ request.url }}?per_page=500&amp;page=8&gt; rel="next",
-&lt;{{ request.url }}?per_page=500&amp;page=10&gt; rel="last"
-                </pre>
-                <p>If you want to page through the whole collection, start at <code>first</code> and follow link headers until you reach <code>last</code> or until no <code>last</code> is given. You shouldn't try to calculate each <code>page</code> query string argument yourself.</p>
-                </div>
-            </div>
         </div>
     </div>
     <script>

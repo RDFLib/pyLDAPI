@@ -1,8 +1,9 @@
 # 1. rm -r build dist pyldapi.egg-info
+# ?? python setup.py clean --all
 
 # 2. change version no in pyldapi/__init__.py
 
-# 3. $ git commit changes
+# 3. $ git commit
 
 # 4. $ git tag <VERSION_NO>
 
