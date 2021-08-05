@@ -5,7 +5,7 @@ from pyldapi.renderer import Renderer
 from pyldapi.renderer_container import ContainerRenderer, ContainerOfContainersRenderer
 from pyldapi.profile import Profile
 from pyldapi.helpers import setup
-from data import RDF_MEDIATYPES, RDF_FILE_EXTS, MEDIATYPE_NAMES
+from pyldapi.data import RDF_MEDIATYPES, RDF_FILE_EXTS, MEDIATYPE_NAMES
 
 __version__ = '4.0'
 
