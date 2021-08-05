@@ -443,10 +443,10 @@ class Renderer(object, metaclass=ABCMeta):
         )
 
     def _render_alt_profile_html(
-            self,
-            alt_template: str = "alt.html",
-            additional_alt_template_context=None,
-            alt_template_context_replace=False
+        self,
+        alt_template: str = "alt.html",
+        additional_alt_template_context=None,
+        alt_template_context_replace=False
     ):
         """Renders the Alternates Profile in HTML
 
@@ -509,7 +509,12 @@ class Renderer(object, metaclass=ABCMeta):
             headers=self.headers
         )
 
-    def _render_alt_profile(self):
+    def _render_alt_profile(
+        self,
+        alt_template: str = "alt.html",
+        additional_alt_template_context=None,
+        alt_template_context_replace=False
+    ):
         """
         Return a Flask Response object depending on the value assigned to :code:`self.mediatype`.
 
@@ -519,13 +524,22 @@ class Renderer(object, metaclass=ABCMeta):
         if self.mediatype == '_internal':
             return self
         if self.mediatype == 'text/html':
-            return self._render_alt_profile_html()
+            return self._render_alt_profile_html(
+                alt_template,
+                additional_alt_template_context,
+                alt_template_context_replace
+            )
         elif self.mediatype in RDF_MEDIATYPES:
             return self._render_alt_profile_rdf()
         else:  # application/json
             return self._render_alt_profile_json()
 
-    def render(self):
+    def render(
+        self,
+        alt_template: str = "alt.html",
+        additional_alt_template_context=None,
+        alt_template_context_replace=False
+    ):
         """
         Use the received profile and mediatype to create a response back to the client.
 
@@ -542,7 +556,11 @@ class Renderer(object, metaclass=ABCMeta):
         if self.vf_error is not None:
             return Response(self.vf_error, status=400, media_type='text/plain')
         elif self.profile == 'alt' or self.profile == 'alternates':
-            return self._render_alt_profile()
+            return self._render_alt_profile(
+                alt_template,
+                additional_alt_template_context,
+                alt_template_context_replace
+            )
         return None
 
     # end making response content
