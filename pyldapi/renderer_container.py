@@ -64,7 +64,7 @@ class ContainerRenderer(Renderer):
         :param super_register: A super-Register URI for this register. Can be within this API or external.
         :type super_register: str
         :param members_template: The Jinja2 template to use for rendering the HTML profile of the register. If None,
-        then it will default to try and use a template called :code:`alt.html`.
+        then it will default to try and use a template called :code:`mem.html`.
         :type members_template: str or None
         :param per_page: Number of items to show per page if not specified in request. If None, then it will default to
         RegisterRenderer.DEFAULT_ITEMS_PER_PAGE.
@@ -195,7 +195,12 @@ class ContainerRenderer(Renderer):
 
         return None
 
-    def render(self):
+    def render(
+        self,
+        mem_template: str = "mem.html",
+        additional_mem_template_context=None,
+        mem_template_context_replace=False
+    ):
         """
         Renders the register profile.
 
@@ -206,7 +211,11 @@ class ContainerRenderer(Renderer):
         if response is None and self.profile == 'mem':
             if self.paging_error is None:
                 if self.mediatype == 'text/html':
-                    return self._render_mem_profile_html()
+                    return self._render_mem_profile_html(
+                        mem_template,
+                        additional_mem_template_context,
+                        mem_template_context_replace
+                    )
                 elif self.mediatype in Renderer.RDF_MEDIA_TYPES:
                     return self._render_mem_profile_rdf()
                 else:
@@ -216,10 +225,10 @@ class ContainerRenderer(Renderer):
         return response
 
     def _render_mem_profile_html(
-            self,
-            mem_template: str = "mem.html",
-            additional_mem_template_context=None,
-            mem_template_context_replace=False
+        self,
+        mem_template: str = "mem.html",
+        additional_mem_template_context=None,
+        mem_template_context_replace=False
     ):
         _template_context = {
             'uri': self.instance_uri,

@@ -3,7 +3,7 @@
 import codecs
 import re
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 def open_local(paths, mode='r', encoding='utf8'):
@@ -29,7 +29,12 @@ with open_local(['requirements.txt']) as req:
 
 setup(
     name='pyldapi',
-    packages=['pyldapi'],
+    packages=find_packages(),
+    package_dir={"pyldapi": "pyldapi"},
+    package_data={
+        "pyldapi": ["templates/*"],
+    },
+    include_package_data=True,
     version=version,
     description='A very small module to add Linked Data API functionality to '
                 'a Python FastAPI or Flask (v3.x) installation',
