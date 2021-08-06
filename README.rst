@@ -5,7 +5,7 @@ Welcome to pyLDAPI
 
 The Python Linked Data API (pyLDAPI) is:
 
-*A very small module to add Linked Data API functionality to a Python Flask installation*.
+*A very small module to add Linked Data API functionality to a Python FastAPI installation*.
 
 |PyPI version|
 
@@ -15,7 +15,7 @@ The Python Linked Data API (pyLDAPI) is:
 What is it?
 -----------
 
-This module contains a small Python module which is intended to be added (imported) into a `Python Flask <http://flask.pocoo.org/>`_ installation to add a small library of ``Renderer`` classes which can be used to handle requests and return responses in a manner consistent with `Linked Data <https://en.wikipedia.org/wiki/Linked_data>`__ principles of operation.
+This module contains a small Python module which is intended to be added (imported) into a `FastAPI <https://fastapi.tiangolo.com/>`_ (v4.x +) or `Python Flask <http://flask.pocoo.org/>`_ (v3.x) installation to add a small library of ``Renderer`` classes which can be used to handle requests and return responses in a manner consistent with `Linked Data <https://en.wikipedia.org/wiki/Linked_data>`__ principles of operation.
 
 The intention is to make it easy to "Linked Data-enable" web APIs.
 
@@ -37,7 +37,7 @@ The main parts of pyLDAPI are as follows:
     :width: 250
     :alt: Block diagram of pyLDAPI's main parts
 
-Web requests arrive at a Web Server, such as *Apache* or *nginx*, which then forwards (some of) them on to *Flask*, a Python web framework. Flask calls Python functions for web requests defined in a request/function mapping and may call pyLDAPI elements. Flask need not call pyLDAPI for all requests, just as Apache/nginx need not forward all web request to flask. pyLDAPI may then draw on any Python data source, such as database APIs, and uses the *rdflib* Python module to formulate RDF responses.
+Web requests arrive at a Web Server, such as *Apache* or *nginx*, which then forwards (some of) them on to *FastAPI*, a Python web framework. FastAPI calls Python functions for web requests defined in a request/function mapping and may call pyLDAPI elements. FastAPI need not call pyLDAPI for all requests, just as Apache/nginx need not forward all web request to FastAPI. pyLDAPI may then draw on any Python data source, such as database APIs, and uses the *rdflib* Python module to formulate RDF responses.
 
 Definitions
 -----------

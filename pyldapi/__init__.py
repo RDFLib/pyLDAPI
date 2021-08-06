@@ -5,8 +5,9 @@ from pyldapi.renderer import Renderer
 from pyldapi.renderer_container import ContainerRenderer, ContainerOfContainersRenderer
 from pyldapi.profile import Profile
 from pyldapi.helpers import setup
+from pyldapi.data import RDF_MEDIATYPES, RDF_FILE_EXTS, MEDIATYPE_NAMES
 
-__version__ = '3.13'
+__version__ = '4.1'
 
 __all__ = [
     'Renderer',
@@ -16,5 +17,8 @@ __all__ = [
     'ProfilesMediatypesException',
     'PagingError',
     'setup',
-    '__version__'
+    '__version__',
+    'RDF_MEDIATYPES',
+    'RDF_FILE_EXTS',
+    'MEDIATYPE_NAMES'
 ]

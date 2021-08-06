@@ -1,21 +1,26 @@
 # -*- coding: utf-8 -*-
-from collections import defaultdict
-from flask import Response, render_template
-from flask_paginate import Pagination
-from rdflib import Graph, Namespace, URIRef, Literal, RDF, RDFS, XSD
-from rdflib.term import Identifier
-import json
+from pathlib import Path
+
+from fastapi import Response
+from fastapi.responses import JSONResponse
+from fastapi.templating import Jinja2Templates
+
+from rdflib import Graph, Namespace, URIRef, Literal, RDF, RDFS
 from pyldapi.renderer import Renderer
 from pyldapi.profile import Profile
 from pyldapi.exceptions import ProfilesMediatypesException, CofCTtlError
+from .data import RDF_MEDIATYPES, MEDIATYPE_NAMES
+
+templates_dir = Path(__file__).parent.parent / "pyldapi" / "templates"
+templates = Jinja2Templates(directory=str(templates_dir))
 
 
 class ContainerRenderer(Renderer):
     """
     Specific implementation of the abstract Renderer for displaying Register information
     """
-    DEFAULT_ITEMS_PER_PAGE = 20
-    
+    DEFAULT_ITEMS_PER_PAGE = 100
+
     def __init__(self,
                  request,
                  instance_uri,
@@ -29,9 +34,7 @@ class ContainerRenderer(Renderer):
                  profiles=None,
                  default_profile_token=None,
                  super_register=None,
-                 page_size_max=1000,
-                 register_template=None,
-                 **kwargs):
+                 page_size_max=1000):
         """
         Constructor
 
@@ -60,14 +63,15 @@ class ContainerRenderer(Renderer):
         :type default_profile_token: str
         :param super_register: A super-Register URI for this register. Can be within this API or external.
         :type super_register: str
-        :param register_template: The Jinja2 template to use for rendering the HTML profile of the register. If None,
-        then it will default to try and use a template called :code:`alt.html`.
-        :type register_template: str or None
+        :param members_template: The Jinja2 template to use for rendering the HTML profile of the register. If None,
+        then it will default to try and use a template called :code:`mem.html`.
+        :type members_template: str or None
         :param per_page: Number of items to show per page if not specified in request. If None, then it will default to
         RegisterRenderer.DEFAULT_ITEMS_PER_PAGE.
         :type per_page: int or None
         """
         self.instance_uri = instance_uri
+
         if profiles is None:
             profiles = {}
         for k, v in profiles.items():
@@ -80,18 +84,18 @@ class ContainerRenderer(Renderer):
                 'https://w3id.org/profile/mem',
                 'Members Profile',
                 'A very basic RDF data model-only profile that lists the sub-items (members) of collections (rdf:Bag)',
-                ['text/html'] + Renderer.RDF_MEDIA_TYPES,
+                ['text/html'] + RDF_MEDIATYPES,
                 'text/html'
             )
         })
         if default_profile_token is None:
             default_profile_token = 'mem'
+
         super(ContainerRenderer, self).__init__(
             request,
             instance_uri,
             profiles,
-            default_profile_token,
-            **kwargs
+            default_profile_token
          )
         if self.vf_error is None:
             self.label = label
@@ -103,17 +107,19 @@ class ContainerRenderer(Renderer):
             else:
                 self.members = []
             self.members_total_count = members_total_count
-            self.per_page = kwargs.pop("per_page", request.args.get(
-                'per_page',
-                type=int,
-                default=ContainerRenderer.DEFAULT_ITEMS_PER_PAGE
-            ))
-            self.page = kwargs.pop("page", request.args.get('page', type=int, default=1))
+
+            if request.query_params.get("per_page"):
+                self.per_page = int(request.query_params.get("per_page"))
+            else:
+                self.per_page = ContainerRenderer.DEFAULT_ITEMS_PER_PAGE
+            if request.query_params.get("page"):
+                self.page = int(request.query_params.get("page"))
+            else:
+                self.page = 1
+
             self.super_register = super_register
             self.page_size_max = page_size_max
-            self.members_template = register_template
             self.paging_error = self._paging()
-            self.template_extras = kwargs
 
     def _paging(self):
         # calculate last page
@@ -135,7 +141,7 @@ class ContainerRenderer(Renderer):
         links.append('<http://www.w3.org/ns/ldp#Page>; rel="type"')
 
         # other Query String Arguments
-        other_qsas = [x + "=" + self.request.values[x] for x in self.request.values if x not in ["page", "per_page"]]
+        other_qsas = [x + "=" + self.request.query_params[x] for x in self.request.query_params if x not in ["page", "per_page"]]
         if len(other_qsas) > 0:
             other_qsas_str = "&".join(other_qsas) + "&"
         else:
@@ -189,7 +195,12 @@ class ContainerRenderer(Renderer):
 
         return None
 
-    def render(self):
+    def render(
+        self,
+        mem_template: str = "mem.html",
+        additional_mem_template_context=None,
+        mem_template_context_replace=False
+    ):
         """
         Renders the register profile.
 
@@ -200,24 +211,25 @@ class ContainerRenderer(Renderer):
         if response is None and self.profile == 'mem':
             if self.paging_error is None:
                 if self.mediatype == 'text/html':
-                    return self._render_mem_profile_html()
+                    return self._render_mem_profile_html(
+                        mem_template,
+                        additional_mem_template_context,
+                        mem_template_context_replace
+                    )
                 elif self.mediatype in Renderer.RDF_MEDIA_TYPES:
                     return self._render_mem_profile_rdf()
                 else:
                     return self._render_mem_profile_json()
             else:  # there is a paging error (e.g. page > last_page)
-                return Response(self.paging_error, status=400, mimetype='text/plain')
+                return Response(self.paging_error, status_code=400, media_type='text/plain')
         return response
 
-    def _render_mem_profile_html(self, template_context=None):
-        pagination = Pagination(
-            members_uri=self.instance_uri,
-            page=self.page,
-            per_page=self.per_page,
-            total=self.members_total_count,
-            page_parameter='page',
-            per_page_parameter='per_page'
-        )
+    def _render_mem_profile_html(
+        self,
+        mem_template: str = "mem.html",
+        additional_mem_template_context=None,
+        mem_template_context_replace=False
+    ):
         _template_context = {
             'uri': self.instance_uri,
             'label': self.label,
@@ -231,20 +243,18 @@ class ContainerRenderer(Renderer):
             'prev_page': self.prev_page,
             'next_page': self.next_page,
             'last_page': self.last_page,
-            'pagination': pagination
+            'mediatype_names': MEDIATYPE_NAMES,
+            'request': self.request
         }
-        if self.template_extras is not None:
-            _template_context.update(self.template_extras)
-        if template_context is not None and isinstance(template_context, dict):
-            _template_context.update(template_context)
+        if additional_mem_template_context is not None and isinstance(additional_mem_template_context, dict):
+            if mem_template_context_replace:
+                _template_context = additional_mem_template_context
+            else:
+                _template_context.update(additional_mem_template_context)
 
-        return Response(
-            render_template(
-                self.members_template or 'members.html',
-                **_template_context
-            ),
-            headers=self.headers
-        )
+        return templates.TemplateResponse(mem_template,
+                                          context=_template_context,
+                                          headers=self.headers)
 
     def _generate_mem_profile_rdf(self):
         g = Graph()
@@ -272,7 +282,7 @@ class ContainerRenderer(Renderer):
                 g.add((u, RDFS.member, URIRef(member)))
 
         # other Query String Arguments
-        other_qsas = [x + "=" + self.request.values[x] for x in self.request.values if x not in ["page", "per_page"]]
+        other_qsas = [x + "=" + self.request.query_params[x] for x in self.request.query_params if x not in ["page", "per_page"]]
         if len(other_qsas) > 0:
             other_qsas_str = "&".join(other_qsas) + "&"
         else:
@@ -309,16 +319,16 @@ class ContainerRenderer(Renderer):
         return self._make_rdf_response(g)
 
     def _render_mem_profile_json(self):
-        return Response(
-            json.dumps({
+        return JSONResponse(
+            content={
                 'uri': self.instance_uri,
                 'label': self.label,
                 'comment': self.comment,
                 'profiles': list(self.profiles.keys()),
                 'default_profile': self.default_profile_token,
                 'register_items': self.members
-            }),
-            mimetype='application/json',
+            },
+            media_type='application/json',
             headers=self.headers
         )
 
@@ -329,7 +339,8 @@ class ContainerOfContainersRenderer(ContainerRenderer):
 
     This sub-class auto-fills many of the :class:`.RegisterRenderer` options.
     """
-    def __init__(self, request, instance_uri, label, comment, profiles, cofc_file_path, default_profile_token='mem', *args, **kwargs):
+
+    def __init__(self, request, instance_uri, label, comment, profiles, cofc_file_path, default_profile_token='mem'):
         """
         Constructor
 
@@ -354,7 +365,7 @@ class ContainerOfContainersRenderer(ContainerRenderer):
             [],  # will be replaced further down
             0,    # will be replaced further down
             profiles=profiles,
-            default_profile_token=default_profile_token
+            default_profile_token=default_profile_token,
         )
         self.members = []
 
@@ -379,4 +390,5 @@ class ContainerOfContainersRenderer(ContainerRenderer):
             '''.format(**{'register_uri': instance_uri})
         for r in g.query(q):
             self.members.append((r['uri'], r['label']))
+
         self.register_total_count = len(self.members)

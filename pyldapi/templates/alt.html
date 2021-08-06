@@ -19,14 +19,17 @@
                     <td style="padding-right: 30px;"><a href="{{ request.base_url }}?_profile={{ token }}&_mediatype={{ vals['default_mediatype'] }}">{{ token }}</a></td>
                     <td>{{ vals['label'] }}</td>
                     <td>
-                    {% for f in vals['mediatypes'] %}
-                        <a href="{{ request.base_url }}?_profile={{ token }}&_mediatype={{ f }}">{{ f }}</a><br />
-                    {% endfor %}
+                        {% for f in vals['mediatypes'] -%}
+                        {% if f in mediatype_names -%}
+                          <a href="{{ request.base_url }}?_profile={{ token }}&_mediatype={{ f }}">{{ mediatype_names[f] }}</a><br />
+                        {% else -%}
+                            <a href="{{ request.base_url }}?_profile={{ token }}&_mediatype={{ f }}">{{ f }}</a><br />
+                        {% endif %}{% endfor %}
                     </td>
                     <td style="text-align: center;">
-                    {% for l in vals['languages'] %}
+                    {%- for l in vals['languages'] %}
                         <a href="{{ request.base_url }}?_profile={{ token }}&_lang={{ l }}">{{ l }}</a><br />
-                    {% endfor %}
+                    {% endfor -%}
                     </td>
                     <td>{{ vals['comment'] }}</td>
                     {% if vals['namespace'] is not none %}
