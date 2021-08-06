@@ -11,8 +11,7 @@ from pyldapi.profile import Profile
 from pyldapi.exceptions import ProfilesMediatypesException, CofCTtlError
 from .data import RDF_MEDIATYPES, MEDIATYPE_NAMES
 
-templates_dir = Path(__file__).parent.parent / "pyldapi" / "templates"
-templates = Jinja2Templates(directory=str(templates_dir))
+templates = Jinja2Templates(directory="templates")
 
 
 class ContainerRenderer(Renderer):
@@ -197,7 +196,8 @@ class ContainerRenderer(Renderer):
 
     def render(
         self,
-        mem_template: str = "mem.html",
+        additional_alt_template_context=None,
+        alt_template_context_replace=False,
         additional_mem_template_context=None,
         mem_template_context_replace=False
     ):
@@ -207,16 +207,18 @@ class ContainerRenderer(Renderer):
         :return: A Flask Response object.
         :rtype: :py:class:`flask.Response`
         """
-        response = super(ContainerRenderer, self).render()
+        response = super(ContainerRenderer, self).render(
+            additional_alt_template_context,
+            alt_template_context_replace
+        )
         if response is None and self.profile == 'mem':
             if self.paging_error is None:
                 if self.mediatype == 'text/html':
                     return self._render_mem_profile_html(
-                        mem_template,
                         additional_mem_template_context,
                         mem_template_context_replace
                     )
-                elif self.mediatype in Renderer.RDF_MEDIA_TYPES:
+                elif self.mediatype in RDF_MEDIATYPES:
                     return self._render_mem_profile_rdf()
                 else:
                     return self._render_mem_profile_json()
@@ -226,7 +228,6 @@ class ContainerRenderer(Renderer):
 
     def _render_mem_profile_html(
         self,
-        mem_template: str = "mem.html",
         additional_mem_template_context=None,
         mem_template_context_replace=False
     ):
@@ -252,7 +253,7 @@ class ContainerRenderer(Renderer):
             else:
                 _template_context.update(additional_mem_template_context)
 
-        return templates.TemplateResponse(mem_template,
+        return templates.TemplateResponse("mem.html",
                                           context=_template_context,
                                           headers=self.headers)
 

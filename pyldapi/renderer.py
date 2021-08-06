@@ -441,7 +441,6 @@ class Renderer(object, metaclass=ABCMeta):
 
     def _render_alt_profile_html(
         self,
-        alt_template: str = "alt.html",
         additional_alt_template_context=None,
         alt_template_context_replace=False
     ):
@@ -487,7 +486,7 @@ class Renderer(object, metaclass=ABCMeta):
             else:
                 _template_context.update(additional_alt_template_context)
 
-        return templates.TemplateResponse(alt_template,
+        return templates.TemplateResponse("alt.html",
                                           context=_template_context,
                                           headers=self.headers)
 
@@ -508,7 +507,6 @@ class Renderer(object, metaclass=ABCMeta):
 
     def _render_alt_profile(
         self,
-        alt_template: str = "alt.html",
         additional_alt_template_context=None,
         alt_template_context_replace=False
     ):
@@ -518,11 +516,8 @@ class Renderer(object, metaclass=ABCMeta):
         :return: A Flask Response object
         :rtype: :class:`flask.Response`
         """
-        if self.mediatype == '_internal':
-            return self
         if self.mediatype == 'text/html':
             return self._render_alt_profile_html(
-                alt_template,
                 additional_alt_template_context,
                 alt_template_context_replace
             )
@@ -554,7 +549,6 @@ class Renderer(object, metaclass=ABCMeta):
             return Response(self.vf_error, status=400, media_type='text/plain')
         elif self.profile == 'alt' or self.profile == 'alternates':
             return self._render_alt_profile(
-                alt_template,
                 additional_alt_template_context,
                 alt_template_context_replace
             )

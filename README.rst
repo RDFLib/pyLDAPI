@@ -1,4 +1,7 @@
-.. image:: pyLDAPI-250.png
+|pyLDAPI Logo|
+
+.. |pyLDAPI Logo| image:: https://github.com/RDFLib/pyLDAPI/raw/master/pyLDAPI-250.png
+    :target: https://github.com/RDFLib/pyLDAPI/raw/master/pyLDAPI-250.png
 
 Welcome to pyLDAPI
 ==================
@@ -138,6 +141,10 @@ Related work
 
 Changelog
 ---------
+**4.x**
+
+* Version 4+ uses FastAPI, not Flask. For Flask, use <=3.11
+
 **3.11**
 
 * tokens applied to Representations in Alternate View profile, not Profiles

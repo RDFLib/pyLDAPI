@@ -7,7 +7,7 @@ from pyldapi.profile import Profile
 from pyldapi.helpers import setup
 from pyldapi.data import RDF_MEDIATYPES, RDF_FILE_EXTS, MEDIATYPE_NAMES
 
-__version__ = '4.1'
+__version__ = '4.2'
 
 __all__ = [
     'Renderer',
