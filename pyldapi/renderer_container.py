@@ -208,8 +208,8 @@ class ContainerRenderer(Renderer):
         :rtype: :py:class:`flask.Response`
         """
         response = super(ContainerRenderer, self).render(
-            additional_alt_template_context,
-            alt_template_context_replace
+            additional_alt_template_context=additional_alt_template_context,
+            alt_template_context_replace=alt_template_context_replace
         )
         if response is None and self.profile == 'mem':
             if self.paging_error is None:
