@@ -16,8 +16,7 @@ import re
 import connegp
 from .data import MEDIATYPE_NAMES, RDF_MEDIATYPES
 
-templates_dir = Path(__file__).parent.parent / "pyldapi" / "templates"
-templates = Jinja2Templates(directory=str(templates_dir))
+templates = Jinja2Templates(directory="templates")
 
 
 class Renderer(object, metaclass=ABCMeta):
