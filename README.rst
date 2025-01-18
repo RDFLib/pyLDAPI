@@ -1,3 +1,8 @@
+.. note::
+
+   This API is replaced by `Prez <https://github.com/RDFLib/prez>`_ .
+
+
 |pyLDAPI Logo|
 
 .. |pyLDAPI Logo| image:: https://github.com/RDFLib/pyLDAPI/raw/master/pyLDAPI-250.png
